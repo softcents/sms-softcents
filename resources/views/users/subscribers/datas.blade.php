@@ -1,0 +1,32 @@
+@foreach($subscribers as $subscriber)
+    <tr>
+        <td>{{ $loop->iteration }}</td>
+        <td>{{ $subscriber->invoice_no }}</td>
+        <td>{{ optional($subscriber->plan)->title }}</td>
+        <td>{{ $subscriber->gateway->name ?? '' }}</td>
+        <td class="fw-bold text-dark">{{ currency_format($subscriber->price) }}</td>
+        <td class="fw-bold text-dark">{{ $subscriber->total_sms }}</td>
+        <td>{{ $subscriber->will_expire }}</td>
+        <td>{{ formatted_date($subscriber->created_at) }}</td>
+        <td>
+            @if ($subscriber->status == 'pending')
+                <div class="badge bg-warning">
+                    {{ ucfirst($subscriber->status) }}
+                </div>
+            @elseif ($subscriber->status == 'approved')
+                <div class="badge bg-success">
+                    {{ ucfirst($subscriber->status) }}
+                </div>
+            @else
+                <div class="badge bg-danger">
+                    {{ ucfirst($subscriber->status) }}
+                </div>
+            @endif
+        </td>
+        <td>
+            <a target="_blank" href="{{ route('users.subscribers.show', $subscriber->id) }}" class="btn btn-light btn-sm">
+                <i class="fas fa-print"></i>
+            </a>
+        </td>
+    </tr>
+@endforeach

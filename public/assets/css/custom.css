@@ -1,0 +1,436 @@
+.mybazar-login-section .forget-password input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+    border: 1px solid #D0D5DD !important;
+    background: #4876FF !important;
+    margin-right: 5px;
+    margin-top: -1px;
+}
+
+.table.no-wrap td {
+    white-space: break-spaces;
+}
+
+.mybazar-login-section .forget-password input[type="checkbox"]:checked + .custom-control-label::before {
+    color: #FFFFFF;
+}
+
+.mybazar-login-section .forget-password input[type="checkbox"]:checked {
+    accent-color: #3291d4 !important;
+}
+
+.indicate-text {
+    font-size: 12px;
+    color: red;
+}
+
+.form-control.error {
+    border-color: red;
+    padding: .375rem .75rem;
+}
+.image-wrapper.error {
+    border-color: red;
+    padding: .375rem .75rem;
+}
+.error-alert{
+    font-size: 11px;
+    color: red;
+}
+
+.error {
+    color: red !important;
+}
+
+.budget-form .form-control[readonly] {
+    background-color: #fff !important;
+}
+.budget-form ::placeholder{
+    font-size: 12px;
+}
+
+.avatar {
+    background: #4876FF;
+    border-radius: 50%;
+    color: #e3eaef;
+    display: inline-block;
+    font-size: 16px;
+    font-weight: 300;
+    margin: 0;
+    position: relative;
+    vertical-align: middle;
+    line-height: 1.28;
+    height: 45px;
+    width: 45px;
+}
+
+.avatar.avatar-sm {
+    font-size: 12px;
+    height: 30px;
+    width: 30px;
+}
+
+.avatar img {
+    border-radius: 50%;
+    height: 100%;
+    position: relative;
+    width: 100%;
+    z-index: 1;
+}
+
+.btn-custom-warning {
+    background-color: #4876FF !important;
+    color: #fff;
+    border: none !important;
+}
+.btn-custom-warning:hover {
+    color: #fff !important;
+}
+
+.custom-warning-color {
+    color: #4876FF;
+}
+
+.roles-permissions table td {
+    color: black;
+}
+
+.img-preview {
+    margin-top: 4px;
+    height: auto;
+    width: 100px;
+}
+.side-bar-logo img{
+    height: auto;
+}
+
+.folders-files tr a {
+    font-size: 18px !important;
+}
+
+.gradient-row {
+    background: linear-gradient(270deg, #dbe4df 0%, #65e4a6 50%, #FFFFFF 100%);
+}
+
+@media print {
+    .table-two thead td{
+        padding: 0px !important;
+    }
+}
+
+.order-form-section label{
+    left: 10px;
+    white-space: nowrap;
+}
+
+.table-form-section .responsive-table{
+    min-height: unset !important;
+}
+.table-title-three h5{
+    font-weight: 600 !important;
+}
+.loss-profit-custom-color1{
+    background-color: rgba(255, 132, 0, 0.15);
+}
+.loss-profit-custom-color2{
+    background-color: rgba(255, 181, 101, 1);
+    font-weight: bold;
+}
+.production-wrap{
+    padding-right: 60px;
+}
+.form-control.reset-img{
+    display: none;
+}
+.print-wrapper .responsive-table{
+    min-height: unset;
+}
+
+.print-wrapper .table th, .print-wrapper .table td {
+    white-space: nowrap;
+}
+
+.print-wrapper{
+    min-height: 700px !important;
+}
+
+.table-header h3,
+.table-header h4{
+    font-weight:700;
+}
+
+.erp-new-invice .invice-detaisl{
+    padding: 20px 0;
+}
+
+.commercial-invoice {
+    margin-bottom: 30px;
+}
+
+.invoice-payment-details{
+    margin-top: 40px;
+}
+
+.erp-new-invice{
+    min-height: 900px !important;
+}
+
+/* dropdown font size reduce */
+.form-select {
+    font-size: 1rem;
+}
+
+.product-img{
+    height: 100px;
+    width: 250px;
+    border-radius: 2%;
+    overflow: hidden;
+    border: 2px dashed #E4E5E7;
+}
+
+.form-control .form-control {
+    border: 0 !important;
+}
+
+.table-user-icon {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    background: var(--clr-gray4);
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+.table-user-icon img {
+    height: 25px;
+}
+.ctg-icon img{
+    max-height: 40px;
+    width: auto;
+    margin: 0 auto;
+}
+
+ /*delete modal*/
+.delete-modal {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.delete-modal h5 {
+    font-size: 20px;
+    font-weight: 500;
+    line-height: 30px;
+    margin-bottom: 5px;
+}
+.delete-modal p {
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+}
+
+.multiple-button-group {
+    display: -webkit-box;
+    display: -ms-flexbox;
+    display: flex;
+    -webkit-box-align: center;
+    -ms-flex-align: center;
+    align-items: center;
+    -webkit-box-pack: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    gap: 24px;
+}
+
+.chart-css {
+    width: 100% !important;
+    max-height: 340px !important;
+    min-height: 290px;
+}
+
+.rounded-image .table-img {
+    width: 40px;
+    height: 40px;
+}
+
+.width-10 {
+    width: 10px;
+}
+
+.theme-btn.active {
+    background: rgb(223, 223, 223);
+    color: #000 !important;
+}
+
+.password-input {
+    position: relative;
+}
+
+.password-input .hide-pass {
+    position: absolute;
+    top: 36px;
+    right: 10px;
+    background: none;
+    border: 0;
+}
+
+.plans-list .cards {
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+}
+
+.plans-list .card-header {
+    background: rgba(72, 118, 255);
+    color: #fff;
+}
+
+.plans-list .card h2 {
+    color: #4876FF;
+    font-weight: bold;
+    font-size: 35px;
+}
+
+.plans-list .card h6 {
+    color: #212121;
+    display: inline-block;
+    text-align: center;
+    padding: 0 5px;
+    margin: 15px 0;
+    background: #ECF1F9;
+}
+
+.plans-list .card h2 small {
+    color: #475467;
+    font-weight: 400;
+    font-size: 16px;
+}
+
+.plans-list .card ul li {
+    margin: 5px 0;
+}
+
+.plans-list .card .action-buttons a:first-child {
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
+    background: #ebf0ec;
+    border-radius: 50%;
+    border: 1px solid #16A34A;
+    display: inline-block;
+    margin-right: 10px;
+    transition: .4s ease;
+}
+
+.plans-list .card .action-buttons a:first-child i {
+    color: #16A34A;
+    font-size: 13px;
+}
+
+.plans-list .card .action-buttons a:first-child:hover i {
+    color: #fff;
+}
+
+.plans-list .card .action-buttons a:first-child:hover {
+    background: #16A34A;
+}
+
+.plans-list .card .action-buttons a:last-child {
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
+    background: #f5f1f1;
+    border-radius: 50%;
+    border: 1px solid #EF4444;
+    display: inline-block;
+    margin-right: 10px;
+    transition: .4s ease;
+}
+
+.plans-list .card .action-buttons a:last-child i {
+    color: #EF4444;
+    font-size: 13px;
+}
+
+.plans-list .card .action-buttons a:last-child:hover i {
+    color: #fff;
+}
+
+.plans-list .card .action-buttons a:last-child:hover {
+    background: #EF4444;
+}
+
+.text-custom-primary {
+    color: #4876FF;
+    font-weight: bold;
+}
+
+.quick-sms .order-form-section label {
+    background: none;
+    left: -8px;
+    top: 0px;
+    font-weight: bold;
+}
+
+.the-count {
+    position: relative;
+}
+
+#current {
+    padding-right: 5px;
+    position: absolute;
+    display: inline-block;
+    background: #fff;
+    z-index: 3;
+}
+.p-16{
+    padding: 16px;
+}
+.card {
+    border: 0;
+    border-top: 3px solid #4876FF;
+    /* height: 100vh; */
+    min-height: 100vh;
+
+}
+
+.delete-selected {
+    cursor: pointer;
+}
+.btn-custom-style {
+    border: none;
+}
+
+.subscribe-plan {
+    color: #4876FF !important;
+    border: 2px solid #4876FF;
+    font-weight: bold;
+    transition: .4s ease;
+}
+
+.subscribe-plan:hover {
+    color: #fff !important;
+    background: #4876FF !important;
+    font-weight: bold;
+}
+
+.subscribe-plan-background{
+    color: #fff !important;
+    background: #4876FF !important;
+    font-weight: bold;
+}
+
+.cards-header{
+    padding: 16px;
+    border-top: 3px solid #4876FF;
+    background-color: #fff;
+    border-radius: 12px;
+
+}
+
+.cards{
+    background-color: #fff;
+    padding: 16px;
+}

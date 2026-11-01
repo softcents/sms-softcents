@@ -38,7 +38,7 @@
                                                 <label>{{ __('Gateway Type') }}</label>
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="type_id" required="" class="form-control select-dropdown gateway-type">
-                                                        <option value="1">{{ __('Select a type') }}</option>
+                                                        <option value="">{{ __('Select a type') }}</option>
                                                         @foreach ($types as $type)
                                                         <option data-names='@json($type->inputs['names'] ?? [])' data-labels='@json($type->inputs['labels'] ?? [])' value="{{ $type->id }}">{{ $type->name }}</option>
                                                         @endforeach

@@ -15,6 +15,7 @@
 <script src="{{ asset('assets/js/toastr.min.js') }}"></script>
 <script src="{{ asset('assets/js/custom/input.js') }}"></script>
 @stack('js')
+@stack('scripts')
 
 @stack('modal-view')
 

@@ -99,6 +99,67 @@
             </div>
         </div>
 
+        <!-- SMS Gateways Live Balance Section -->
+        <div class="card mb-30 border-0 shadow-sm" style="border-radius: 12px; background: #fff;">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                        <i class="fas fa-wallet text-primary"></i> {{ __('SMS Gateways Live Balances') }}
+                    </h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="dashRefreshBalances">
+                            <i class="fas fa-sync-alt me-1" id="dashRefreshIcon"></i> {{ __('Refresh') }}
+                        </button>
+                        <a href="{{ route('admin.sms-gateways.index') }}" class="btn btn-sm btn-primary text-light">
+                            {{ __('All Gateways') }} &rarr;
+                        </a>
+                    </div>
+                </div>
+                <div class="row g-3">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f0fdf4; border-color: #bbf7d0 !important;">
+                            <div>
+                                <small class="text-muted d-block fw-semibold">{{ __('White Info BD') }}</small>
+                                <span class="fs-5 fw-bold text-success" id="dash-gateway-31">৳6,408.44</span>
+                                <small class="d-block text-muted" style="font-size: 11px;">API: sms.whiteinfobd.com</small>
+                            </div>
+                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #eff6ff; border-color: #bfdbfe !important;">
+                            <div>
+                                <small class="text-muted d-block fw-semibold">{{ __('PanelSms1') }}</small>
+                                <span class="fs-5 fw-bold text-primary" id="dash-gateway-27">৳13,643.51</span>
+                                <small class="d-block text-muted" style="font-size: 11px;">Panel SMS BD</small>
+                            </div>
+                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                            <div>
+                                <small class="text-muted d-block fw-semibold">{{ __('SYSSMS') }}</small>
+                                <span class="fs-5 fw-bold text-dark" id="dash-gateway-29">Connected</span>
+                                <small class="d-block text-muted" style="font-size: 11px;">SysSms / REVE</small>
+                            </div>
+                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>Online</span>
+                        </div>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f8fafc; border-color: #e2e8f0 !important;">
+                            <div>
+                                <small class="text-muted d-block fw-semibold">{{ __('REVE SMS') }}</small>
+                                <span class="fs-5 fw-bold text-dark" id="dash-gateway-30">Connected</span>
+                                <small class="d-block text-muted" style="font-size: 11px;">REVE Systems</small>
+                            </div>
+                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="row gpt-dashboard-chart">
             <div class="col-xxl-8 col-xl-7 col-lg-7 mb-30">
                 <div class="cards dashboard-card new-card border-0 p-0">
@@ -186,4 +247,43 @@
 @push('js')
     <script src="{{ asset('assets/js/chart.min.js') }}"></script>
     <script src="{{ asset('assets/plugins/custom/dashboard.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            function loadDashboardGatewayBalances() {
+                const icon = $('#dashRefreshIcon');
+                icon.addClass('fa-spin');
+
+                $.ajax({
+                    url: "{{ route('admin.sms-gateways.all-balances') }}",
+                    type: 'GET',
+                    dataType: 'json',
+                    success: function(res) {
+                        if (res && res.gateways) {
+                            $.each(res.gateways, function(id, data) {
+                                const el = $('#dash-gateway-' + id);
+                                if (el.length) {
+                                    if (data.success && data.formatted) {
+                                        el.text(data.formatted);
+                                    } else if (!data.success) {
+                                        el.text(data.formatted || 'Offline');
+                                    }
+                                }
+                            });
+                        }
+                    },
+                    complete: function() {
+                        icon.removeClass('fa-spin');
+                    }
+                });
+            }
+
+            $('#dashRefreshBalances').on('click', function(e) {
+                e.preventDefault();
+                loadDashboardGatewayBalances();
+            });
+
+            // Automatically refresh on load
+            loadDashboardGatewayBalances();
+        });
+    </script>
 @endpush

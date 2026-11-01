@@ -7,7 +7,13 @@
                 {{ __('View Website') }}
             </a>
         </div>
-        <div class="header-middle"></div>
+        <div class="header-middle">
+            <a href="{{ route('admin.sms-gateways.index') }}" class="d-none d-md-inline-flex align-items-center gap-2 text-decoration-none px-3 py-1 rounded-pill shadow-xs" style="background: #eef2ff; border: 1px solid #c7d2fe;" title="{{ __('Click to view SMS Gateways & Live Balances') }}">
+                <span class="badge bg-success rounded-pill px-2 py-1" style="font-size: 11px;">WhiteInfo SMS</span>
+                <span class="fw-bold text-dark" style="font-size: 13px;" id="headerWhiteInfoBalance">৳6,408.44</span>
+                <i class="fas fa-wallet text-primary ms-1" style="font-size: 12px;"></i>
+            </a>
+        </div>
         <div class="header-right">
             <div class="language-change">
                 <div class="dropdown">

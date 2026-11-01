@@ -154,7 +154,9 @@ class WhiteInfoBDSms
                     'Accept'        => 'application/json',
                 ])
                 ->withoutVerifying()
-                ->get($endpoint);
+                ->get($endpoint, [
+                    'api_key' => $apiKey,
+                ]);
 
             if ($response->successful()) {
                 $data = $response->json();

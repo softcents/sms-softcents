@@ -72,7 +72,7 @@
     @include('admin.components.multi-delete-modal')
 @endpush
 
-@push('scripts')
+@push('js')
 <script>
     $(document).ready(function() {
         const checkAllUrl = "{{ route('admin.sms-gateways.all-balances') }}";
@@ -92,6 +92,9 @@
                     textSpan.text(data.formatted || 'Connected');
                 }
                 badge.attr('title', data.message || 'Balance active');
+                if (gatewayId == 31 && data.formatted) {
+                    $('#headerWhiteInfoBalance').text(data.formatted);
+                }
             } else {
                 badge.addClass('bg-warning text-dark');
                 textSpan.text(data.formatted || 'Error');

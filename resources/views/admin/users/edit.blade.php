@@ -7,8 +7,13 @@
                 <div class="card-body">
                     <div class="tab-content order-summary-tab">
                         <div class="tab-pane fade show active" id="add-new-user"><br>
-                            <div class="table-header">
+                            <div class="table-header d-flex justify-content-between align-items-center">
                                 <h4>{{ $user->role == 'admin' ? __('Edit Staff') : __('Edit Customer') }}</h4>
+                                @if ($user->role == 'user')
+                                <a href="{{ route('admin.users.login-as', $user->id) }}" class="btn btn-sm btn-primary d-inline-flex align-items-center">
+                                    <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login As Customer') }}
+                                </a>
+                                @endif
                             </div>
                             <div class="order-form-section">
                                 <form action="{{ route('admin.users.update',$user->id) }}" method="post" enctype="multipart/form-data" class="ajaxform_instant_reload">
@@ -22,9 +27,44 @@
                                                 <input type="text" name="name" value="{{ $user->name }}" required class="form-control" placeholder="{{ __('Enter Name') }}" >
                                             </div>
                                             <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Username') }}</label>
+                                                <input type="text" name="username" value="{{ $user->username }}" class="form-control" placeholder="{{ __('Enter unique username') }}" autocomplete="off">
+                                            </div>
+                                            <div class="col-lg-6 mt-2">
                                                 <label>{{__('Phone')}}</label>
                                                 <input type="text" name="phone" value="{{ $user->phone }}" class="form-control" placeholder="{{ __('Enter Phone Number') }}" >
                                             </div>
+                                            @if (in_array($user->role, ['sp', 'ssp', 'user']))
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Masking Rate') }}</label>
+                                                <input type="number" step="0.001" name="masking_rate" value="{{ $user->masking_rate }}" class="form-control" placeholder="0.75">
+                                            </div>
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Non-Masking Rate') }}</label>
+                                                <input type="number" step="0.001" name="non_masking_rate" value="{{ $user->non_masking_rate }}" class="form-control" placeholder="0.39">
+                                            </div>
+                                            @endif
+                                            @if (in_array($user->role, ['ssp', 'user']) && isset($resellers) && $resellers->count() > 0)
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Parent Reseller (SP / SSP)') }}</label>
+                                                <select name="parent_id" class="form-control">
+                                                    <option value="">{{ __('None (Direct Under Super Admin)') }}</option>
+                                                    @foreach ($resellers as $res)
+                                                    <option value="{{ $res->id }}" @selected($user->parent_id == $res->id)>{{ $res->name }} ({{ strtoupper($res->role) }} - {{ $res->username }})</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            @endif
+                                            @if (in_array($user->role, ['sp', 'ssp']))
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Company / Brand Name') }}</label>
+                                                <input type="text" name="company_name" value="{{ $user->company_name }}" class="form-control" placeholder="{{ __('Enter Company Name') }}">
+                                            </div>
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('White Label Title') }}</label>
+                                                <input type="text" name="white_label_title" value="{{ $user->white_label_title }}" class="form-control" placeholder="{{ __('Enter Portal Title') }}">
+                                            </div>
+                                            @endif
                                             @if (request('users') == 'admin')
                                             <div class="col-lg-6 mt-2">
                                                 <label>{{__('Role')}}</label>

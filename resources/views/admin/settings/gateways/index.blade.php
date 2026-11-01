@@ -53,7 +53,7 @@
                                             </div>
 
                                             <div class="col-1 align-self-center mb-2">
-                                                <img src="{{ asset($gateway->image) }}" class="img-fluid" alt="">
+                                                <img src="{{ asset($gateway->image ?? 'assets/images/icons/img-upload.png') }}" class="img-fluid" alt="">
                                             </div>
 
                                             <div class="col-12 mb-2">

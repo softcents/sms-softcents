@@ -22,6 +22,8 @@ class Smsgateway extends Model
         'params',
         'driver',
         'namespace',
+        'non_masking_rate',
+        'masking_rate',
     ];
 
     /**

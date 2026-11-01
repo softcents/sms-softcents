@@ -33,6 +33,7 @@ Route::post('/pipra-pay/webhook/recharge', [PipraPay::class, 'webhookRecharge'])
 
 // Payment Routes
 Route::group(['middleware' => ['auth']], function () {
+    Route::get('/return-to-admin', [\App\Http\Controllers\Admin\UserController::class, 'returnToAdmin'])->name('users.return-to-admin');
     Route::get('/payments-gateways', [Web\PaymentController::class, 'index'])->name('payments-gateways.index');
     Route::post('/payments/{plan_id}/{gateway_id}', [Web\PaymentController::class, 'payment'])->name('payments-gateways.payment');
     Route::get('/payment/success', [Web\PaymentController::class, 'success'])->name('payment.success');
@@ -50,20 +51,5 @@ Route::get('/clear-all', function () {
 });
 
 Route::get('/update', function () {
-    if (!Gateway::where('namespace', 'App\\Library\\PipraPay')->exists()) {
-        Artisan::call('db:seed', ['--class' => 'PipraPaySeeder']);
-    }
-
-    if (!Gateway::where('name', 'Tap Payment')->exists()) {
-        Artisan::call('db:seed', ['--class' => 'OthersCurrenciesSeeder']);
-        Artisan::call('db:seed', ['--class' => 'TapPaymentSeeder']);
-    }
-
-    Artisan::call('migrate');
-    Artisan::call('cache:clear');
-    Artisan::call('config:clear');
-    Artisan::call('route:clear');
-    Artisan::call('view:clear');
-
-    return redirect('/')->with('message', __('System updated successfully.'));
+    abort(404);
 });

@@ -35,13 +35,21 @@ class AuthenticatedSessionController extends Controller
         $user = auth()->user();
 
         if ($user->role == 'admin' || $user->role == 'superadmin') {
-
             $role = Role::where('name', $user->role)->first();
-            $first_role = $role->permissions->pluck('name')->all()[0]; // get auth user first page permission.
-            $page = explode('-', $first_role);
-            $redirect_url = route('admin.'.$page[0].'.index');
-
+            if ($role && $role->permissions->count() > 0) {
+                $first_role = $role->permissions->pluck('name')->all()[0];
+                $page = explode('-', $first_role);
+                $redirect_url = route('admin.'.$page[0].'.index');
+            } else {
+                $redirect_url = route('admin.dashboard.index');
+            }
+        } elseif ($user->role == 'sp') {
+            $redirect_url = route('sp.dashboard.index');
+        } elseif ($user->role == 'ssp') {
+            $redirect_url = route('ssp.dashboard.index');
         } elseif ($user->role == 'user') {
+            $redirect_url = route('users.dashboard.index');
+        } else {
             $redirect_url = route('users.dashboard.index');
         }
 

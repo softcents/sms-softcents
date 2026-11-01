@@ -71,6 +71,8 @@ class Kernel extends HttpKernel
         'permission' => \Spatie\Permission\Middlewares\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middlewares\RoleOrPermissionMiddleware::class,
         'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'sp' => \App\Http\Middleware\SPMiddleware::class,
+        'ssp' => \App\Http\Middleware\SSPMiddleware::class,
         'users' => \App\Http\Middleware\UserMiddleware::class,
         'expired' => \App\Http\Middleware\ExpiredMiddleware::class,
     ];

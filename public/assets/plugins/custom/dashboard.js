@@ -176,7 +176,10 @@ function getMonthNameFromIndex(index) {
         "January", "February", "March", "April", "May", "June",
         "July", "August", "September", "October", "November", "December"
     ];
-    return months[index - 1];
+    if (index >= 0 && index < 12) {
+        return months[index];
+    }
+    return months[index - 1] || '';
 }
 
 $('.sms-statistics').on('change', function () {

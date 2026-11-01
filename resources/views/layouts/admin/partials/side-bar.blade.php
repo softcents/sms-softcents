@@ -69,6 +69,36 @@
             @endcanany
 
             @can(['users-read'])
+                <li class="dropdown {{ request('users') == 'sp' ? 'active' : '' }}">
+                    <a href="#"><span class="sidebar-icon">
+                            <i class="fas fa-network-wired"></i>
+                        </span>
+                        {{ __('Resellers (SP)') }} </a>
+                    <ul>
+                        <li>
+                            <a class="{{ Route::is('admin.users.create') && request('users') == 'sp' ? 'active' : '' }}" href="{{ route('admin.users.create', ['users' => 'sp']) }}">{{ __('Create Reseller (SP)') }}</a>
+                        </li>
+                        <li>
+                            <a class="{{ Route::is('admin.users.index', 'admin.users.edit') && request('users') == 'sp' ? 'active' : '' }}" href="{{ route('admin.users.index', ['users' => 'sp']) }}">{{ __('All Resellers (SP)') }}</a>
+                        </li>
+                    </ul>
+                </li>
+
+                <li class="dropdown {{ request('users') == 'ssp' ? 'active' : '' }}">
+                    <a href="#"><span class="sidebar-icon">
+                            <i class="fas fa-sitemap"></i>
+                        </span>
+                        {{ __('Sub Resellers (SSP)') }} </a>
+                    <ul>
+                        <li>
+                            <a class="{{ Route::is('admin.users.create') && request('users') == 'ssp' ? 'active' : '' }}" href="{{ route('admin.users.create', ['users' => 'ssp']) }}">{{ __('Create Sub Reseller (SSP)') }}</a>
+                        </li>
+                        <li>
+                            <a class="{{ Route::is('admin.users.index', 'admin.users.edit') && request('users') == 'ssp' ? 'active' : '' }}" href="{{ route('admin.users.index', ['users' => 'ssp']) }}">{{ __('All Sub Resellers (SSP)') }}</a>
+                        </li>
+                    </ul>
+                </li>
+
                 <li class="dropdown {{ request('users') == 'user' ? 'active' : '' }}">
                     <a href="#"><span class="sidebar-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" height="16" width="20"
@@ -173,7 +203,7 @@
 
             @can(['reports-read'])
                 <li
-                    class="dropdown {{ Route::is('admin.reports.quick-sms', 'admin.reports.campaigns-sms', 'admin.reports.subscriptions', 'admin.reports.recharges', 'admin.reports.transactions', 'admin.reports.group-sms') ? 'active' : '' }}">
+                    class="dropdown {{ Route::is('admin.reports.profit-loss', 'admin.reports.advanced', 'admin.reports.quick-sms', 'admin.reports.campaigns-sms', 'admin.reports.subscriptions', 'admin.reports.recharges', 'admin.reports.transactions', 'admin.reports.group-sms') ? 'active' : '' }}">
                     <a href="#">
                         <span class="sidebar-icon">
                             <svg xmlns="http://www.w3.org/2000/svg" height="16" width="14"
@@ -185,6 +215,8 @@
                         {{ __('Reports') }}
                     </a>
                     <ul>
+                        <li><a class="{{ Route::is('admin.reports.profit-loss') ? 'active' : '' }}" href="{{ route('admin.reports.profit-loss') }}"><strong style="color: #10b981;"><i class="fas fa-hand-holding-usd me-1"></i> {{ __('Profit & Loss (লাভ-লোকসান)') }}</strong></a></li>
+                        <li><a class="{{ Route::is('admin.reports.advanced') ? 'active' : '' }}" href="{{ route('admin.reports.advanced') }}"><strong style="color: #2563eb;"><i class="fas fa-chart-line me-1"></i> {{ __('Advanced Analytics') }}</strong></a></li>
                         <li><a class="{{ Route::is('admin.reports.quick-sms') ? 'active' : '' }}" href="{{ route('admin.reports.quick-sms') }}">{{ __('Quick Sms') }}</a></li>
 
                         <li><a class="{{ Route::is('admin.reports.group-sms') ? 'active' : '' }}" href="{{ route('admin.reports.group-sms') }}">{{ __('Group Sms') }}</a></li>

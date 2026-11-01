@@ -19,7 +19,7 @@ class SmsGatewayController extends Controller
 
     public function index(Request $request)
     {
-        $gateways = Smsgateway::with('type:id,name')->orderByRaw('CAST(priority AS SIGNED)')
+        $gateways = Smsgateway::with('type:id,name')->orderByRaw("CAST(NULLIF(priority, '') AS INTEGER) ASC NULLS LAST")
                     ->when($request->has('search'), function ($q) use ($request) {
                         $q->where(function ($query) use ($request) {
                             $query->where('name', 'like', '%' . $request->search . '%')
@@ -61,6 +61,8 @@ class SmsGatewayController extends Controller
             'priority' => 'nullable|integer',
             'name' => 'required|string|unique:smsgateways,name',
             'type_id' => 'required|exists:gateway_types,id',
+            'non_masking_rate' => 'nullable|numeric|min:0',
+            'masking_rate' => 'nullable|numeric|min:0',
         ]);
 
         $type = GatewayType::findOrFail($request->type_id);
@@ -68,6 +70,8 @@ class SmsGatewayController extends Controller
         Smsgateway::create($request->all() + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
+            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : 0.2000,
+            'masking_rate' => $request->filled('masking_rate') ? $request->masking_rate : 0.4500,
         ]);
 
         return response()->json([
@@ -101,7 +105,9 @@ class SmsGatewayController extends Controller
             'params.*' => 'required|string',
             'priority' => 'nullable|integer',
             'type_id' => 'required|exists:gateway_types,id',
-            'name' => 'required|string|unique:smsgateways,name,'.$id
+            'name' => 'required|string|unique:smsgateways,name,'.$id,
+            'non_masking_rate' => 'nullable|numeric|min:0',
+            'masking_rate' => 'nullable|numeric|min:0',
         ]);
 
         $gateway = Smsgateway::findOrFail($id);
@@ -110,6 +116,8 @@ class SmsGatewayController extends Controller
         $gateway->update($request->all() + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
+            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : ($gateway->non_masking_rate ?? 0.2000),
+            'masking_rate' => $request->filled('masking_rate') ? $request->masking_rate : ($gateway->masking_rate ?? 0.4500),
         ]);
 
         return response()->json([

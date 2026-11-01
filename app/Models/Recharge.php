@@ -24,11 +24,17 @@ class Recharge extends Model
         'attachment',
         'gateway_id',
         'manual_data',
+        'reseller_id',
     ];
 
     public function user() : BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function reseller() : BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reseller_id');
     }
 
     public function gateway() : BelongsTo

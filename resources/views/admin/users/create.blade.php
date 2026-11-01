@@ -22,6 +22,10 @@
                                         <input type="text" name="name" required class="form-control" placeholder="{{ __('Enter Name') }}" >
                                     </div>
                                     <div class="col-lg-6 mt-2">
+                                        <label>{{ __('Username') }}</label>
+                                        <input type="text" name="username" class="form-control" placeholder="{{ __('Enter unique username') }}" autocomplete="off">
+                                    </div>
+                                    <div class="col-lg-6 mt-2">
                                         <label>{{ __('E-mail') }}</label>
                                         <input type="email" name="email"  autocomplete="off" required class="form-control" placeholder="{{ __('Enter Email Address') }}" >
                                     </div>
@@ -29,6 +33,37 @@
                                         <label>{{__('Phone')}}</label>
                                         <input type="text" name="phone" class="form-control" placeholder="{{ __('Enter Phone Number') }}" >
                                     </div>
+                                    @if (in_array(request('users'), ['sp', 'ssp', 'user']))
+                                    <div class="col-lg-6 mt-2">
+                                        <label>{{ __('Masking Rate') }}</label>
+                                        <input type="number" step="0.001" name="masking_rate" value="0.75" class="form-control" placeholder="0.75">
+                                    </div>
+                                    <div class="col-lg-6 mt-2">
+                                        <label>{{ __('Non-Masking Rate') }}</label>
+                                        <input type="number" step="0.001" name="non_masking_rate" value="0.39" class="form-control" placeholder="0.39">
+                                    </div>
+                                    @endif
+                                    @if (in_array(request('users'), ['ssp', 'user']) && isset($resellers) && $resellers->count() > 0)
+                                    <div class="col-lg-6 mt-2">
+                                        <label>{{ __('Parent Reseller (SP / SSP)') }}</label>
+                                        <select name="parent_id" class="form-control">
+                                            <option value="">{{ __('None (Direct Under Super Admin)') }}</option>
+                                            @foreach ($resellers as $res)
+                                            <option value="{{ $res->id }}">{{ $res->name }} ({{ strtoupper($res->role) }} - {{ $res->username }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    @endif
+                                    @if (in_array(request('users'), ['sp', 'ssp']))
+                                    <div class="col-lg-6 mt-2">
+                                        <label>{{ __('Company / Brand Name') }}</label>
+                                        <input type="text" name="company_name" class="form-control" placeholder="{{ __('Enter Company Name') }}">
+                                    </div>
+                                    <div class="col-lg-6 mt-2">
+                                        <label>{{ __('White Label Title') }}</label>
+                                        <input type="text" name="white_label_title" class="form-control" placeholder="{{ __('Enter Portal Title') }}">
+                                    </div>
+                                    @endif
                                     <div class="col-lg-6 mt-1">
                                         <div class="row">
                                             <div class="col-10">

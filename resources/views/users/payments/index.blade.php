@@ -81,12 +81,19 @@
                                                 <input type="file" name="attachment" class="form-control" required>
                                             </div>
                                             @endif
+                                            @if (empty($gateway->manual_data['label']))
+                                            <div class="form-group mt-3">
+                                                <label for="trxid" class="form-label fw-bold">{{ __('Transaction ID (TrxID) / Reference / Sender Account') }} <span class="text-danger">*</span></label>
+                                                <input type="text" name="manual_data[trxid]" class="form-control" placeholder="{{ __('Enter your Transaction ID (TrxID) or payment reference') }}" required>
+                                            </div>
+                                            @else
                                             @foreach ($gateway->manual_data['label'] ?? [] as $key => $row)
                                             <div class="form-group mt-3">
                                                 <label for="">{{ $row }}</label>
                                                 <input type="text" name="manual_data[]" @required($gateway->manual_data['is_required'][$key] == 1) class="form-control" placeholder="{{ __('Enter ').$row }}">
                                             </div>
                                             @endforeach
+                                            @endif
                                         </div>
                                     </div>
                                     @endif

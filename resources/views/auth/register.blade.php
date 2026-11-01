@@ -7,7 +7,7 @@
 @section('main_content')
 <div class="mybazar-login-section">
         <div class="mybazar-login-avatar text-center">
-            <img class="login-img" src="{{ asset(asset(get_option('manage-pages')['body_image'])) }}" alt="">
+            <img class="login-img" src="{{ asset(get_option('manage-pages')['body_image'] ?? 'assets/images/login/login-avatar.png') }}" alt="">
         </div>
         <div class="mybazar-login-wrapper">
             <div class="login-wrapper">

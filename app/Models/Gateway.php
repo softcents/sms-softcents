@@ -29,7 +29,13 @@ class Gateway extends Model
         'currency_id',
         'instructions',
         'phone_required',
+        'user_id',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 
     public function currency()
     {

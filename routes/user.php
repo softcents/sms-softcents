@@ -40,6 +40,10 @@ Route::group([
     Route::get('/pipra-pay/status', 'PipraPay@status')->name('pipra-pay.status');
 });
 
+Route::get('/customer', function() { return redirect()->route('users.dashboard.index'); });
+Route::get('/customer/dashboard', function() { return redirect()->route('users.dashboard.index'); });
+Route::get('/superadmin', function() { return redirect()->route('admin.dashboard.index'); });
+
 Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']], function () {
 
     Route::get('dashboard', [User\DashboardController::class, 'index'])->name('dashboard.index');
@@ -93,6 +97,10 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
 
     Route::group(['as' => 'reports.', 'prefix' => 'reports'], function () {
 
+        Route::get('/expenses', [User\ExpenseReportController::class, 'index'])->name('expenses');
+        Route::get('/expenses/export', [User\ExpenseReportController::class, 'export'])->name('expenses.export');
+        Route::get('/analytics', [User\AnalyticsReportController::class, 'index'])->name('analytics');
+        Route::get('/analytics/export', [User\AnalyticsReportController::class, 'export'])->name('analytics.export');
         Route::get('/quick-sms', [User\ReportController::class, 'quickSms'])->name('quick-sms');
         Route::get('/group-sms', [User\ReportController::class, 'groupSms'])->name('group-sms');
         Route::get('/campaigns-sms', [User\ReportController::class, 'campaigns'])->name('campaigns-sms');

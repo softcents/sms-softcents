@@ -52,6 +52,14 @@
                     <img src="{{ asset(Auth::user()->image ?? 'assets/images/icons/default-user.png') }}" alt="Profile">
                 </a>
                 <ul class="dropdown-menu">
+                    @php $banner = \App\Services\ImpersonationService::getBannerInfo(); @endphp
+                    @if ($banner)
+                    <li>
+                        <a href="{{ $banner['switch_back_url'] }}" class="text-danger fw-bold">
+                            <i class="far fa-arrow-left text-danger me-2"></i> {{ __('Switch Back to ') . $banner['impersonator_role_label'] }}
+                        </a>
+                    </li>
+                    @endif
                     <li> <a href="{{ route('users.profiles.index') }}"> <i class="fal fa-user"></i> {{ __('My Profile') }}</a></li>
                     <li>
                         <a href="javascript:void(0)" class="logoutButton">

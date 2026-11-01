@@ -20,3 +20,10 @@ yarn-error.log
 
 /.docs
 /.claude
+
+# Archives and backups
+*.tar.gz
+*.tar
+*.zip
+*.sql
+*.sql.gz

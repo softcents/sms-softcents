@@ -3,12 +3,13 @@
 namespace App\Jobs;
 
 use App\SmsGateways\PanelSms;
-
+use App\SmsGateways\WhiteInfoBDSms;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class SendSmsJob implements ShouldQueue
 {
@@ -17,6 +18,7 @@ class SendSmsJob implements ShouldQueue
     public $number;
     public $message;
     public $gatewayConfig;
+
     /**
      * Create a new job instance.
      */
@@ -32,27 +34,27 @@ class SendSmsJob implements ShouldQueue
      */
     public function handle(): void
     {
-        $sms = new PanelSms();
-        $response = $sms->send(
-            $this->number,
-            $this->message,
-            $this->gatewayConfig['senderid'],
-            $this->gatewayConfig['apiurl'],
-            $this->gatewayConfig['apikey'],
-            $this->gatewayConfig['clientid']
-        );
+        $driver = trim($this->gatewayConfig['driver'] ?? 'panelsms');
 
-        // \Log::info('SMS SENT RESPONSE', [
-        //     'number' => $this->number,
-        //     'response' => $response
-        // ]);
-
-        // if (!isset($response['ErrorCode']) || $response['ErrorCode'] != 0) {
-        //     \Log::error('SMS FAILED', [
-        //         'number' => $this->number,
-        //         'gateway_response' => $response
-        //     ]);
-        //     throw new \Exception("SMS failed: " . json_encode($response));
-        // }
+        if ($driver === 'whiteinfobd') {
+            $sms = new WhiteInfoBDSms();
+            $response = $sms->send(
+                $this->number,
+                $this->message,
+                $this->gatewayConfig['senderid'],
+                $this->gatewayConfig['apiurl'],
+                $this->gatewayConfig['apikey']
+            );
+        } else {
+            $sms = new PanelSms();
+            $response = $sms->send(
+                $this->number,
+                $this->message,
+                $this->gatewayConfig['senderid'],
+                $this->gatewayConfig['apiurl'],
+                $this->gatewayConfig['apikey'],
+                $this->gatewayConfig['clientid'] ?? null
+            );
+        }
     }
 }

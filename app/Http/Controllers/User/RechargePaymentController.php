@@ -24,7 +24,30 @@ class RechargePaymentController extends Controller
     public function index()
     {
         $amount = session('amount');
-        $gateways = Gateway::with('currency:id,code,rate,symbol,position')->where('status', 1)->get();
+        $user = auth()->user();
+
+        // Check if customer belongs to a reseller (SP or SSP) with configured payment gateways
+        $gateways = collect();
+        $curr = $user ? $user->parent : null;
+        while ($curr) {
+            $resellerGateways = Gateway::with('currency:id,code,rate,symbol,position')
+                ->where('user_id', $curr->id)
+                ->where('status', 1)
+                ->get();
+            if ($resellerGateways->isNotEmpty()) {
+                $gateways = $resellerGateways;
+                break;
+            }
+            $curr = $curr->parent;
+        }
+
+        // If no reseller gateways, load system gateways (Super Admin)
+        if ($gateways->isEmpty()) {
+            $gateways = Gateway::with('currency:id,code,rate,symbol,position')
+                ->whereNull('user_id')
+                ->where('status', 1)
+                ->get();
+        }
 
         return view('users.payments.index', compact('gateways', 'amount'));
     }
@@ -36,10 +59,12 @@ class RechargePaymentController extends Controller
     {
         $amount = session('amount');
         $gateway = Gateway::findOrFail($gateway_id);
+        $user = auth()->user();
+        $resellerId = $gateway->user_id ?? $user->parent_id ?? null;
 
         if ($gateway->is_manual) {
             $request->validate([
-                'attachment' => 'required|max:2048|file',
+                'attachment' => 'nullable|max:2048|file',
             ]);
 
             $recharge = Recharge::create([
@@ -47,12 +72,18 @@ class RechargePaymentController extends Controller
                 'user_id' => auth()->id(),
                 'gateway_id' => $gateway->id,
                 'manual_data' => $request->manual_data,
-                'attachment' => $this->upload($request, 'attachment'),
+                'attachment' => $request->hasFile('attachment') ? $this->upload($request, 'attachment') : null,
+                'reseller_id' => $resellerId,
+                'status' => 'pending',
             ]);
 
             session()->forget('amount');
-            sendNotification($recharge->id, route('admin.recharges.index', ['id' => $recharge->id]), __('New recharge requested.'));
-            return redirect(route('users.recharges.index'))->with('message', __('Recharge request successfully. Please wait for admin approval.'));
+            if ($resellerId) {
+                sendNotification($recharge->id, route('sp.recharges.index', ['id' => $recharge->id]), __('New recharge requested.'));
+            } else {
+                sendNotification($recharge->id, route('admin.recharges.index', ['id' => $recharge->id]), __('New recharge requested.'));
+            }
+            return redirect(route('users.recharges.index'))->with('message', __('Recharge request submitted successfully. Please wait for approval.'));
         }
 
         $amount = session('amount');

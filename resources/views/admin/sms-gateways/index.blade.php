@@ -42,6 +42,7 @@
                                 <th>{{ __('Name') }}</th>
                                 <th>{{ __('Gateway Type') }}</th>
                                 <th>{{ __('Priority') }}</th>
+                                <th>{{ __('Purchase Rate (NM / M)') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
                             </tr>

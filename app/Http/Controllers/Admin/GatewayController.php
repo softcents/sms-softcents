@@ -17,7 +17,7 @@ class GatewayController extends Controller
      */
     public function index()
     {
-        $gateways = Gateway::all();
+        $gateways = Gateway::whereNull('user_id')->get();
         $currencies = Currency::latest()->get();
 
         return view('admin.settings.gateways.index', compact('gateways', 'currencies'));

@@ -20,9 +20,64 @@ function cache_remember(string $key, callable $callback, int $ttl = 1800): mixed
 
 function get_option($key)
 {
-    return cache_remember($key, function () use ($key) {
+    $val = cache_remember($key, function () use ($key) {
         return Option::where('key', $key)->first()->value ?? [];
     });
+
+    if ($key === 'general') {
+        $target = null;
+        if (auth()->check()) {
+            $user = auth()->user();
+            if (!empty($user->white_label_title) || !empty($user->white_label_logo)) {
+                $target = $user;
+            } else {
+                $curr = $user->parent;
+                while ($curr) {
+                    if (!empty($curr->white_label_title) || !empty($curr->white_label_logo)) {
+                        $target = $curr;
+                        break;
+                    }
+                    $curr = $curr->parent;
+                }
+            }
+        } else {
+            $brand = request('brand') ?? request('portal');
+            $host = request()->getHost();
+            if ($brand) {
+                $target = User::where('username', $brand)->first();
+            } elseif ($host && !in_array($host, ['sms.softcents.com', 'localhost', '127.0.0.1'])) {
+                $target = User::where('custom_domain', $host)->first();
+            }
+        }
+
+        if ($target) {
+            if (!empty($target->white_label_title)) {
+                $val['title'] = $target->white_label_title;
+            }
+            if (!empty($target->white_label_logo)) {
+                $val['logo'] = $target->white_label_logo;
+                $val['front_logo'] = $target->white_label_logo;
+            }
+            if (!empty($target->white_label_favicon)) {
+                $val['favicon'] = $target->white_label_favicon;
+            }
+            if (!empty($target->company_name)) {
+                $val['develop_by'] = $target->company_name;
+            }
+            if (!empty($target->white_label_phone)) {
+                $val['phone'] = $target->white_label_phone;
+            }
+            if (!empty($target->white_label_email)) {
+                $val['email'] = $target->white_label_email;
+            }
+            if (!empty($target->white_label_footer)) {
+                $val['copyright'] = $target->white_label_footer;
+                $val['footer_desc'] = $target->white_label_footer;
+            }
+        }
+    }
+
+    return $val;
 }
 
 function payable(float | int $amount, Gateway $gateway)
@@ -181,21 +236,16 @@ function languages()
 {
     return [
         'en' => 'English',
-        'ar' => 'Arabic',
-        'bn' => 'Bangla',
-        'zh' => 'Chinese',
-        'fr' => 'French',
-        'de' => 'German',
-        'hi' => 'Hindi',
-        'es' => 'Spanish',
+        'bn' => 'বাংলা',
     ];
 }
 
 function convert_money($amount, $currency) {
-    if ($currency->code == default_currency('code') || $amount == 0) {
+    $amount = (float)($amount ?? 0);
+    if (!$currency || $currency->code == default_currency('code') || $amount == 0) {
         return round($amount, 2);
     } else {
-        return $amount * $currency->rate / default_currency()->rate;
+        return $amount * ($currency->rate ?? 1) / (default_currency()->rate ?? 1);
     }
 }
 

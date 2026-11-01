@@ -69,28 +69,28 @@ class AcnooGroupSmsController extends Controller
                             'message' => __("Api gateway is not available, Please contact with admin."),
                         ], 406);
                     }
-                    if(trim($gateway_details->driver) == 'panelsms'){
-                        //$response = $sms->send($request->numbers, $request->contents,$sender_id_info->sender,$api_url,$api_key,$client_id);
+                    if (in_array(trim($gateway_details->driver), ['panelsms', 'whiteinfobd'])) {
                         // Queue each SMS instead of direct sending
                         $params = $gateway_details->params;
-                        $api_url = $params['apiurl'];
-                        $api_key = $params['key'];
-                        $client_id = $params['clientid'];
+                        $api_url = $params['api_url'] ?? $params['apiurl'] ?? '';
+                        $api_key = $params['api_key'] ?? $params['key'] ?? '';
+                        $client_id = $params['clientid'] ?? '';
 
                         foreach ($numbers_arr as $number) {
                             dispatch(new \App\Jobs\SendSmsJob(
                                 $number,
                                 $request->contents,
                                 [
+                                    'driver'   => trim($gateway_details->driver),
                                     'senderid' => $sender_id_info->sender,
-                                    'apiurl' => $api_url,
-                                    'apikey' => $api_key,
+                                    'apiurl'   => $api_url,
+                                    'apikey'   => $api_key,
                                     'clientid' => $client_id,
                                 ]
                             ))->onQueue('sms');
                         }
                         session()->put('gateway_id', $gateway_details->id);
-                    }else{
+                    } else {
                         $response = sendMessage($request->numbers, $request->contents, $sender_id_info);
 
                         if (!$response) {
@@ -100,7 +100,9 @@ class AcnooGroupSmsController extends Controller
                 }
 
                 $message_details = makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms);
-                Sms::insert($message_details);
+                foreach (array_chunk($message_details, 1000) as $chunk) {
+                    Sms::insert($chunk);
+                }
 
                 $user->update([
                     'balance' => $user->balance - $total_charges,

@@ -9,6 +9,10 @@
         <td>{{ $gateway->name }}</td>
         <td>{{ $gateway->type->name ?? '' }}</td>
         <td>{{ $gateway->priority }}</td>
+        <td>
+            <span class="badge bg-light text-primary border" title="Non-Masking Purchase Rate">NM: ৳{{ number_format((float)($gateway->non_masking_rate ?? 0.20), 4) }}</span>
+            <span class="badge bg-light text-info border" title="Masking Purchase Rate">M: ৳{{ number_format((float)($gateway->masking_rate ?? 0.45), 4) }}</span>
+        </td>
         <td class="text-center w-150">
             @can('smsgateways-update')
                 <label class="switch">

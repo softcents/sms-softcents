@@ -38,8 +38,11 @@ class DashboardController extends Controller
 
     public function yearlyStatistics()
     {
+        $isPgSql = \DB::connection()->getDriverName() === 'pgsql';
+        $monthExpr = $isPgSql ? "TRIM(TO_CHAR(created_at, 'Month'))" : "MONTHNAME(created_at)";
+
         $data['sms'] = Sms::where('user_id', auth()->id())->whereYear('created_at', request('year') ?? date('Y'))
-                            ->selectRaw('MONTHNAME(created_at) as month, COUNT(*) as total_items')
+                            ->selectRaw("{$monthExpr} as month, COUNT(*) as total_items")
                             ->groupBy('month')
                             ->get();
 

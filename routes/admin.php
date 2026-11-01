@@ -9,6 +9,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::get('/yearly-statistics', [Admin\DashboardController::class, 'yearlyStatistics'])->name('dashboard.statistics');
     Route::get('/users-overview', [ADMIN\DashboardController::class, 'smsOverview'])->name('dashboard.sms-overview');
 
+    Route::get('users/{user}/login-as', [ADMIN\UserController::class, 'loginAs'])->name('users.login-as');
     Route::resource('users', ADMIN\UserController::class);
     Route::post('users/filter', [ADMIN\UserController::class, 'acnooFilter'])->name('users.filter');
     Route::post('users/status/{id}', [ADMIN\UserController::class,'status'])->name('users.status');
@@ -105,6 +106,10 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
 
     Route::group(['as' => 'reports.', 'prefix' => 'reports'], function () {
 
+        Route::get('/profit-loss', [ADMIN\ProfitLossController::class, 'index'])->name('profit-loss');
+        Route::get('/profit-loss/export', [ADMIN\ProfitLossController::class, 'export'])->name('profit-loss.export');
+        Route::get('/advanced', [ADMIN\AdvancedReportController::class, 'index'])->name('advanced');
+        Route::get('/advanced/export', [ADMIN\AdvancedReportController::class, 'export'])->name('advanced.export');
         Route::get('/quick-sms', [ADMIN\ReportController::class, 'quickSms'])->name('quick-sms');
         Route::get('/group-sms', [ADMIN\ReportController::class, 'groupSms'])->name('group-sms');
         Route::get('/campaigns-sms', [ADMIN\ReportController::class, 'campaigns'])->name('campaigns-sms');

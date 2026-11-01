@@ -19,6 +19,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
+        'username',
         'role',
         'email',
         'phone',
@@ -38,11 +39,71 @@ class User extends Authenticatable
         'client_secret',
         'non_masking_rate',
         'email_verified_at',
+        'parent_id',
+        'company_name',
+        'white_label_title',
+        'white_label_logo',
+        'white_label_favicon',
+        'white_label_phone',
+        'white_label_email',
+        'white_label_footer',
+        'custom_domain',
+        'mail_settings',
     ];
+
+    public function gateways()
+    {
+        return $this->hasMany(Gateway::class, 'user_id');
+    }
+
+    public function resellerRecharges()
+    {
+        return $this->hasMany(Recharge::class, 'reseller_id');
+    }
 
     public function plan()
     {
         return $this->belongsTo(Plan::class);
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(User::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(User::class, 'parent_id');
+    }
+
+    public function ssps()
+    {
+        return $this->hasMany(User::class, 'parent_id')->where('role', 'ssp');
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(User::class, 'parent_id')->where('role', 'user');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return in_array($this->role, ['superadmin', 'admin']);
+    }
+
+    public function isSP(): bool
+    {
+        return $this->role === 'sp';
+    }
+
+    public function isSSP(): bool
+    {
+        return $this->role === 'ssp';
+    }
+
+    public function isCustomer(): bool
+    {
+        return $this->role === 'user';
     }
 
     public static function boot()
@@ -53,6 +114,17 @@ class User extends Authenticatable
             $count = User::where('role', 'user')->count() + 1;
             $client_id = str_pad($count, 6, '0', STR_PAD_LEFT);
             $model->client_id = $client_id;
+
+            if (empty($model->username)) {
+                $base = $model->email ? explode('@', $model->email)[0] : ($model->phone ?: 'user');
+                $base = preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($base)) ?: 'user';
+                $candidate = $base;
+                $counter = 1;
+                while (User::where('username', $candidate)->exists()) {
+                    $candidate = $base . '_' . $counter++;
+                }
+                $model->username = $candidate;
+            }
         });
     }
 
@@ -74,5 +146,6 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
         'password' => 'hashed',
+        'mail_settings' => 'array',
     ];
 }

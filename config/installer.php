@@ -130,7 +130,7 @@ return [
     |
     */
 
-    'installedAlreadyAction' => '',
+    'installedAlreadyAction' => '404',
 
     /*
     |--------------------------------------------------------------------------
@@ -145,7 +145,7 @@ return [
     'checkPurchaseCode' => true,
     'demoPurchaseCodeAllow' => true,
     'demoPurchaseCode' => '',
-    'updaterEnabled' => 'true',
+    'updaterEnabled' => false,
     'headerkeys' => 'Bearer sLAEuLH83WuGmg8iJGDSxQiavZ2TF1ba',
 
     'api_url' => 'https://api.envato.com',

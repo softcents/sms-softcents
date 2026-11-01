@@ -99,7 +99,9 @@ class AcnooCampaignSmsController extends Controller
                     }
 
                     $message_details = makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $response);
-                    Sms::insert($message_details);
+                    foreach (array_chunk($message_details, 1000) as $chunk) {
+                    Sms::insert($chunk);
+                }
 
                     $user->update([
                         'balance' => $user->balance - $campaign_sms->charges,

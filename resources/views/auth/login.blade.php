@@ -12,7 +12,7 @@
         </div>
 
         <div class="left-img">
-            <img class="login-img" src="{{ asset(get_option('manage-pages')['body_image']) }}" alt="">
+            <img class="login-img" src="{{ asset(get_option('manage-pages')['body_image'] ?? 'assets/images/login/login-avatar.png') }}" alt="">
         </div>
     </div>
 
@@ -25,7 +25,7 @@
                     @csrf
                     <div class="input-group">
                         <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                        <input type="email" name="email" class="form-control email" placeholder="{{ __('Enter your Email') }}">
+                        <input type="text" name="email" class="form-control" placeholder="{{ __('Enter Username or Email') }}" required>
                     </div>
 
                     <div class="input-group">

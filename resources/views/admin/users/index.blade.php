@@ -40,8 +40,8 @@
                                 <th>{{ __('Name') }}</th>
                                 <th>{{ __('Phone') }}</th>
                                 <th>{{ __('E-mail') }}</th>
-                                @if (request('users') == 'user')
-                                <th>{{ __('Plan') }}</th>
+                                @if (request('users', 'user') != 'admin')
+                                <th>{{ request('users') == 'user' ? __('Plan / Parent') : __('Role / Parent') }}</th>
                                 <th>{{ __('Balance') }}</th>
                                 <th>{{ __('Created At') }}</th>
                                 @endif

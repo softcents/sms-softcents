@@ -6,12 +6,22 @@
             </td>
         @endcan
         <td>{{ $loop->iteration }}</td>
-        <td>{{ $gateway->name }}</td>
-        <td>{{ $gateway->type->name ?? '' }}</td>
+        <td><strong>{{ $gateway->name }}</strong></td>
+        <td><span class="badge bg-light text-dark border">{{ $gateway->type->name ?? $gateway->driver ?? '' }}</span></td>
         <td>{{ $gateway->priority }}</td>
         <td>
             <span class="badge bg-light text-primary border" title="Non-Masking Purchase Rate">NM: ৳{{ number_format((float)($gateway->non_masking_rate ?? 0.20), 4) }}</span>
             <span class="badge bg-light text-info border" title="Masking Purchase Rate">M: ৳{{ number_format((float)($gateway->masking_rate ?? 0.45), 4) }}</span>
+        </td>
+        <td class="text-center gateway-balance-cell" data-id="{{ $gateway->id }}">
+            <div class="d-inline-flex align-items-center gap-2">
+                <span class="badge bg-secondary balance-badge-{{ $gateway->id }}" style="font-size: 13px; font-weight: 600; padding: 6px 10px;" title="Click refresh icon to check balance">
+                    <i class="fas fa-wallet me-1"></i> <span class="balance-text">—</span>
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-primary check-single-balance" style="padding: 2px 6px; border-radius: 4px;" data-id="{{ $gateway->id }}" data-url="{{ route('admin.sms-gateways.balance', $gateway->id) }}" title="{{ __('Refresh Balance') }}">
+                    <i class="fas fa-sync-alt fa-xs"></i>
+                </button>
+            </div>
         </td>
         <td class="text-center w-150">
             @can('smsgateways-update')

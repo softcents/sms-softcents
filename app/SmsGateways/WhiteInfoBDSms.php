@@ -121,4 +121,72 @@ class WhiteInfoBDSms
             return false;
         }
     }
+
+    /**
+     * Check real-time wallet/account balance from WhiteInfoBD API
+     *
+     * @param mixed $gateway
+     * @return array
+     */
+    public static function check_balance($gateway): array
+    {
+        $params = is_array($gateway->params) ? $gateway->params : json_decode($gateway->params, true);
+        $apiKey = $params['api_key'] ?? $params['apikey'] ?? '';
+        $apiUrl = $params['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages';
+
+        if (empty($apiKey)) {
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Config Error',
+                'message'   => 'WhiteInfoBD API Key is missing.',
+            ];
+        }
+
+        // Base URL up to /api/v1 or hostname
+        $baseUrl = preg_replace('#/api/v1.*#i', '', $apiUrl) ?: 'https://sms.whiteinfobd.com';
+        $endpoint = rtrim($baseUrl, '/') . '/api/v1/balance';
+
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders([
+                    'Authorization' => 'Bearer ' . $apiKey,
+                    'Accept'        => 'application/json',
+                ])
+                ->withoutVerifying()
+                ->get($endpoint);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                $balance = (float) ($data['balance'] ?? 0);
+                $currency = $data['currency'] ?? 'BDT';
+
+                return [
+                    'success'   => true,
+                    'balance'   => $balance,
+                    'currency'  => $currency,
+                    'formatted' => '৳' . number_format($balance, 2),
+                    'message'   => $data['message'] ?? 'Balance retrieved successfully.',
+                    'raw'       => $data,
+                ];
+            }
+
+            $body = $response->json() ?? [];
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Error',
+                'message'   => $body['message'] ?? 'HTTP ' . $response->status() . ' error from provider.',
+                'raw'       => $body,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('WhiteInfoBDSms::check_balance Exception', ['error' => $e->getMessage()]);
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Error',
+                'message'   => $e->getMessage(),
+            ];
+        }
+    }
 }

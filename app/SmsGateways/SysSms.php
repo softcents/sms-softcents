@@ -99,4 +99,105 @@ class SysSms
 
         return false;
     }
+
+    /**
+     * Check balance or connection status for SysSms / REVE SMS gateway
+     *
+     * @param mixed $gateway
+     * @return array
+     */
+    public static function check_balance($gateway): array
+    {
+        $params = is_array($gateway->params) ? $gateway->params : json_decode($gateway->params, true);
+        $apiUrl = $params['api_url'] ?? $params['apiurl'] ?? '';
+        $apiKey = $params['apikey'] ?? $params['api_key'] ?? '';
+        $secretKey = $params['secretkey'] ?? $params['secret_key'] ?? '';
+        $clientId = $params['client_id'] ?? $params['clientid'] ?? $params['client'] ?? '';
+
+        if (empty($apiKey) || empty($secretKey)) {
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Config Error',
+                'message'   => 'ApiKey or SecretKey is missing.',
+            ];
+        }
+
+        // 1. Try ReveSMS web balance check if client ID or portal available
+        if (!empty($clientId)) {
+            try {
+                $host = parse_url($apiUrl, PHP_URL_HOST) ?: 'smpp.revesms.com';
+                $balanceUrl = "https://{$host}/sms/smsConfiguration/smsClientBalance.jsp";
+                $res = Http::timeout(8)->withoutVerifying()->get($balanceUrl, ['client' => $clientId]);
+                if ($res->successful()) {
+                    $content = trim($res->body());
+                    if (is_numeric($content)) {
+                        $val = (float) $content;
+                        return [
+                            'success'   => true,
+                            'balance'   => $val,
+                            'currency'  => 'BDT',
+                            'formatted' => '৳' . number_format($val, 2),
+                            'message'   => 'Balance retrieved successfully from REVE portal.',
+                        ];
+                    }
+                }
+            } catch (\Throwable $e) {
+                // proceed to endpoint check
+            }
+        }
+
+        // 2. Query endpoint status via getstatus / sendtext handshake
+        try {
+            $parsedUrl = preg_replace('#/sendtext.*#i', '', $apiUrl);
+            $endpoint = rtrim($parsedUrl, '/') . '/getstatus';
+
+            $res = Http::timeout(10)->withoutVerifying()->get($endpoint, [
+                'apikey'    => $apiKey,
+                'secretkey' => $secretKey,
+                'messageid' => '0',
+            ]);
+
+            $data = $res->json() ?? [];
+            $status = (string) ($data['Status'] ?? '');
+
+            // "114" with REJECTD means authenticated & alive, waiting for valid messageid
+            if (in_array($status, ['0', '4', '114', 'REJECTD'])) {
+                return [
+                    'success'   => true,
+                    'balance'   => null,
+                    'currency'  => 'BDT',
+                    'formatted' => 'Connected',
+                    'message'   => 'Gateway API online & authenticated successfully.',
+                    'raw'       => $data,
+                ];
+            }
+
+            if ($status === '109') {
+                return [
+                    'success'   => false,
+                    'balance'   => null,
+                    'formatted' => 'Auth Error',
+                    'message'   => 'Invalid API key or Secret key.',
+                    'raw'       => $data,
+                ];
+            }
+
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Offline',
+                'message'   => $data['StatusDescription'] ?? $data['Text'] ?? ('Status code: ' . $status),
+                'raw'       => $data,
+            ];
+        } catch (\Throwable $e) {
+            Log::error('SysSms::check_balance Exception', ['error' => $e->getMessage()]);
+            return [
+                'success'   => false,
+                'balance'   => null,
+                'formatted' => 'Error',
+                'message'   => $e->getMessage(),
+            ];
+        }
+    }
 }

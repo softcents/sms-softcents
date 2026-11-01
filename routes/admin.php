@@ -24,6 +24,8 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::resource('senderips', ADMIN\AcnooSenderIpController::class)->only('index');
 
     Route::resource('gateways-types', ADMIN\GatewayTypeController::class);
+    Route::get('sms-gateways/balances/all', [ADMIN\SmsGatewayController::class, 'checkAllBalances'])->name('sms-gateways.all-balances');
+    Route::get('sms-gateways/{id}/balance', [ADMIN\SmsGatewayController::class, 'checkBalance'])->name('sms-gateways.balance');
     Route::resource('sms-gateways', ADMIN\SmsGatewayController::class);
     Route::post('sms-gateways/delete-all', [ADMIN\SmsGatewayController::class,'deleteAll'])->name('sms-gateways.delete-all');
     Route::post('sms-gateways/filter', [ADMIN\SmsGatewayController::class, 'acnooFilter'])->name('sms-gateways.filter');

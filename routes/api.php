@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api as Api;
+use App\Http\Controllers\Admin\SmsGatewayController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -13,3 +13,8 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::prefix('v1')->group(function () {
+    Route::get('/gateways/balances', [SmsGatewayController::class, 'checkAllBalances']);
+    Route::get('/gateways/{id}/balance', [SmsGatewayController::class, 'checkBalance']);
+});

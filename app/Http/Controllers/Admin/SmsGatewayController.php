@@ -148,4 +148,71 @@ class SmsGatewayController extends Controller
             'redirect' => route('admin.sms-gateways.index')
         ]);
     }
+
+    /**
+     * Check real-time balance of a specific SMS gateway
+     */
+    public function checkBalance(string $id)
+    {
+        $gateway = Smsgateway::findOrFail($id);
+        $result = $this->resolveGatewayBalance($gateway);
+
+        return response()->json(array_merge($result, [
+            'id' => $gateway->id,
+            'name' => $gateway->name,
+        ]));
+    }
+
+    /**
+     * Check real-time balance of all SMS gateways
+     */
+    public function checkAllBalances()
+    {
+        $gateways = Smsgateway::all();
+        $results = [];
+
+        foreach ($gateways as $gateway) {
+            $results[$gateway->id] = array_merge($this->resolveGatewayBalance($gateway), [
+                'id' => $gateway->id,
+                'name' => $gateway->name,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'gateways' => $results,
+        ]);
+    }
+
+    /**
+     * Resolve balance using the matching SMS Gateway driver
+     */
+    private function resolveGatewayBalance(Smsgateway $gateway): array
+    {
+        $driver = strtolower(trim($gateway->driver ?? ''));
+        $namespace = trim($gateway->namespace ?? '');
+
+        if ($driver === 'whiteinfobd' || str_contains($namespace, 'WhiteInfoBD')) {
+            return \App\SmsGateways\WhiteInfoBDSms::check_balance($gateway);
+        }
+
+        if ($driver === 'panelsms' || str_contains($namespace, 'PanelSms')) {
+            return \App\SmsGateways\PanelSms::check_balance($gateway);
+        }
+
+        if ($driver === 'syssms' || str_contains($namespace, 'SysSms')) {
+            return \App\SmsGateways\SysSms::check_balance($gateway);
+        }
+
+        if (class_exists($namespace) && method_exists($namespace, 'check_balance')) {
+            return $namespace::check_balance($gateway);
+        }
+
+        return [
+            'success'   => false,
+            'balance'   => null,
+            'formatted' => 'Unsupported',
+            'message'   => "Balance check is not supported for driver: {$driver}",
+        ];
+    }
 }

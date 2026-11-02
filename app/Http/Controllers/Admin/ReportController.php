@@ -14,11 +14,16 @@ class ReportController extends Controller
     // Quick messages report
     public function quickSms(Request $request)
     {
-        $messages = Sms::with('senderid:id,sender', 'user:id,name', 'smsgateway:id,name')
+        $messages = Sms::with([
+                            'senderid:id,sender,type,rate',
+                            'user:id,name,username,balance,allow_api',
+                            'smsgateway:id,name'
+                        ])
                         ->whereNull(['group_id', 'campaign_id'])
                         ->when($request->has('search'), function ($q) use ($request) {
                             $q->where(function ($query) use ($request) {
                                 $query->where('number', 'like', '%' . $request->search . '%')
+                                    ->orWhere('message_id', 'like', '%' . $request->search . '%')
                                     ->orWhere('charge', 'like', '%' . $request->search . '%')
                                     ->orWhere('ip_address', 'like', '%' . $request->search . '%')
                                     ->orWhere('contents', 'like', '%' . $request->search . '%')
@@ -26,13 +31,14 @@ class ReportController extends Controller
                                     ->orWhere('status', 'like', '%' . $request->search . '%')
                                     ->orWhereHas('user', function ($q) use ($request) {
                                         $q->where('name', 'like', '%' . $request->search . '%')
+                                            ->orWhere('username', 'like', '%' . $request->search . '%')
                                             ->orWhere('email', 'like', '%' . $request->search . '%');
-                                    })
-                                    ->orWhereHas('campaign', function ($q) use ($request) {
-                                        $q->where('name', 'like', '%' . $request->search . '%');
                                     })
                                     ->orWhereHas('senderid', function ($q) use ($request) {
                                         $q->where('sender', 'like', '%' . $request->search . '%');
+                                    })
+                                    ->orWhereHas('smsgateway', function ($q) use ($request) {
+                                        $q->where('name', 'like', '%' . $request->search . '%');
                                     });
                             });
                         })
@@ -45,7 +51,7 @@ class ReportController extends Controller
             ]);
         }
 
-        $messages = $messages->paginate(10);
+        $messages = $messages->paginate(15);
         return view('admin.reports.quick-sms.index', compact('messages'));
     }
 

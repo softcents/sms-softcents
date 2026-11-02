@@ -100,62 +100,55 @@
         </div>
 
         <!-- SMS Gateways Live Balance Section -->
-        <div class="card mb-30 border-0 shadow-sm" style="border-radius: 12px; background: #fff;">
-            <div class="card-body p-3">
-                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                    <h5 class="mb-0 fw-bold d-flex align-items-center gap-2">
-                        <i class="fas fa-wallet text-primary"></i> {{ __('SMS Gateways Live Balances') }}
-                    </h5>
-                    <div class="d-flex align-items-center gap-2">
-                        <button type="button" class="btn btn-sm btn-outline-primary" id="dashRefreshBalances">
-                            <i class="fas fa-sync-alt me-1" id="dashRefreshIcon"></i> {{ __('Refresh') }}
-                        </button>
-                        <a href="{{ route('admin.sms-gateways.index') }}" class="btn btn-sm btn-primary text-light">
-                            {{ __('All Gateways') }} &rarr;
-                        </a>
-                    </div>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-20">
+            <h4 class="mb-0 fw-bold" style="color: #101828; font-size: 18px;">
+                <i class="fas fa-wallet text-primary me-2"></i>{{ __('SMS Gateways Live Balances') }}
+            </h4>
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" class="btn btn-sm btn-outline-primary" id="dashRefreshBalances" style="border-radius: 6px; padding: 4px 12px; font-weight: 500;">
+                    <i class="fas fa-sync-alt me-1" id="dashRefreshIcon"></i> {{ __('Refresh') }}
+                </button>
+                <a href="{{ route('admin.sms-gateways.index') }}" class="btn btn-sm btn-primary text-light" style="border-radius: 6px; padding: 4px 14px; font-weight: 500;">
+                    {{ __('All Gateways') }} &rarr;
+                </a>
+            </div>
+        </div>
+
+        <div class="gpt-dashboard-card grid-4 mb-30">
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/credit.svg') }}" alt="">
                 </div>
-                <div class="row g-3">
-                    <div class="col-xl-3 col-md-6">
-                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f0fdf4; border-color: #bbf7d0 !important;">
-                            <div>
-                                <small class="text-muted d-block fw-semibold">{{ __('White Info BD') }}</small>
-                                <span class="fs-5 fw-bold text-success" id="dash-gateway-31">৳6,408.44</span>
-                                <small class="d-block text-muted" style="font-size: 11px;">API: sms.whiteinfobd.com</small>
-                            </div>
-                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #eff6ff; border-color: #bfdbfe !important;">
-                            <div>
-                                <small class="text-muted d-block fw-semibold">{{ __('PanelSms1') }}</small>
-                                <span class="fs-5 fw-bold text-primary" id="dash-gateway-27">৳13,643.51</span>
-                                <small class="d-block text-muted" style="font-size: 11px;">Panel SMS BD</small>
-                            </div>
-                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                            <div>
-                                <small class="text-muted d-block fw-semibold">{{ __('SYSSMS') }}</small>
-                                <span class="fs-5 fw-bold text-dark" id="dash-gateway-29">Connected</span>
-                                <small class="d-block text-muted" style="font-size: 11px;">SysSms / REVE</small>
-                            </div>
-                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>Online</span>
-                        </div>
-                    </div>
-                    <div class="col-xl-3 col-md-6">
-                        <div class="p-3 rounded border d-flex align-items-center justify-content-between" style="background: #f8fafc; border-color: #e2e8f0 !important;">
-                            <div>
-                                <small class="text-muted d-block fw-semibold">{{ __('REVE SMS') }}</small>
-                                <span class="fs-5 fw-bold text-dark" id="dash-gateway-30">Connected</span>
-                                <small class="d-block text-muted" style="font-size: 11px;">REVE Systems</small>
-                            </div>
-                            <span class="badge bg-info"><i class="fas fa-link me-1"></i>Online</span>
-                        </div>
-                    </div>
+                <div class="content-side">
+                    <h5 id="dash-gateway-31">৳6,408.44</h5>
+                    <p>{{ __('White Info BD') }}</p>
+                </div>
+            </div>
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/banner.svg') }}" alt="">
+                </div>
+                <div class="content-side">
+                    <h5 id="dash-gateway-27">৳13,643.51</h5>
+                    <p>{{ __('PanelSms1') }}</p>
+                </div>
+            </div>
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/category.svg') }}" alt="">
+                </div>
+                <div class="content-side">
+                    <h5 id="dash-gateway-29">Connected</h5>
+                    <p>{{ __('SYSSMS') }}</p>
+                </div>
+            </div>
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="">
+                </div>
+                <div class="content-side">
+                    <h5 id="dash-gateway-30">Connected</h5>
+                    <p>{{ __('REVE SMS') }}</p>
                 </div>
             </div>
         </div>

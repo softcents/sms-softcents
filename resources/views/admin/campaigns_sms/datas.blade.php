@@ -1,7 +1,12 @@
 @foreach($campaign_sms as $campaign)
     <tr>
         <td>{{ $loop->iteration }}</td>
-        <td>{{ optional($campaign->user)->name }}</td>
+        <td>
+            <div class="fw-bold">{{ optional($campaign->user)->name ?? 'N/A' }}</div>
+            @if(optional($campaign->user)->username)
+                <small class="text-primary font-monospace">@<span>{{ $campaign->user->username }}</span></small>
+            @endif
+        </td>
         <td>{{ optional($campaign->campaign)->name }}</td>
         <td>{{ optional($campaign->senderid)->sender }}</td>
         <td><a data-numbers="{{ $campaign->numbers }}" class="badge btn-custom-warning view-numbers" href="#"><i class="fa fa-eye" aria-hidden="true"></i> {{ __('View Numbers') }}</a></td>

@@ -30,7 +30,7 @@
                                                     <select name="user_id" class="form-control select-dropdown">
                                                         <option value="">{{ __('Select a customer') }}</option>
                                                         @foreach ($users as $user)
-                                                            <option value="{{ $user->id }}">{{ $user->name .' ('. $user->phone .')' }}</option>
+                                                            <option value="{{ $user->id }}">{{ $user->name }} (@{{ $user->username }}) - {{ $user->phone }}</option>
                                                         @endforeach
                                                     </select>
                                                     <span></span>

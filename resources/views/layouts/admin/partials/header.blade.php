@@ -55,10 +55,15 @@
             </div>
             @endif
             <div class="profile-info dropdown">
-                <a href="#"  data-bs-toggle="dropdown">
+                <a href="#" class="d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown">
                     <img src="{{ asset(Auth::user()->image ?? 'assets/images/icons/default-user.png') }}" alt="Profile">
+                    <span class="d-none d-md-inline fw-semibold text-dark">{{ Auth::user()->name }} <small class="text-primary font-monospace">(@<span>{{ Auth::user()->username }}</span>)</small></span>
                 </a>
                 <ul class="dropdown-menu">
+                    <li class="px-3 py-2 border-bottom">
+                        <div class="fw-bold">{{ Auth::user()->name }}</div>
+                        <small class="text-primary font-monospace">@<span>{{ Auth::user()->username }}</span></small>
+                    </li>
                     <li> <a href="{{ url('clear-all') }}"> <i class="far fa-undo"></i> {{ __('Clear cache') }}</a></li>
                     <li> <a href="{{ route('admin.profiles.index') }}"> <i class="fal fa-user"></i> {{ __('My Profile') }}</a></li>
                     <li>

@@ -20,7 +20,12 @@
 
                         <div class="input-group">
                             <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                            <input type="text" name="name" class="form-control" placeholder="{{ __('Enter your name') }}">
+                            <input type="text" name="name" class="form-control" placeholder="{{ __('Enter your name') }}" required>
+                        </div>
+
+                        <div class="input-group">
+                            <span><i class="fas fa-at text-muted ps-3"></i></span>
+                            <input type="text" name="username" class="form-control font-monospace" placeholder="{{ __('Choose username (e.g. yourbrand)') }}">
                         </div>
 
                         <div class="input-group">

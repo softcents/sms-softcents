@@ -27,7 +27,12 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>{{ optional($recharge->user)->name }}</td>
+                            <td>
+                                <div class="fw-bold">{{ optional($recharge->user)->name ?? 'N/A' }}</div>
+                                @if(optional($recharge->user)->username)
+                                    <small class="text-primary font-monospace">@<span>{{ $recharge->user->username }}</span></small>
+                                @endif
+                            </td>
                             <td>{{ $recharge->invoice_no }}</td>
                             <td>{{ $recharge->gateway->name ?? '' }}</td>
                             <td>{{ ($recharge->created_at)->format('d M Y') }}</td>

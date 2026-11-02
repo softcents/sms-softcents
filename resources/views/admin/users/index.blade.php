@@ -37,7 +37,7 @@
                                 @endcan
                                 <th>{{ __('SL') }}.</th>
                                 <th>{{ __('Image') }}</th>
-                                <th>{{ __('Name') }}</th>
+                                <th>{{ __('Name / Username') }}</th>
                                 <th>{{ __('Phone') }}</th>
                                 <th>{{ __('E-mail') }}</th>
                                 @if (request('users', 'user') != 'admin')
@@ -72,7 +72,8 @@
                 <div class="modal-body order-form-section">
                     <div class="costing-list">
                         <ul>
-                            <li><span>{{__('User Name')}}</span> <span>:</span> <span id="name"></span></li>
+                            <li><span>{{__('Full Name')}}</span> <span>:</span> <span id="name"></span></li>
+                            <li><span>{{__('Username')}}</span> <span>:</span> <span id="username" class="fw-bold text-primary font-monospace"></span></li>
                             <li><span>{{__('Phone')}}</span> <span>:</span> <span id="phone"></span></li>
                             <li><span>{{__('Email')}}</span> <span>:</span> <span id="email"></span></li>
                             <li><span>{{__('Address')}} </span> <span>:</span> <span id="address"></span></li>

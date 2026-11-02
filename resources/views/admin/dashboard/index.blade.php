@@ -194,7 +194,12 @@
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
                                         <td><img class="table-img rounded-circle" src="{{ asset($user->image ?? 'assets/images/icons/default-user.png') }}" alt=""></td>
-                                        <td>{{ ucwords($user->name) }}</td>
+                                        <td>
+                                            <div class="fw-bold">{{ ucwords($user->name) }}</div>
+                                            @if($user->username)
+                                                <small class="text-primary font-monospace">@<span>{{ $user->username }}</span></small>
+                                            @endif
+                                        </td>
                                         <td>{{ $user->email }}</td>
                                         <td>
                                             <p>{{ optional($user->plan)->title }} (<small>{{ optional($user->plan)->duration ?? 'N/A' }}</small>)</p>

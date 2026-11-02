@@ -52,7 +52,7 @@
                                         <option value="">{{ __('All Customers / Users') }}</option>
                                         @foreach($users as $u)
                                             <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
-                                                {{ $u->name }} ({{ $u->phone ?? $u->email }})
+                                                {{ $u->name }} (@{{ $u->username }}) - {{ $u->phone ?? $u->email }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -110,6 +110,7 @@
                                     <td>
                                         @if($ip->user)
                                             <div class="fw-bold text-dark">{{ $ip->user->name }}</div>
+                                            <div class="text-primary font-monospace small">@<span>{{ $ip->user->username }}</span></div>
                                             <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ $ip->user->phone ?? '—' }} | <i class="fas fa-envelope me-1"></i>{{ $ip->user->email }}</small>
                                         @else
                                             <span class="text-muted">{{ __('User Deleted') }}</span>
@@ -191,7 +192,7 @@
                             <select name="user_id" class="form-select select2" required style="width: 100%;">
                                 <option value="">{{ __('-- Select User --') }}</option>
                                 @foreach($users as $u)
-                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ $u->phone ?? $u->email }})</option>
+                                    <option value="{{ $u->id }}">{{ $u->name }} (@{{ $u->username }}) - {{ $u->phone ?? $u->email }}</option>
                                 @endforeach
                             </select>
                         </div>

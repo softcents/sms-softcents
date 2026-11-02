@@ -2,7 +2,12 @@
     <tr>
         <td>{{ $loop->iteration }}</td>
         <td>{{ $subscriber->invoice_no }}</td>
-        <td>{{ optional($subscriber->user)->name }}</td>
+        <td>
+            <div class="fw-bold">{{ optional($subscriber->user)->name ?? 'N/A' }}</div>
+            @if(optional($subscriber->user)->username)
+                <small class="text-primary font-monospace">@<span>{{ $subscriber->user->username }}</span></small>
+            @endif
+        </td>
         <td>{{ optional($subscriber->plan)->title }}</td>
         <td>{{ $subscriber->gateway->name ?? '' }}</td>
         <td class="fw-bold text-dark">{{ $subscriber->price }}</td>

@@ -25,6 +25,7 @@
                             <div class="profile-details card-body">
                                 <ul class="list-group">
                                     <li class="list-group-item"><span>{{ __('Name') }}: </span>{{ ucwords($user->name) }}</li>
+                                    <li class="list-group-item"><span>{{ __('Username') }}: </span><strong class="text-primary font-monospace">@<span>{{ $user->username }}</span></strong></li>
                                     <li class="list-group-item"><span>{{ __('Email') }}: </span>{{ $user->email }}</li>
                                     <li class="list-group-item"><span>{{ __('Registration Date') }}:</span> {{ formatted_date($user->created_at) }}</li>
                                 </ul>
@@ -48,6 +49,12 @@
                                 </div>
                                 <div class="col-lg-8 mt-3">
                                     <input type="text" name="name" value="{{ $user->name }}" required class="form-control" placeholder="{{ __('Enter Your Name') }}">
+                                </div>
+                                <div class="col-lg-4 mt-3">
+                                    <label>{{__('Username')}}</label>
+                                </div>
+                                <div class="col-lg-8 mt-3">
+                                    <input type="text" value="{{ $user->username }}" readonly class="form-control bg-light font-monospace text-primary">
                                 </div>
                                 <div class="col-lg-4 mt-3">
                                     <label>{{__('Email')}}</label>

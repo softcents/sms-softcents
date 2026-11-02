@@ -6,7 +6,12 @@
         </td>
         @endcan
         <td>{{ $loop->iteration }}</td>
-        <td>{{ optional($senderid->user)->name ?? 'N/A' }}</td>
+        <td>
+            <div class="fw-bold">{{ optional($senderid->user)->name ?? 'N/A' }}</div>
+            @if(optional($senderid->user)->username)
+                <small class="text-primary font-monospace">@<span>{{ $senderid->user->username }}</span></small>
+            @endif
+        </td>
         <td>{{ optional($senderid->user)->phone ?? 'N/A' }}</td>
         <td>{{ $senderid->sender }}</td>
         <td>

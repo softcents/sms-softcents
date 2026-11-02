@@ -553,7 +553,7 @@
     "MAIL_FROM_NAME": "মেইল পাঠানোর নাম",
     "If you are using MAIL QUEUE after Changing The Mail Settings You Need To Restart Your Supervisor From Your Server": "আপনি যদি মেইল সেটিংস পরিবর্তন করার পরে মেইল QUEUE ব্যবহার করছেন তবে আপনাকে আপনার সার্ভার থেকে আপনার সুপারভাইজার পুনরায় চালু করতে হবে",
     "QUEUE COMMAND Path :": "কিউ কমান্ড পাথ :",
-    "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro": "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro",
+    "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro": "/www/wwwroot/sms.softcents.com",
     "QUEUE COMMAND :": "কিউ কমান্ড :",
     "php artisan queue:work": "php artisan queue:work",
     "CACHE_DRIVER": "ক্যাশ ড্রাইভার",

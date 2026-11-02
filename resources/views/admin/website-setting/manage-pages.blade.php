@@ -171,9 +171,9 @@
                                                                 </div>
 
                                                                 <div class="col-12 mt-3">
-                                                                    <h4 class="mb-3">{{ __('Sms Pro Text') }}</h4>
+                                                                    <h4 class="mb-3">{{ __('Softcents SMS Text') }}</h4>
                                                                     <button class="w-100 py-3 d-block text-center fw-bold mt-3 admin-collapse bg-light text-primary border-0" type="button" data-bs-toggle="collapse" data-bs-target="#sms_pro" aria-expanded="false" aria-controls="sms_pro">
-                                                                        {{ __('Sms Pro Text') }} <i class="fas fa-arrow-circle-down ms-2"></i>
+                                                                        {{ __('Softcents SMS Text') }} <i class="fas fa-arrow-circle-down ms-2"></i>
                                                                     </button>
                                                                     <div class="collapse mt-3" id="sms_pro">
                                                                         @foreach ($page_data['headings']['sms_pro_text'] ?? [] as $key => $sms_pro_text)
@@ -186,7 +186,7 @@
                                                                                 <div class="grid-1 col-lg-12">
                                                                                     <div class="row mb-4">
                                                                                         <div class="col-lg-12">
-                                                                                            <label>{{ __('Sms Pro Text') }}- {{ $key + 1 }} </label>
+                                                                                            <label>{{ __('Softcents SMS Text') }}- {{ $key + 1 }} </label>
                                                                                             <input type="text" name="sms_pro_text[]" value="{{ $sms_pro_text ?? '' }}" required  class="form-control" placeholder="Enter text">
                                                                                         </div>
                                                                                     </div>

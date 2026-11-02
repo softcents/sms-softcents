@@ -553,7 +553,7 @@
     "MAIL_FROM_NAME": "MAIL_FROM_NAME",
     "If you are using MAIL QUEUE after Changing The Mail Settings You Need To Restart Your Supervisor From Your Server": "If you are using MAIL QUEUE after Changing The Mail Settings You Need To Restart Your Supervisor From Your Server",
     "QUEUE COMMAND Path :": "QUEUE COMMAND Path :",
-    "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro": "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro",
+    "/home/u186958312/domains/smspro.acnoo.com/public_html/smspro": "/www/wwwroot/sms.softcents.com",
     "QUEUE COMMAND :": "QUEUE COMMAND :",
     "php artisan queue:work": "php artisan queue:work",
     "CACHE_DRIVER": "CACHE_DRIVER",

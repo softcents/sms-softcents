@@ -123,8 +123,8 @@
                     {{ __('Reports') }}
                 </a>
                 <ul>
-                    <li><a class="{{ Route::is('users.reports.expenses') ? 'active' : '' }}" href="{{ route('users.reports.expenses') }}"><strong style="color: #10b981;"><i class="fas fa-file-invoice-dollar me-1"></i> {{ __('Expense Summary') }}</strong></a></li>
-                    <li><a class="{{ Route::is('users.reports.analytics') ? 'active' : '' }}" href="{{ route('users.reports.analytics') }}"><strong style="color: #2563eb;"><i class="fas fa-chart-line me-1"></i> {{ __('Advanced Analytics') }}</strong></a></li>
+                    <li><a class="{{ Route::is('users.reports.expenses') ? 'active' : '' }}" href="{{ route('users.reports.expenses') }}">{{ __('Expense Summary') }}</a></li>
+                    <li><a class="{{ Route::is('users.reports.analytics') ? 'active' : '' }}" href="{{ route('users.reports.analytics') }}">{{ __('Advanced Analytics') }}</a></li>
                     <li><a class="{{ Route::is('users.reports.quick-sms') ? 'active' : '' }}" href="{{ route('users.reports.quick-sms') }}">{{ __('Quick Sms') }}</a></li>
 
                     <li><a class="{{ Route::is('users.reports.group-sms') ? 'active' : '' }}" href="{{ route('users.reports.group-sms') }}">{{ __('Group Sms') }}</a></li>

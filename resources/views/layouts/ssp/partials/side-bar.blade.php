@@ -53,7 +53,7 @@
                     {{ __('Reports') }}
                 </a>
                 <ul>
-                    <li><a class="{{ Route::is('ssp.reports.profit-loss*') ? 'active' : '' }}" href="{{ route('ssp.reports.profit-loss') }}"><strong style="color: #10b981;"><i class="fas fa-hand-holding-usd me-1"></i> {{ __('Profit & Loss') }}</strong></a></li>
+                    <li><a class="{{ Route::is('ssp.reports.profit-loss*') ? 'active' : '' }}" href="{{ route('ssp.reports.profit-loss') }}">{{ __('Profit & Loss') }}</a></li>
                     <li><a class="{{ Route::is('ssp.reports.index*') ? 'active' : '' }}" href="{{ route('ssp.reports.index') }}">{{ __('SMS Traffic Reports') }}</a></li>
                 </ul>
             </li>

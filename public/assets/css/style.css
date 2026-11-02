@@ -343,6 +343,11 @@ svg {
     position: relative;
 }
 
+.side-bar-manu li a *,
+.side-bar-manu li .dropdown-menu li a * {
+    color: inherit;
+}
+
 .side-bar-manu li .dropdown-menu li a:hover,
 .side-bar-manu li .dropdown-menu li a.active {
     color: #fff !important;
@@ -1659,7 +1664,7 @@ input[type="date"] {
 
 b,
 strong {
-    color: #191919 !important;
+    color: #191919;
 }
 
 .small-table tr td {

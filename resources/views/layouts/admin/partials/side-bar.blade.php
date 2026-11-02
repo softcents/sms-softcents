@@ -215,8 +215,8 @@
                         {{ __('Reports') }}
                     </a>
                     <ul>
-                        <li><a class="{{ Route::is('admin.reports.profit-loss') ? 'active' : '' }}" href="{{ route('admin.reports.profit-loss') }}"><strong style="color: #10b981;"><i class="fas fa-hand-holding-usd me-1"></i> {{ __('Profit & Loss') }}</strong></a></li>
-                        <li><a class="{{ Route::is('admin.reports.advanced') ? 'active' : '' }}" href="{{ route('admin.reports.advanced') }}"><strong style="color: #2563eb;"><i class="fas fa-chart-line me-1"></i> {{ __('Advanced Analytics') }}</strong></a></li>
+                        <li><a class="{{ Route::is('admin.reports.profit-loss') ? 'active' : '' }}" href="{{ route('admin.reports.profit-loss') }}">{{ __('Profit & Loss') }}</a></li>
+                        <li><a class="{{ Route::is('admin.reports.advanced') ? 'active' : '' }}" href="{{ route('admin.reports.advanced') }}">{{ __('Advanced Analytics') }}</a></li>
                         <li><a class="{{ Route::is('admin.reports.quick-sms') ? 'active' : '' }}" href="{{ route('admin.reports.quick-sms') }}">{{ __('Quick Sms') }}</a></li>
 
                         <li><a class="{{ Route::is('admin.reports.group-sms') ? 'active' : '' }}" href="{{ route('admin.reports.group-sms') }}">{{ __('Group Sms') }}</a></li>

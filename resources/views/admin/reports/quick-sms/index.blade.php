@@ -45,10 +45,10 @@
                                 <th>{{ __('API User') }}</th>
                                 <th>{{ __('Source IP') }}</th>
                                 <th>{{ __('Request ID') }}</th>
-                                <th>{{ __('Gateway TxnId') }}</th>
+                                <th>{{ __('Server TxnId') }}</th>
                                 <th>{{ __('Gateway Response Code') }}</th>
                                 <th>{{ __('Infozillion Response') }}</th>
-                                <th>{{ __('MNO TxnId') }}</th>
+                                <th>{{ __('Gateway TxnId') }}</th>
                             </tr>
                         </thead>
                         <tbody class="searchResults">

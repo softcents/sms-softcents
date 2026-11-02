@@ -9,9 +9,9 @@
         $prevBalance = $userBalance + $charge;
         $nextBalance = $userBalance;
         $requestId = $message->request_id ?: ('REQ-' . str_pad($message->id, 7, '0', STR_PAD_LEFT));
-        $gatewayTxnId = $message->gateway_txnid ?: ('TXN-' . str_pad($message->id, 8, '0', STR_PAD_LEFT));
+        $serverTxnId = 'TXN-' . str_pad($message->id, 8, '0', STR_PAD_LEFT);
+        $gatewayTxnId = $message->mno_txnid ?: ($message->message_id ?: ($message->gateway_txnid ?: ('GW-' . str_pad($message->id, 8, '0', STR_PAD_LEFT))));
         $gatewayResponseCode = $message->gateway_response_code ?: ($message->status == 'success' ? '200 (Success)' : ($message->status == 'pending' ? '102 (Queued)' : '400 (Failed)'));
-        $mnoTxnId = $message->mno_txnid ?: ($message->message_id ?? ('MNO-' . str_pad($message->id, 8, '0', STR_PAD_LEFT)));
     @endphp
     <tr>
         <td>{{ $loop->iteration }}</td>
@@ -155,9 +155,9 @@
             <span class="font-monospace small">{{ $requestId }}</span>
         </td>
 
-        {{-- 20. Gateway TxnId --}}
+        {{-- 20. Server TxnId --}}
         <td>
-            <span class="font-monospace small">{{ $gatewayTxnId }}</span>
+            <span class="font-monospace small text-muted">{{ $serverTxnId }}</span>
         </td>
 
         {{-- 21. Gateway Response Code --}}
@@ -184,9 +184,9 @@
             </span>
         </td>
 
-        {{-- 23. MNO TxnId --}}
+        {{-- 23. Gateway TxnId --}}
         <td>
-            <span class="font-monospace small text-muted">{{ $mnoTxnId }}</span>
+            <span class="font-monospace small text-dark fw-semibold">{{ $gatewayTxnId }}</span>
         </td>
     </tr>
 @empty

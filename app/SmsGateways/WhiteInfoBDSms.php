@@ -16,8 +16,10 @@ class WhiteInfoBDSms
         $payload = [
             'sender_id' => $senderid,
             'numbers'   => $number,
+            'mobile'    => $number,
             'body'      => $message,
             'message'   => $message,
+            'masking'   => $senderid,
         ];
 
         try {

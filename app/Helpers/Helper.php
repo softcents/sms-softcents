@@ -226,6 +226,8 @@ function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms)
             'smsgateway_id' => session('gateway_id'),
             'charge' => $charge,
             'status' => 'success',
+            'operator' => class_exists(\App\Services\ReportAnalyticsService::class) ? \App\Services\ReportAnalyticsService::detectOperator($number) : null,
+            'gateway_response_code' => '200 (Success)',
         ];
     }
 

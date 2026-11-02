@@ -6,6 +6,9 @@ use App\Http\Controllers\SSP as SSP;
 Route::group(['as' => 'ssp.', 'prefix' => 'ssp', 'middleware' => ['auth', 'ssp']], function () {
     Route::get('/', [SSP\DashboardController::class, 'index'])->name('dashboard.root');
     Route::get('/dashboard', [SSP\DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard/data', [SSP\DashboardController::class, 'getDashboardData'])->name('dashboard.data');
+    Route::get('/dashboard/sms-overview', [SSP\DashboardController::class, 'smsOverview'])->name('dashboard.sms-overview');
+    Route::get('/dashboard/statistics', [SSP\DashboardController::class, 'yearlyStatistics'])->name('dashboard.statistics');
 
     // Customers
     Route::get('/customers', [SSP\CustomerController::class, 'index'])->name('customers.index');

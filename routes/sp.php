@@ -6,6 +6,9 @@ use App\Http\Controllers\SP as SP;
 Route::group(['as' => 'sp.', 'prefix' => 'sp', 'middleware' => ['auth', 'sp']], function () {
     Route::get('/', [SP\DashboardController::class, 'index'])->name('dashboard.root');
     Route::get('/dashboard', [SP\DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('/dashboard/data', [SP\DashboardController::class, 'getDashboardData'])->name('dashboard.data');
+    Route::get('/dashboard/sms-overview', [SP\DashboardController::class, 'smsOverview'])->name('dashboard.sms-overview');
+    Route::get('/dashboard/statistics', [SP\DashboardController::class, 'yearlyStatistics'])->name('dashboard.statistics');
 
     // Sub Resellers (SSP)
     Route::get('/sub-resellers', [SP\SSPController::class, 'index'])->name('ssps.index');

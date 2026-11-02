@@ -22,7 +22,7 @@ class AdvancedReportController extends Controller
 
         // Detailed paginated list
         $smsList = (clone $baseQuery)
-            ->with(['user:id,name,username,role', 'senderid:id,sender,type'])
+            ->with(['user:id,name,username,role,balance', 'senderid:id,sender,type', 'smsgateway:id,name'])
             ->latest('sms.created_at')
             ->paginate(25)
             ->withQueryString();

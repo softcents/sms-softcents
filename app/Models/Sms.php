@@ -51,6 +51,11 @@ class Sms extends Model
         return $this->belongsTo(Campaign::class);
     }
 
+    public function group() : BelongsTo
+    {
+        return $this->belongsTo(Group::class);
+    }
+
     public function user() : BelongsTo
     {
         return $this->belongsTo(User::class);

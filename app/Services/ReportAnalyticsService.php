@@ -85,15 +85,15 @@ class ReportAnalyticsService
         if ($request->filled('operator')) {
             $op = strtolower($request->operator);
             if ($op === 'gp' || $op === 'grameenphone') {
-                $query->whereRaw("sms.number ~ '^(88)?01[37]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[37]'");
             } elseif ($op === 'bl' || $op === 'banglalink') {
-                $query->whereRaw("sms.number ~ '^(88)?01[49]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[49]'");
             } elseif ($op === 'robi' || $op === 'airtel') {
-                $query->whereRaw("sms.number ~ '^(88)?01[68]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[68]'");
             } elseif ($op === 'teletalk') {
-                $query->whereRaw("sms.number ~ '^(88)?015'");
+                $query->whereRaw("sms.number ~ '^(88|)015'");
             } elseif ($op === 'other') {
-                $query->whereRaw("sms.number !~ '^(88)?01[3-9]'");
+                $query->whereRaw("sms.number !~ '^(88|)01[3-9]'");
             }
         }
 
@@ -176,17 +176,17 @@ class ReportAnalyticsService
     {
         $operatorData = (clone $baseQuery)->selectRaw("
             CASE 
-                WHEN sms.number ~ '^(88)?01[37]' THEN 'Grameenphone'
-                WHEN sms.number ~ '^(88)?01[49]' THEN 'Banglalink'
-                WHEN sms.number ~ '^(88)?01[68]' THEN 'Robi / Airtel'
-                WHEN sms.number ~ '^(88)?015' THEN 'Teletalk'
+                WHEN sms.number ~ '^(88|)01[37]' THEN 'Grameenphone'
+                WHEN sms.number ~ '^(88|)01[49]' THEN 'Banglalink'
+                WHEN sms.number ~ '^(88|)01[68]' THEN 'Robi / Airtel'
+                WHEN sms.number ~ '^(88|)015' THEN 'Teletalk'
                 ELSE 'Other / Intl'
             END as operator,
             COUNT(*) as total_sms,
             COALESCE(SUM(charge), 0) as total_cost,
             SUM(CASE WHEN status IN ('success', 'delivered') THEN 1 ELSE 0 END) as delivered,
             SUM(CASE WHEN status IN ('failed', 'undelivered') THEN 1 ELSE 0 END) as failed
-        ")->groupBy('operator')->orderByRaw("COUNT(*) DESC")->get();
+        ")->groupByRaw('1')->orderByRaw("COUNT(*) DESC")->get();
 
         $colorMap = [
             'Grameenphone' => '#00a3e0',
@@ -241,7 +241,7 @@ class ReportAnalyticsService
                 SUM(CASE WHEN status IN ('success', 'delivered') THEN 1 ELSE 0 END) as delivered,
                 SUM(CASE WHEN status IN ('failed', 'undelivered') THEN 1 ELSE 0 END) as failed
             ")
-            ->groupBy('date_str')
+            ->groupByRaw('1')
             ->orderBy('date_str', 'ASC')
             ->limit($days)
             ->get();

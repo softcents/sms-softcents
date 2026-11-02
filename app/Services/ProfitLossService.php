@@ -79,13 +79,13 @@ class ProfitLossService
         if ($request->filled('operator')) {
             $op = strtolower($request->operator);
             if ($op === 'gp') {
-                $query->whereRaw("sms.number ~ '^(88)?01[37]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[37]'");
             } elseif ($op === 'bl') {
-                $query->whereRaw("sms.number ~ '^(88)?01[49]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[49]'");
             } elseif ($op === 'robi') {
-                $query->whereRaw("sms.number ~ '^(88)?01[68]'");
+                $query->whereRaw("sms.number ~ '^(88|)01[68]'");
             } elseif ($op === 'teletalk') {
-                $query->whereRaw("sms.number ~ '^(88)?015'");
+                $query->whereRaw("sms.number ~ '^(88|)015'");
             }
         }
 
@@ -282,17 +282,17 @@ class ProfitLossService
             ->leftJoin('smsgateways as gw', 'sms.smsgateway_id', '=', 'gw.id')
             ->selectRaw("
                 CASE 
-                    WHEN sms.number ~ '^(88)?01[37]' THEN 'Grameenphone'
-                    WHEN sms.number ~ '^(88)?01[49]' THEN 'Banglalink'
-                    WHEN sms.number ~ '^(88)?01[68]' THEN 'Robi / Airtel'
-                    WHEN sms.number ~ '^(88)?015' THEN 'Teletalk'
+                    WHEN sms.number ~ '^(88|)01[37]' THEN 'Grameenphone'
+                    WHEN sms.number ~ '^(88|)01[49]' THEN 'Banglalink'
+                    WHEN sms.number ~ '^(88|)01[68]' THEN 'Robi / Airtel'
+                    WHEN sms.number ~ '^(88|)015' THEN 'Teletalk'
                     ELSE 'Other / Intl'
                 END as operator,
                 COUNT(*) as total_sms,
                 COALESCE(SUM(sms.charge), 0) as revenue,
                 COALESCE(SUM({$costSql}), 0) as cost
             ")
-            ->groupBy('operator')
+            ->groupByRaw('1')
             ->orderByRaw("COUNT(*) DESC")
             ->get();
 
@@ -345,7 +345,7 @@ class ProfitLossService
                 COALESCE(SUM(sms.charge), 0) as revenue,
                 COALESCE(SUM({$costSql}), 0) as cost
             ")
-            ->groupBy('date_str')
+            ->groupByRaw('1')
             ->orderBy('date_str', 'ASC')
             ->limit($days)
             ->get();

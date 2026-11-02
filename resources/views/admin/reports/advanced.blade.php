@@ -297,7 +297,7 @@
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-hover text-nowrap align-middle mb-0">
                         <thead class="table-light">
                             <tr>
                                 <th>#</th>
@@ -306,15 +306,25 @@
                                 <th>{{ __('Sender ID') }}</th>
                                 <th>{{ __('Recipient') }}</th>
                                 <th>{{ __('Operator') }}</th>
+                                <th>{{ __('Count') }}</th>
                                 <th>{{ __('Cost') }}</th>
+                                <th>{{ __('Channel') }}</th>
                                 <th>{{ __('Status') }}</th>
+                                <th>{{ __('Server TxnId') }}</th>
+                                <th>{{ __('Gateway Response Code') }}</th>
+                                <th>{{ __('Infozillion Response') }}</th>
+                                <th>{{ __('Gateway TxnId') }}</th>
                                 <th>{{ __('Message Preview') }}</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse($smsList as $sms)
                                 @php
-                                    $op = \App\Services\ReportAnalyticsService::detectOperator($sms->number ?? '');
+                                    $op = $sms->operator ?: \App\Services\ReportAnalyticsService::detectOperator($sms->number ?? '');
+                                    $serverTxnId = 'TXN-' . str_pad($sms->id, 8, '0', STR_PAD_LEFT);
+                                    $gwTxnId = $sms->mno_txnid ?: ($sms->message_id ?: ($sms->gateway_txnid ?: ('GW-' . str_pad($sms->id, 8, '0', STR_PAD_LEFT))));
+                                    $gwRespCode = $sms->gateway_response_code ?: ($sms->status == 'success' ? '200 (Success)' : ($sms->status == 'pending' ? '102 (Queued)' : '400 (Failed)'));
+                                    $infoz = $sms->infozillion_response ?: ($sms->status == 'success' ? '9000 (Accepted by Central Platform)' : (($sms->status == 'pending') ? 'Processing' : 'Failed'));
                                 @endphp
                                 <tr>
                                     <td>{{ $sms->id }}</td>
@@ -341,7 +351,13 @@
                                     <td>
                                         {!! operator_badge($op) !!}
                                     </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ $sms->total_sms ?? 1 }}</span>
+                                    </td>
                                     <td class="fw-bold text-success">{{ number_format($sms->charge ?? 0, 2) }} BDT</td>
+                                    <td>
+                                        <span class="fw-semibold">{{ optional($sms->smsgateway)->name ?? 'Direct Gateway' }}</span>
+                                    </td>
                                     <td>
                                         @if(in_array($sms->status, ['success', 'delivered']))
                                             <span class="badge bg-success"><i class="fas fa-check me-1"></i>{{ __('Delivered') }}</span>
@@ -351,13 +367,33 @@
                                             <span class="badge bg-warning text-dark"><i class="fas fa-clock me-1"></i>{{ ucfirst($sms->status) }}</span>
                                         @endif
                                     </td>
+                                    <td>
+                                        <span class="font-monospace small text-muted">{{ $serverTxnId }}</span>
+                                    </td>
+                                    <td>
+                                        @if(str_contains($gwRespCode, 'Success') || str_contains($gwRespCode, '200') || str_contains($gwRespCode, '1000'))
+                                            <span class="badge bg-success">{{ $gwRespCode }}</span>
+                                        @elseif(str_contains($gwRespCode, 'Queued') || str_contains($gwRespCode, '102') || str_contains($gwRespCode, 'Processing'))
+                                            <span class="badge bg-warning text-dark">{{ $gwRespCode }}</span>
+                                        @else
+                                            <span class="badge bg-danger">{{ $gwRespCode }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        <span class="small {{ (str_contains($infoz, 'Accepted') || str_contains($infoz, '9000') || str_contains(strtolower($infoz), 'success')) ? 'text-success fw-semibold' : 'text-danger' }}" title="{{ $infoz }}">
+                                            {{ Str::limit($infoz, 30) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="font-monospace small text-dark fw-semibold">{{ $gwTxnId }}</span>
+                                    </td>
                                     <td style="max-width: 260px;" class="text-truncate" title="{{ $sms->contents }}">
                                         {{ $sms->contents }}
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center py-5 text-muted">
+                                    <td colspan="15" class="text-center py-5 text-muted">
                                         <i class="fas fa-inbox fa-3x mb-3 text-secondary opacity-50"></i>
                                         <p class="mb-0 fw-bold">{{ __('No SMS records match your filter criteria.') }}</p>
                                     </td>

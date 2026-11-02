@@ -63,12 +63,22 @@ class ReportController extends Controller
     // Group messages report
     public function groupSms(Request $request)
     {
-
-        $groups = Sms::with('senderid:id,sender', 'user:id,name', 'smsgateway:id,name')
+        $groups = Sms::with([
+                        'senderid:id,sender,type,rate',
+                        'user:id,name,username,balance,allow_api',
+                        'smsgateway:id,name',
+                        'group:id,name'
+                    ])
                     ->whereNotNull('group_id')
                     ->when($request->has('search'), function ($q) use ($request) {
                         $q->where(function ($query) use ($request) {
                             $query->where('number', 'like', '%' . $request->search . '%')
+                                ->orWhere('message_id', 'like', '%' . $request->search . '%')
+                                ->orWhere('gateway_txnid', 'like', '%' . $request->search . '%')
+                                ->orWhere('gateway_response_code', 'like', '%' . $request->search . '%')
+                                ->orWhere('infozillion_response', 'like', '%' . $request->search . '%')
+                                ->orWhere('request_id', 'like', '%' . $request->search . '%')
+                                ->orWhere('operator', 'like', '%' . $request->search . '%')
                                 ->orWhere('charge', 'like', '%' . $request->search . '%')
                                 ->orWhere('ip_address', 'like', '%' . $request->search . '%')
                                 ->orWhere('contents', 'like', '%' . $request->search . '%')
@@ -76,13 +86,17 @@ class ReportController extends Controller
                                 ->orWhere('status', 'like', '%' . $request->search . '%')
                                 ->orWhereHas('user', function ($q) use ($request) {
                                     $q->where('name', 'like', '%' . $request->search . '%')
+                                        ->orWhere('username', 'like', '%' . $request->search . '%')
                                         ->orWhere('email', 'like', '%' . $request->search . '%');
                                 })
-                                ->orWhereHas('campaign', function ($q) use ($request) {
+                                ->orWhereHas('group', function ($q) use ($request) {
                                     $q->where('name', 'like', '%' . $request->search . '%');
                                 })
                                 ->orWhereHas('senderid', function ($q) use ($request) {
                                     $q->where('sender', 'like', '%' . $request->search . '%');
+                                })
+                                ->orWhereHas('smsgateway', function ($q) use ($request) {
+                                    $q->where('name', 'like', '%' . $request->search . '%');
                                 });
                         });
                     })
@@ -95,18 +109,29 @@ class ReportController extends Controller
             ]);
         }
 
-        $groups = $groups->paginate(10);
+        $groups = $groups->paginate(15);
         return view('admin.reports.group-sms.index', compact('groups'));
     }
 
     // Campaigns messages report
     public function campaigns(Request $request)
     {
-        $campaign_sms = Sms::with('senderid:id,sender', 'user:id,name', 'smsgateway:id,name', 'campaign:id,name')
+        $campaign_sms = Sms::with([
+                            'senderid:id,sender,type,rate',
+                            'user:id,name,username,balance,allow_api',
+                            'smsgateway:id,name',
+                            'campaign:id,name'
+                        ])
                         ->whereNotNull('campaign_id')
                         ->when($request->has('search'), function ($q) use ($request) {
                             $q->where(function ($query) use ($request) {
                                 $query->where('number', 'like', '%' . $request->search . '%')
+                                    ->orWhere('message_id', 'like', '%' . $request->search . '%')
+                                    ->orWhere('gateway_txnid', 'like', '%' . $request->search . '%')
+                                    ->orWhere('gateway_response_code', 'like', '%' . $request->search . '%')
+                                    ->orWhere('infozillion_response', 'like', '%' . $request->search . '%')
+                                    ->orWhere('request_id', 'like', '%' . $request->search . '%')
+                                    ->orWhere('operator', 'like', '%' . $request->search . '%')
                                     ->orWhere('charge', 'like', '%' . $request->search . '%')
                                     ->orWhere('ip_address', 'like', '%' . $request->search . '%')
                                     ->orWhere('contents', 'like', '%' . $request->search . '%')
@@ -114,6 +139,7 @@ class ReportController extends Controller
                                     ->orWhere('status', 'like', '%' . $request->search . '%')
                                     ->orWhereHas('user', function ($q) use ($request) {
                                         $q->where('name', 'like', '%' . $request->search . '%')
+                                            ->orWhere('username', 'like', '%' . $request->search . '%')
                                             ->orWhere('email', 'like', '%' . $request->search . '%');
                                     })
                                     ->orWhereHas('campaign', function ($q) use ($request) {
@@ -121,6 +147,9 @@ class ReportController extends Controller
                                     })
                                     ->orWhereHas('senderid', function ($q) use ($request) {
                                         $q->where('sender', 'like', '%' . $request->search . '%');
+                                    })
+                                    ->orWhereHas('smsgateway', function ($q) use ($request) {
+                                        $q->where('name', 'like', '%' . $request->search . '%');
                                     });
                             });
                         })
@@ -133,7 +162,7 @@ class ReportController extends Controller
             ]);
         }
 
-        $campaign_sms = $campaign_sms->paginate(10);
+        $campaign_sms = $campaign_sms->paginate(15);
         return view('admin.reports.campaigns-sms.index', compact('campaign_sms'));
     }
 

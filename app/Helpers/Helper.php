@@ -236,7 +236,7 @@ function languages()
 {
     return [
         'en' => 'English',
-        'bn' => 'বাংলা',
+        'bn' => 'Bengali',
     ];
 }
 

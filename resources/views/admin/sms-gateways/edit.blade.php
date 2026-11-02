@@ -59,13 +59,13 @@
                                             </div>
 
                                             <div class="col-sm-6 mb-2">
-                                                <label class="fw-bold text-primary">{{ __('Non-Masking Purchase Rate (ক্রয়রেট BDT)') }}</label>
+                                                <label class="fw-bold text-primary">{{ __('Non-Masking Purchase Rate (BDT)') }}</label>
                                                 <input type="number" step="0.0001" min="0" name="non_masking_rate" value="{{ $gateway->non_masking_rate ?? '0.2000' }}" class="form-control" placeholder="0.2000" required>
                                                 <small class="text-muted">{{ __('Wholesale cost per non-masking SMS from this gateway provider') }}</small>
                                             </div>
 
                                             <div class="col-sm-6 mb-2">
-                                                <label class="fw-bold text-info">{{ __('Masking Purchase Rate (ক্রয়রেট BDT)') }}</label>
+                                                <label class="fw-bold text-info">{{ __('Masking Purchase Rate (BDT)') }}</label>
                                                 <input type="number" step="0.0001" min="0" name="masking_rate" value="{{ $gateway->masking_rate ?? '0.4500' }}" class="form-control" placeholder="0.4500" required>
                                                 <small class="text-muted">{{ __('Wholesale cost per masking SMS from this gateway provider') }}</small>
                                             </div>

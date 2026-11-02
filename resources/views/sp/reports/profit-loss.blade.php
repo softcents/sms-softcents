@@ -1,6 +1,6 @@
 @extends('layouts.sp.master')
 
-@section('title', __('Reseller (SP) Profit & Loss (লাভ-লোকসান) Summary'))
+@section('title', __('Reseller (SP) Profit & Loss Summary'))
 
 @section('main_content')
 <div class="erp-table-section">
@@ -8,7 +8,7 @@
         <!-- Page Title & Header Actions -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
-                <h3 class="fw-bold mb-1"><i class="fas fa-hand-holding-usd text-success me-2"></i>{{ __('Reseller Profit & Loss (লাভ-লোকসান) Summary') }}</h3>
+                <h3 class="fw-bold mb-1"><i class="fas fa-hand-holding-usd text-success me-2"></i>{{ __('Reseller Profit & Loss Summary') }}</h3>
                 <p class="text-muted small mb-0">{{ __('Downline customer & sub-reseller revenue, admin wholesale buying cost, reseller net profit, and profit margins.') }}</p>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -122,12 +122,12 @@
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="card shadow-sm border-0 h-100 p-3" style="border-left: 4px solid #10b981 !important;">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-bold text-uppercase">{{ __('Net Profit (লাভ)') }}</span>
+                        <span class="text-muted small fw-bold text-uppercase">{{ __('Net Profit') }}</span>
                         <div class="p-2 bg-success bg-opacity-10 text-success rounded-circle"><i class="fas fa-coins fa-sm"></i></div>
                     </div>
                     <h4 class="fw-bold mb-1 {{ $metrics['net_profit'] >= 0 ? 'text-success' : 'text-danger' }}">৳{{ number_format($metrics['net_profit'], 2) }}</h4>
                     <div class="small text-muted">
-                        <span class="badge {{ $metrics['net_profit'] >= 0 ? 'bg-success' : 'bg-danger' }} text-white">{{ $metrics['net_profit'] >= 0 ? 'লাভজনক' : 'লোকসান' }}</span>
+                        <span class="badge {{ $metrics['net_profit'] >= 0 ? 'bg-success' : 'bg-danger' }} text-white">{{ $metrics['net_profit'] >= 0 ? 'Profitable' : 'Loss' }}</span>
                     </div>
                 </div>
             </div>

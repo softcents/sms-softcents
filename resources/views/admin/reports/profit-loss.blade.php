@@ -1,6 +1,6 @@
 @extends('layouts.admin.master')
 
-@section('title', __('Financial Profit & Loss (লাভ-লোকসান) Summary'))
+@section('title', __('Financial Profit & Loss Summary'))
 
 @section('main_content')
 <div class="erp-table-section">
@@ -8,7 +8,7 @@
         <!-- Page Title & Header Actions -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
-                <h3 class="fw-bold mb-1"><i class="fas fa-hand-holding-usd text-success me-2"></i>{{ __('Financial Profit & Loss (লাভ-লোকসান) Summary') }}</h3>
+                <h3 class="fw-bold mb-1"><i class="fas fa-hand-holding-usd text-success me-2"></i>{{ __('Financial Profit & Loss Summary') }}</h3>
                 <p class="text-muted small mb-0">{{ __('System-wide gross revenue, wholesale telco buying cost, net profit, operator margins, and downline profitability.') }}</p>
             </div>
             <div class="d-flex align-items-center gap-2">
@@ -122,12 +122,12 @@
             <div class="col-xl-2 col-md-4 col-sm-6">
                 <div class="card shadow-sm border-0 h-100 p-3" style="border-left: 4px solid #10b981 !important;">
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span class="text-muted small fw-bold text-uppercase">{{ __('Net Profit (লাভ)') }}</span>
+                        <span class="text-muted small fw-bold text-uppercase">{{ __('Net Profit') }}</span>
                         <div class="p-2 bg-success bg-opacity-10 text-success rounded-circle"><i class="fas fa-coins fa-sm"></i></div>
                     </div>
                     <h4 class="fw-bold mb-1 {{ $metrics['net_profit'] >= 0 ? 'text-success' : 'text-danger' }}">৳{{ number_format($metrics['net_profit'], 2) }}</h4>
                     <div class="small text-muted">
-                        <span class="badge {{ $metrics['net_profit'] >= 0 ? 'bg-success' : 'bg-danger' }} text-white">{{ $metrics['net_profit'] >= 0 ? 'লাভজনক' : 'লোকসান' }}</span>
+                        <span class="badge {{ $metrics['net_profit'] >= 0 ? 'bg-success' : 'bg-danger' }} text-white">{{ $metrics['net_profit'] >= 0 ? 'Profitable' : 'Loss' }}</span>
                     </div>
                 </div>
             </div>
@@ -269,7 +269,7 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="fw-bold mb-1"><i class="fas fa-trophy text-warning me-2"></i>{{ __('Top Profit Generating Accounts & Resellers (লাভের তালিকা)') }}</h6>
+                    <h6 class="fw-bold mb-1"><i class="fas fa-trophy text-warning me-2"></i>{{ __('Top Profit Generating Accounts & Resellers') }}</h6>
                     <p class="text-muted small mb-0">{{ __('Ranked by total net profit contributed to the system.') }}</p>
                 </div>
             </div>
@@ -281,9 +281,9 @@
                             <th>{{ __('Role') }}</th>
                             <th>{{ __('SMS Sent') }}</th>
                             <th>{{ __('Masking / Non') }}</th>
-                            <th>{{ __('Revenue (বিক্রয়)') }}</th>
-                            <th>{{ __('Gateway Cost (ক্রয়)') }}</th>
-                            <th>{{ __('Net Profit (লাভ)') }}</th>
+                            <th>{{ __('Revenue') }}</th>
+                            <th>{{ __('Gateway Cost') }}</th>
+                            <th>{{ __('Net Profit') }}</th>
                             <th>{{ __('Margin %') }}</th>
                             <th>{{ __('Current Balance') }}</th>
                             <th class="text-end">{{ __('Action') }}</th>
@@ -347,7 +347,7 @@
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                 <div>
-                    <h6 class="fw-bold mb-1"><i class="fas fa-server text-success me-2"></i>{{ __('SMS Gateway Purchase Cost & Profit Breakdown (গেটওয়ে ভিত্তিক ক্রয়মূল্য ও লাভ)') }}</h6>
+                    <h6 class="fw-bold mb-1"><i class="fas fa-server text-success me-2"></i>{{ __('SMS Gateway Purchase Cost & Profit Breakdown') }}</h6>
                     <p class="text-muted small mb-0">{{ __('Calculated in real-time from the purchase rates set in each SMS Gateway configuration.') }}</p>
                 </div>
                 <a href="{{ route('admin.sms-gateways.index') }}" class="btn btn-sm btn-outline-primary shadow-sm">
@@ -424,7 +424,7 @@
         <!-- Mobile Operator Financial P&L Table -->
         <div class="card shadow-sm border-0 mb-4">
             <div class="card-header bg-white border-0 py-3">
-                <h6 class="fw-bold mb-0"><i class="fas fa-broadcast-tower text-primary me-2"></i>{{ __('Mobile Operator Financial Breakdown (টেলিকম ভিত্তিক P&L)') }}</h6>
+                <h6 class="fw-bold mb-0"><i class="fas fa-broadcast-tower text-primary me-2"></i>{{ __('Mobile Operator Financial Breakdown') }}</h6>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">

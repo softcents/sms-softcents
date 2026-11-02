@@ -1,6 +1,6 @@
 @extends('layouts.users.master')
 
-@section('title', __('SMS Expense & Billing Summary (ব্যয় বিবরণী)'))
+@section('title', __('SMS Expense & Billing Summary'))
 
 @section('main_content')
 <div class="erp-table-section">
@@ -8,7 +8,7 @@
         <!-- Page Title & Header Actions -->
         <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3">
             <div>
-                <h3 class="fw-bold mb-1"><i class="fas fa-file-invoice-dollar text-primary me-2"></i>{{ __('SMS Expense & Billing Summary (ব্যয় বিবরণী)') }}</h3>
+                <h3 class="fw-bold mb-1"><i class="fas fa-file-invoice-dollar text-primary me-2"></i>{{ __('SMS Expense & Billing Summary') }}</h3>
                 <p class="text-muted small mb-0">{{ __('Transparent overview of your SMS campaign expenditures, operator distribution, and wallet balance.') }}</p>
             </div>
             <div class="d-flex align-items-center gap-2">

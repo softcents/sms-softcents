@@ -45,8 +45,8 @@
                                 <th>{{ __('API User') }}</th>
                                 <th>{{ __('Source IP') }}</th>
                                 <th>{{ __('Request ID') }}</th>
-                                <th>{{ __('Server TxnId') }}</th>
-                                <th>{{ __('ServerResponseCode') }}</th>
+                                <th>{{ __('Gateway TxnId') }}</th>
+                                <th>{{ __('Gateway Response Code') }}</th>
                                 <th>{{ __('MNO TxnId') }}</th>
                             </tr>
                         </thead>

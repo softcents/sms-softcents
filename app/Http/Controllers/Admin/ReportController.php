@@ -24,6 +24,10 @@ class ReportController extends Controller
                             $q->where(function ($query) use ($request) {
                                 $query->where('number', 'like', '%' . $request->search . '%')
                                     ->orWhere('message_id', 'like', '%' . $request->search . '%')
+                                    ->orWhere('gateway_txnid', 'like', '%' . $request->search . '%')
+                                    ->orWhere('gateway_response_code', 'like', '%' . $request->search . '%')
+                                    ->orWhere('request_id', 'like', '%' . $request->search . '%')
+                                    ->orWhere('operator', 'like', '%' . $request->search . '%')
                                     ->orWhere('charge', 'like', '%' . $request->search . '%')
                                     ->orWhere('ip_address', 'like', '%' . $request->search . '%')
                                     ->orWhere('contents', 'like', '%' . $request->search . '%')

@@ -1,13 +1,17 @@
 @forelse($messages as $message)
     @php
         $user = $message->user;
-        $operator = \App\Services\ReportAnalyticsService::detectOperator($message->number ?? '');
+        $operator = $message->operator ?: \App\Services\ReportAnalyticsService::detectOperator($message->number ?? '');
         $charge = (float)($message->charge ?? 0);
         $totalSms = max(1, (int)($message->total_sms ?? 1));
         $tariff = $totalSms > 0 ? ($charge / $totalSms) : $charge;
         $userBalance = (float)($user->balance ?? 0);
         $prevBalance = $userBalance + $charge;
         $nextBalance = $userBalance;
+        $requestId = $message->request_id ?: ('REQ-' . str_pad($message->id, 7, '0', STR_PAD_LEFT));
+        $gatewayTxnId = $message->gateway_txnid ?: ('TXN-' . str_pad($message->id, 8, '0', STR_PAD_LEFT));
+        $gatewayResponseCode = $message->gateway_response_code ?: ($message->status == 'success' ? '200 (Success)' : ($message->status == 'pending' ? '102 (Queued)' : '400 (Failed)'));
+        $mnoTxnId = $message->mno_txnid ?: ($message->message_id ?? ('MNO-' . str_pad($message->id, 8, '0', STR_PAD_LEFT)));
     @endphp
     <tr>
         <td>{{ $loop->iteration }}</td>
@@ -148,28 +152,28 @@
 
         {{-- 19. Request ID --}}
         <td>
-            <span class="font-monospace small">REQ-{{ str_pad($message->id, 7, '0', STR_PAD_LEFT) }}</span>
+            <span class="font-monospace small">{{ $requestId }}</span>
         </td>
 
-        {{-- 20. Server TxnId --}}
+        {{-- 20. Gateway TxnId --}}
         <td>
-            <span class="font-monospace small">TXN-{{ str_pad($message->id, 8, '0', STR_PAD_LEFT) }}</span>
+            <span class="font-monospace small">{{ $gatewayTxnId }}</span>
         </td>
 
-        {{-- 21. ServerResponseCode --}}
+        {{-- 21. Gateway Response Code --}}
         <td>
-            @if($message->status == 'success')
-                <span class="badge bg-success">200 (Success)</span>
-            @elseif($message->status == 'pending')
-                <span class="badge bg-warning text-dark">102 (Queued)</span>
+            @if(str_contains($gatewayResponseCode, 'Success') || str_contains($gatewayResponseCode, '200') || str_contains($gatewayResponseCode, '1000'))
+                <span class="badge bg-success">{{ $gatewayResponseCode }}</span>
+            @elseif(str_contains($gatewayResponseCode, 'Queued') || str_contains($gatewayResponseCode, '102') || str_contains($gatewayResponseCode, 'Processing'))
+                <span class="badge bg-warning text-dark">{{ $gatewayResponseCode }}</span>
             @else
-                <span class="badge bg-danger">400 (Failed)</span>
+                <span class="badge bg-danger">{{ $gatewayResponseCode }}</span>
             @endif
         </td>
 
         {{-- 22. MNO TxnId --}}
         <td>
-            <span class="font-monospace small text-muted">{{ $message->message_id ?? ('MNO-' . str_pad($message->id, 8, '0', STR_PAD_LEFT)) }}</span>
+            <span class="font-monospace small text-muted">{{ $mnoTxnId }}</span>
         </td>
     </tr>
 @empty

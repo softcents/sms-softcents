@@ -72,6 +72,15 @@ class SendSmsJob implements ShouldQueue
                         $updates['gateway_txnid'] = 'BATCH-' . $response['batch_id'];
                     }
 
+                    // 2. Infozillion Response
+                    if (isset($response['data']['infozillion_response']['description'])) {
+                        $code = $response['data']['infozillion_response']['status_code'] ?? '9000';
+                        $desc = $response['data']['infozillion_response']['description'];
+                        $updates['infozillion_response'] = "{$code}: {$desc}";
+                    } elseif (isset($response['message'])) {
+                        $updates['infozillion_response'] = (string) $response['message'];
+                    }
+
                     // 2. Gateway Response Code
                     if (isset($response['data']['infozillion_response']['status_code'])) {
                         $code = $response['data']['infozillion_response']['status_code'];

@@ -171,14 +171,27 @@
             @endif
         </td>
 
-        {{-- 22. MNO TxnId --}}
+        {{-- 22. Infozillion Response --}}
+        <td>
+            @php
+                $infozResp = $message->infozillion_response;
+                if (!$infozResp) {
+                    $infozResp = ($message->status == 'success') ? '9000 (Accepted by Central Platform)' : (($message->status == 'pending') ? 'Processing' : 'Failed / Gateway Error');
+                }
+            @endphp
+            <span class="small {{ (str_contains($infozResp, 'Accepted') || str_contains($infozResp, '9000') || str_contains(strtolower($infozResp), 'success')) ? 'text-success fw-semibold' : 'text-danger' }}" title="{{ $infozResp }}">
+                {{ Str::limit($infozResp, 35) }}
+            </span>
+        </td>
+
+        {{-- 23. MNO TxnId --}}
         <td>
             <span class="font-monospace small text-muted">{{ $mnoTxnId }}</span>
         </td>
     </tr>
 @empty
     <tr>
-        <td colspan="23" class="text-center py-4 text-muted">
+        <td colspan="24" class="text-center py-4 text-muted">
             {{ __('No records found') }}
         </td>
     </tr>

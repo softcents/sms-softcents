@@ -38,6 +38,7 @@ class Sms extends Model
         'mno_txnid',
         'request_id',
         'operator',
+        'infozillion_response',
     ];
 
     public function senderid() : BelongsTo

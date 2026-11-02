@@ -22,7 +22,7 @@
                     </div>
                 </div>
                 <div class="responsive-table" style="overflow-x: auto; width: 100%;">
-                    <table class="table table-bordered table-hover text-nowrap align-middle mb-0" id="datatable" style="min-width: 2200px;">
+                    <table class="table table-bordered table-hover text-nowrap align-middle mb-0" id="datatable" style="min-width: 2400px;">
                         <thead class="table-light align-middle">
                             <tr>
                                 <th style="width: 50px;">{{ __('SL') }}.</th>
@@ -47,6 +47,7 @@
                                 <th>{{ __('Request ID') }}</th>
                                 <th>{{ __('Gateway TxnId') }}</th>
                                 <th>{{ __('Gateway Response Code') }}</th>
+                                <th>{{ __('Infozillion Response') }}</th>
                                 <th>{{ __('MNO TxnId') }}</th>
                             </tr>
                         </thead>

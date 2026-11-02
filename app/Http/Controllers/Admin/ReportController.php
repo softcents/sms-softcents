@@ -26,6 +26,7 @@ class ReportController extends Controller
                                     ->orWhere('message_id', 'like', '%' . $request->search . '%')
                                     ->orWhere('gateway_txnid', 'like', '%' . $request->search . '%')
                                     ->orWhere('gateway_response_code', 'like', '%' . $request->search . '%')
+                                    ->orWhere('infozillion_response', 'like', '%' . $request->search . '%')
                                     ->orWhere('request_id', 'like', '%' . $request->search . '%')
                                     ->orWhere('operator', 'like', '%' . $request->search . '%')
                                     ->orWhere('charge', 'like', '%' . $request->search . '%')

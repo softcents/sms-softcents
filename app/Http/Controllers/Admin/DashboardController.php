@@ -21,7 +21,8 @@ class DashboardController extends Controller
     public function index()
     {
         $users = User::whereRole('user')->latest()->take(5)->get();
-        return view('admin.dashboard.index', compact('users'));
+        $activeGateways = Smsgateway::where('status', 1)->get();
+        return view('admin.dashboard.index', compact('users', 'activeGateways'));
     }
 
     public function getDashboardData()

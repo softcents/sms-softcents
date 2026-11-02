@@ -168,7 +168,7 @@ class SmsGatewayController extends Controller
      */
     public function checkAllBalances()
     {
-        $gateways = Smsgateway::all();
+        $gateways = Smsgateway::where('status', 1)->get();
         $results = [];
 
         foreach ($gateways as $gateway) {

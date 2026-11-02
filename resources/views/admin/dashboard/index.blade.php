@@ -100,6 +100,7 @@
         </div>
 
         <!-- SMS Gateways Live Balance Section -->
+        @if(isset($activeGateways) && $activeGateways->isNotEmpty())
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-20">
             <h4 class="mb-0 fw-bold" style="color: #101828; font-size: 18px;">
                 <i class="fas fa-wallet text-primary me-2"></i>{{ __('SMS Gateways Live Balances') }}
@@ -115,43 +116,22 @@
         </div>
 
         <div class="gpt-dashboard-card grid-4 mb-30">
+            @php
+                $gatewayIcons = ['credit.svg', 'banner.svg', 'category.svg', 'crown-king.svg', 'subscription.svg', 'reward.svg'];
+            @endphp
+            @foreach($activeGateways as $gateway)
             <div class="couter-box">
                 <div class="icons">
-                    <img src="{{ asset('assets/img/icon/credit.svg') }}" alt="">
+                    <img src="{{ asset('assets/img/icon/' . $gatewayIcons[$loop->index % count($gatewayIcons)]) }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="dash-gateway-31">৳6,408.44</h5>
-                    <p>{{ __('White Info BD') }}</p>
+                    <h5 id="dash-gateway-{{ $gateway->id }}">৳6,407.98</h5>
+                    <p>{{ __($gateway->name) }}</p>
                 </div>
             </div>
-            <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/banner.svg') }}" alt="">
-                </div>
-                <div class="content-side">
-                    <h5 id="dash-gateway-27">৳13,643.51</h5>
-                    <p>{{ __('PanelSms1') }}</p>
-                </div>
-            </div>
-            <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/category.svg') }}" alt="">
-                </div>
-                <div class="content-side">
-                    <h5 id="dash-gateway-29">Connected</h5>
-                    <p>{{ __('SYSSMS') }}</p>
-                </div>
-            </div>
-            <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="">
-                </div>
-                <div class="content-side">
-                    <h5 id="dash-gateway-30">Connected</h5>
-                    <p>{{ __('REVE SMS') }}</p>
-                </div>
-            </div>
+            @endforeach
         </div>
+        @endif
 
         <div class="row gpt-dashboard-chart">
             <div class="col-xxl-8 col-xl-7 col-lg-7 mb-30">

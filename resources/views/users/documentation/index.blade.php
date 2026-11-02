@@ -118,6 +118,31 @@
                 <div class="card-body">
                     <div class="order-form-section mt-2">
                         <div class="add-suplier-modal-wrapper">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="fw-bold mb-0"><i class="fas fa-shield-alt text-primary me-2"></i>{{ __('API Security & IP Whitelist') }}</h5>
+                                <a href="{{ route('users.senderips.index') }}" class="btn btn-sm btn-outline-primary"><i class="fas fa-network-wired me-1"></i>{{ __('Manage Whitelisted IPs') }}</a>
+                            </div>
+                            <p class="text-muted">{{ __('For high-security enterprise environments, you can restrict API access strictly to your server IP addresses.') }}</p>
+                            <ul class="mb-3">
+                                <li><strong>{{ __('Unrestricted Mode (Default)') }}:</strong> {{ __('If no IP addresses are added to your whitelist, API requests are accepted from any server.') }}</li>
+                                <li><strong>{{ __('Enforced Whitelist Mode') }}:</strong> {{ __('Once you whitelist at least one IP or CIDR subnet, any incoming request from an unauthorized IP is instantly blocked.') }}</li>
+                            </ul>
+                            <h6>{{ __('Rejected Request Response (HTTP 403 Forbidden):') }}</h6>
+                            <pre class="bg-light p-3 rounded text-danger font-monospace mb-0" style="font-size: 13px;">{
+  "status": 403,
+  "error": "IP_NOT_WHITELISTED",
+  "message": "Access Denied: Your IP address (103.xxx.xxx.xxx) is not whitelisted. Please add this IP to your API whitelist in your dashboard or contact support.",
+  "client_ip": "103.xxx.xxx.xxx"
+}</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cards shadow-sm border-0 mt-3">
+                <div class="card-body">
+                    <div class="order-form-section mt-2">
+                        <div class="add-suplier-modal-wrapper">
                             <h5 class="fw-bold mb-2">{{ __('API Responses') }}</h5>
                             <p>{{ __('Successful response in json format') }}.</p>
                             <p class="text-primary">{{ __('"status":"200","message":"Message sent successfully"') }}</p>

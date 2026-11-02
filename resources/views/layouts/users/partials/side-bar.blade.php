@@ -139,7 +139,7 @@
                 </ul>
             </li>
 
-            <li class="dropdown {{ Route::is('users.client-secret.index', 'users.developer-options') ? 'active' : '' }}">
+            <li class="dropdown {{ Route::is('users.client-secret.index', 'users.senderips.*', 'users.developer-options') ? 'active' : '' }}">
                 <a href="#">
                     <span class="sidebar-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" height="16" width="20" viewBox="0 0 640 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M255 261.7c6.3 6.3 16.4 6.3 22.6 0l11.3-11.3c6.3-6.3 6.3-16.4 0-22.6L253.3 192l35.7-35.7c6.3-6.3 6.3-16.4 0-22.6l-11.3-11.3c-6.3-6.3-16.4-6.3-22.6 0l-58.3 58.3c-6.3 6.3-6.3 16.4 0 22.6l58.4 58.3zm96-11.3l11.3 11.3c6.3 6.3 16.4 6.3 22.6 0l58.3-58.3c6.3-6.3 6.3-16.4 0-22.6l-58.3-58.3c-6.3-6.3-16.4-6.3-22.6 0l-11.3 11.3c-6.3 6.3-6.3 16.4 0 22.6L386.8 192l-35.7 35.7c-6.3 6.3-6.3 16.4 0 22.6zM624 416H381.5c-.7 19.8-14.7 32-32.7 32H288c-18.7 0-33-17.5-32.8-32H16c-8.8 0-16 7.2-16 16v16c0 35.2 28.8 64 64 64h512c35.2 0 64-28.8 64-64v-16c0-8.8-7.2-16-16-16zM576 48c0-26.4-21.6-48-48-48H112C85.6 0 64 21.6 64 48v336h512V48zm-64 272H128V64h384v256z"/></svg>
@@ -148,7 +148,8 @@
                 </a>
                 <ul>
                     <li><a class="{{ Route::is('users.client-secret.index') ? 'active' : '' }}" href="{{ route('users.client-secret.index') }}">{{ __('Api Key & Secret') }}</a></li>
-                    <li><a class="{{ Route::is('users.developer-options') ? 'active' : '' }}" href="{{ route('users.developer-options') }}">{{ __('Developer Options') }}</a></li>
+                    <li><a class="{{ Route::is('users.senderips.*') ? 'active' : '' }}" href="{{ route('users.senderips.index') }}">{{ __('IP Whitelist') }}</a></li>
+                    <li><a class="{{ Route::is('users.developer-options') ? 'active' : '' }}" href="{{ route('users.developer-options') }}">{{ __('API Documentation') }}</a></li>
                 </ul>
             </li>
         </ul>

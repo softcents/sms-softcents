@@ -30,7 +30,7 @@
         toastr.error( "{{ Session::get('error') }}");
     </script>
 @endif
-@if($errors->any())
+@if(isset($errors) && $errors->any())
 <script>
     toastr.warning('Error some occurs!');
 </script>

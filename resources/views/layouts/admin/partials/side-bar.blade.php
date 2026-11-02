@@ -137,6 +137,17 @@
                 </li>
             @endcan
 
+            @can(['senderips-read'])
+                <li class="{{ Route::is('admin.senderips.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.senderips.index') }}">
+                        <span class="sidebar-icon">
+                            <i class="fas fa-network-wired" style="font-size: 16px; width: 16px;"></i>
+                        </span>
+                        {{ __('IP Whitelist') }}
+                    </a>
+                </li>
+            @endcan
+
             @can(['campaigns-read'])
                 <li class="dropdown {{ Route::is('admin.campaigns.index', 'admin.campaigns.create', 'admin.campaigns.edit', 'admin.campaigns_sms.index') ? 'active' : '' }}">
                     <a href="#">

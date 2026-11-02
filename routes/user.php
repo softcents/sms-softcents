@@ -93,6 +93,8 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
 
     // Developer options and API Keys
     Route::resource('client-secret', User\AcnooDeveloperApiController::class)->only('index', 'store');
+    Route::resource('senderips', User\UserSenderIpController::class)->only('index', 'store', 'destroy');
+    Route::post('senderips/status/{id}', [User\UserSenderIpController::class, 'status'])->name('senderips.status');
     Route::get('/developer-options', [AcnooDeveloperApiController::class, 'developerOptions'])->name('developer-options');
 
     Route::group(['as' => 'reports.', 'prefix' => 'reports'], function () {
@@ -129,5 +131,5 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
     })->name('download-numbers-file');
 });
 
-Route::resource('send-message', User\AcnooSmsApiController::class)->only('index');
-Route::resource('check-balance', User\BalanceCheckController::class)->only('index');
+Route::match(['get', 'post'], 'send-message', [User\AcnooSmsApiController::class, 'index'])->name('send-message.index');
+Route::match(['get', 'post'], 'check-balance', [User\BalanceCheckController::class, 'index'])->name('check-balance.index');

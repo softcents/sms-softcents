@@ -15,38 +15,73 @@ class AcnooSmsApiController extends Controller
 {
     public function index(Request $request)
     {
-        $request->validate([
-            'clientId' => 'nullable',
-            'clientSecret' => 'nullable',
-            'numbers' => 'required',
-            'contents' => 'required',
-            'schedule' => 'nullable',
-            'schedule_type' => 'nullable',
-            'senderId' => 'required|string|exists:senderids,sender',
-        ]);
-        $user = User::where(['client_id' => $request->clientId, 'client_secret' => $request->clientSecret])->first();
+        // Support standard parameters and enterprise specification parameters
+        $clientId = $request->clientId ?? $request->account_id;
+        $clientSecret = $request->clientSecret ?? $request->api_key;
+        $numbers = $request->numbers ?? $request->mobile;
+        $contents = $request->contents ?? $request->message;
+        $senderId = $request->senderId ?? $request->masking;
+
+        if (empty($clientId) || empty($clientSecret)) {
+            return response()->json([
+                'status' => 401,
+                'message' => __('Client ID (or account_id) and Client Secret (or api_key) are required.'),
+            ], 401);
+        }
+
+        $user = User::where(['client_id' => $clientId, 'client_secret' => $clientSecret])->first();
 
         if (!$user) {
             return response()->json([
                 'status' => 404,
-                'message' => __('User not found'),
+                'message' => __('User not found or invalid credentials.'),
             ], 404);
         }
 
-        $sender_id_info = Senderid::where(['user_id' => $user->id, 'sender' => $request->senderId])->where('gateway_id','!=',0)->first();
-        $gateway_details = Smsgateway::where('id',$sender_id_info->gateway_id)->where('status',1)->first();
-
-        if(!$gateway_details){
+        // Validate client IP against whitelist & account permissions
+        $clientIp = \App\Services\IpWhitelistService::getClientIp($request);
+        $ipCheck = \App\Services\IpWhitelistService::check($user, $clientIp);
+        if (!$ipCheck['allowed']) {
             return response()->json([
-                'message' => __("The SMS gateway associated with the selected sender ID is currently unavailable. Please contact support."),
-            ], 406);
+                'status' => $ipCheck['code'],
+                'error' => $ipCheck['status'],
+                'message' => $ipCheck['message'],
+                'client_ip' => $ipCheck['client_ip'],
+            ], $ipCheck['code']);
         }
+
+        $request->merge([
+            'clientId' => $clientId,
+            'clientSecret' => $clientSecret,
+            'numbers' => $numbers,
+            'contents' => $contents,
+            'senderId' => $senderId,
+        ]);
+
+        $request->validate([
+            'numbers' => 'required',
+            'contents' => 'required',
+            'schedule' => 'nullable',
+            'schedule_type' => 'nullable',
+            'senderId' => 'required|string',
+        ]);
+
+        $sender_id_info = Senderid::where(['user_id' => $user->id, 'sender' => $request->senderId])->where('gateway_id', '!=', 0)->first();
 
         if (!$sender_id_info) {
             return response()->json([
                 'status' => 404,
-                'message' => __('Sender id not found'),
+                'message' => __('Sender id not found or not assigned to your account.'),
             ], 404);
+        }
+
+        $gateway_details = Smsgateway::where('id', $sender_id_info->gateway_id)->where('status', 1)->first();
+
+        if (!$gateway_details) {
+            return response()->json([
+                'status' => 406,
+                'message' => __("The SMS gateway associated with the selected sender ID is currently unavailable. Please contact support."),
+            ], 406);
         }
 
         $isUnicode = didITypeUnicode($request->contents);
@@ -117,8 +152,11 @@ class AcnooSmsApiController extends Controller
 
             } catch (\Exception $e) {
                 DB::rollback();
-                echo '<pre>';print_r($e->getMessage());exit;
-                return response()->json(__('Invalid phone number or credentials.'), 404);
+                \Illuminate\Support\Facades\Log::error('Send SMS API Error: ' . $e->getMessage());
+                return response()->json([
+                    'status' => 500,
+                    'message' => __('Failed to process message: ') . $e->getMessage(),
+                ], 500);
             }
         } else {
             return response()->json([

@@ -148,4 +148,9 @@ class User extends Authenticatable
         'password' => 'hashed',
         'mail_settings' => 'array',
     ];
+
+    public function senderIps()
+    {
+        return $this->hasMany(SenderIp::class);
+    }
 }

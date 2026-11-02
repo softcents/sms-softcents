@@ -21,7 +21,9 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::post('recharges/filter', [ADMIN\RechargeController::class, 'acnooFilter'])->name('recharges.filter');
     Route::get('recharges/print/{id}', [ADMIN\RechargeController::class, 'print'])->name('recharges.print');
 
-    Route::resource('senderips', ADMIN\AcnooSenderIpController::class)->only('index');
+    Route::resource('senderips', ADMIN\AcnooSenderIpController::class)->only(['index', 'store', 'destroy']);
+    Route::post('senderips/status/{id}', [ADMIN\AcnooSenderIpController::class, 'status'])->name('senderips.status');
+    Route::post('senderips/delete-all', [ADMIN\AcnooSenderIpController::class, 'deleteAll'])->name('senderips.delete-all');
 
     Route::resource('gateways-types', ADMIN\GatewayTypeController::class);
     Route::get('sms-gateways/balances/all', [ADMIN\SmsGatewayController::class, 'checkAllBalances'])->name('sms-gateways.all-balances');

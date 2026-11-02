@@ -19,5 +19,11 @@ class SenderIp extends Model
         'user_id',
         'browser',
         'ip_address',
+        'note',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

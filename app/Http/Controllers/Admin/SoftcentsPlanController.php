@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Plan;
 use Illuminate\Http\Request;
 
-class AcnooPlanController extends Controller
+class SoftcentsPlanController extends Controller
 {
     public function __construct()
     {

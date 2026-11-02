@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use Illuminate\Http\Request;
 
-class AcnooFaqsController extends Controller
+class SoftcentsFaqsController extends Controller
 {
     /**
      * Display a listing of the resource.

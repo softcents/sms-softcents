@@ -26,7 +26,7 @@ class DatabaseSeeder extends Seeder
             // GroupSeeder::class,
             // ContactSeeder::class,
             // CampaignsSeeder::class,
-            AcnooSmsGatewaySeeder::class,
+            SoftcentsSmsGatewaySeeder::class,
             ServiceSeeder::class,
             GatewaySeeder::class,
             PipraPaySeeder::class,

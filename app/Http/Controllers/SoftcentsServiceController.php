@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Plan;
 use App\Models\Service;
 
-class AcnooServiceController extends Controller
+class SoftcentsServiceController extends Controller
 {
     public function index()
     {

@@ -7,7 +7,7 @@ use App\Models\SenderIp;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
-class AcnooSenderIpController extends Controller
+class SoftcentsSenderIpController extends Controller
 {
     public function __construct()
     {

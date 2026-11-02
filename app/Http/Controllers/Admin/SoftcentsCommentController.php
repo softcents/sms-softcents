@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Comment;
 use Illuminate\Http\Request;
 
-class AcnooCommentController extends Controller
+class SoftcentsCommentController extends Controller
 {
     public function destroy(Comment $comment)
     {

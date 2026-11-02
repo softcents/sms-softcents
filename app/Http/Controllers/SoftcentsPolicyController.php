@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-class AcnooPolicyController extends Controller
+class SoftcentsPolicyController extends Controller
 {
     public function privacy()
     {

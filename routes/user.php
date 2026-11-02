@@ -2,7 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\User as User;
-use App\Http\Controllers\User\AcnooDeveloperApiController;
+use App\Http\Controllers\User\SoftcentsDeveloperApiController;
 
 // Recharge Routes
 Route::group(['middleware' => ['auth']], function () {
@@ -54,48 +54,48 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
     Route::resource('profiles', User\ProfileController::class)->only('index', 'update');
 
     Route::resource('quick-sms', User\QuickSmsController::class)->only('index', 'store');
-    Route::resource('group-sms', User\AcnooGroupSmsController::class)->only('index', 'store');
+    Route::resource('group-sms', User\SoftcentsGroupSmsController::class)->only('index', 'store');
     Route::resource('bulk-sms', User\BulkSmsController::class)->only('index', 'store');
 
     Route::resource('senderids', User\SenderIdController::class)->only('index');
-    Route::post('senderids/filter', [User\SenderIdController::class, 'acnooFilter'])->name('senderids.filter');
+    Route::post('senderids/filter', [User\SenderIdController::class, 'softcentsFilter'])->name('senderids.filter');
 
     // Campaigns
-    Route::resource('campaigns', User\AcnooCampaignController::class);
-    Route::post('campaigns/filter', [User\AcnooCampaignController::class, 'acnooFilter'])->name('campaigns.filter');
+    Route::resource('campaigns', User\SoftcentsCampaignController::class);
+    Route::post('campaigns/filter', [User\SoftcentsCampaignController::class, 'softcentsFilter'])->name('campaigns.filter');
 
     // Recharge
     Route::resource('recharges', User\RechargeController::class)->only('index', 'store', 'show');
-    Route::post('recharges/filter', [User\RechargeController::class, 'acnooFilter'])->name('recharges.filter');
+    Route::post('recharges/filter', [User\RechargeController::class, 'softcentsFilter'])->name('recharges.filter');
 
     // Plans
     Route::resource('plans', User\PlanController::class)->only('index');
 
     Route::resource('subscribers', User\SubscriberController::class)->only('index', 'show');
-    Route::post('subscribers/filter', [User\SubscriberController::class, 'acnooFilter'])->name('subscribers.filter');
+    Route::post('subscribers/filter', [User\SubscriberController::class, 'softcentsFilter'])->name('subscribers.filter');
 
     // Contacts & Groups
     Route::resource('groups', User\GroupController::class)->except('create', 'show');
     Route::post('groups/delete-all', [User\GroupController::class,'deleteAll'])->name('groups.delete-all');
-    Route::post('groups/filter', [User\GroupController::class, 'acnooFilter'])->name('groups.filter');
+    Route::post('groups/filter', [User\GroupController::class, 'softcentsFilter'])->name('groups.filter');
 
     Route::resource('contacts', User\ContactController::class)->except('show');
     Route::resource('bulk-contacts', User\BulkContactController::class)->only('index', 'store');
     Route::post('contacts/delete-all', [User\ContactController::class,'deleteAll'])->name('contacts.delete-all');
-    Route::post('contacts/filter', [User\ContactController::class, 'acnooFilter'])->name('contacts.filter');
+    Route::post('contacts/filter', [User\ContactController::class, 'softcentsFilter'])->name('contacts.filter');
 
     // SMS Templates
-    Route::resource('templates', User\AcnooTemplateController::class)->except('create', 'show', 'edit');
-    Route::post('templates/filter', [User\AcnooTemplateController::class, 'acnooFilter'])->name('templates.filter');
+    Route::resource('templates', User\SoftcentsTemplateController::class)->except('create', 'show', 'edit');
+    Route::post('templates/filter', [User\SoftcentsTemplateController::class, 'softcentsFilter'])->name('templates.filter');
 
-    Route::get('get-templates', [User\AcnooTemplateController::class, 'getTemplates'])->name('get-templates');
-    Route::post('templates/delete-all', [User\AcnooTemplateController::class,'deleteAll'])->name('templates.delete-all');
+    Route::get('get-templates', [User\SoftcentsTemplateController::class, 'getTemplates'])->name('get-templates');
+    Route::post('templates/delete-all', [User\SoftcentsTemplateController::class,'deleteAll'])->name('templates.delete-all');
 
     // Developer options and API Keys
-    Route::resource('client-secret', User\AcnooDeveloperApiController::class)->only('index', 'store');
+    Route::resource('client-secret', User\SoftcentsDeveloperApiController::class)->only('index', 'store');
     Route::resource('senderips', User\UserSenderIpController::class)->only('index', 'store', 'destroy');
     Route::post('senderips/status/{id}', [User\UserSenderIpController::class, 'status'])->name('senderips.status');
-    Route::get('/developer-options', [AcnooDeveloperApiController::class, 'developerOptions'])->name('developer-options');
+    Route::get('/developer-options', [SoftcentsDeveloperApiController::class, 'developerOptions'])->name('developer-options');
 
     Route::group(['as' => 'reports.', 'prefix' => 'reports'], function () {
 
@@ -131,5 +131,5 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
     })->name('download-numbers-file');
 });
 
-Route::match(['get', 'post'], 'send-message', [User\AcnooSmsApiController::class, 'index'])->name('send-message.index');
+Route::match(['get', 'post'], 'send-message', [User\SoftcentsSmsApiController::class, 'index'])->name('send-message.index');
 Route::match(['get', 'post'], 'check-balance', [User\BalanceCheckController::class, 'index'])->name('check-balance.index');

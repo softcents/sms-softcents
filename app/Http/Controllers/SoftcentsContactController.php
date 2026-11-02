@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Message;
 use Illuminate\Http\Request;
 
-class AcnooContactController extends Controller
+class SoftcentsContactController extends Controller
 {
     public function index()
     {

@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Template;
 use Illuminate\Http\Request;
 
-class AcnooTemplateController extends Controller
+class SoftcentsTemplateController extends Controller
 {
     public function index(Request $request)
     {

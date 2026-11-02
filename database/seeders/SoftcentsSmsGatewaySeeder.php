@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use App\Models\Smsgateway;
 use Illuminate\Database\Seeder;
 
-class AcnooSmsGatewaySeeder extends Seeder
+class SoftcentsSmsGatewaySeeder extends Seeder
 {
     /**
      * Run the database seeds.

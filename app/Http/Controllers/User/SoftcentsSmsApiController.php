@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Jobs\SendSmsJob;
 
-class AcnooSmsApiController extends Controller
+class SoftcentsSmsApiController extends Controller
 {
     public function index(Request $request)
     {

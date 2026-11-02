@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 
-class AcnooCurrencyController extends Controller
+class SoftcentsCurrencyController extends Controller
 {
     public function __construct()
     {

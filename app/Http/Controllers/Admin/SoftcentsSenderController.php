@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Smsgateway;
 
-class AcnooSenderController extends Controller
+class SoftcentsSenderController extends Controller
 {
     /**
      * Display a listing of the resource.

@@ -11,7 +11,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class AcnooCampaignSmsController extends Controller
+class SoftcentsCampaignSmsController extends Controller
 {
     /**
      * Display a listing of the resource.

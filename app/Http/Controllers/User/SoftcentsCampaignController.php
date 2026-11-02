@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Models\CampaignSms;
 
-class AcnooCampaignController extends Controller
+class SoftcentsCampaignController extends Controller
 {
     public function __construct()
     {

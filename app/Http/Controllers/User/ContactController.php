@@ -38,7 +38,7 @@ class ContactController extends Controller
         return view('users.contacts.index', compact('contacts'));
     }
 
-    public function acnooFilter(Request $request)
+    public function softcentsFilter(Request $request)
     {
         $contacts = Contact::where('user_id', auth()->id())->with('group')
             ->when($request->has('search'), function ($q) use ($request) {

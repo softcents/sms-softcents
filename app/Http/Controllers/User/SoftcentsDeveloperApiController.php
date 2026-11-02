@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User;
 use Illuminate\Support\Str;
 use App\Http\Controllers\Controller;
 
-class AcnooDeveloperApiController extends Controller
+class SoftcentsDeveloperApiController extends Controller
 {
     public function index()
     {

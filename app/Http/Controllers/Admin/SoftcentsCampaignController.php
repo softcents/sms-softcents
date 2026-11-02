@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Campaign;
 use Illuminate\Http\Request;
 
-class AcnooCampaignController extends Controller
+class SoftcentsCampaignController extends Controller
 {
     public function index(Request $request)
     {

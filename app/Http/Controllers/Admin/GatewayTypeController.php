@@ -18,7 +18,7 @@ class GatewayTypeController extends Controller
         return view('admin.gateways-types.index', compact('types'));
     }
 
-    public function acnooFilter(Request $request)
+    public function softcentsFilter(Request $request)
     {
         $contacts = GatewayType::when($request->has('search'), function ($q) use ($request) {
                         $q->where(function ($query) use ($request) {

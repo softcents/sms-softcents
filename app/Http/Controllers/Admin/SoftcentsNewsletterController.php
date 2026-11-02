@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Newsletter;
 use Illuminate\Http\Request;
 
-class AcnooNewsletterController extends Controller
+class SoftcentsNewsletterController extends Controller
 {
     public function __construct()
     {

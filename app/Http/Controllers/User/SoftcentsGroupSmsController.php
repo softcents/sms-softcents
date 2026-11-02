@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Jobs\SendSmsJob;
 
-class AcnooGroupSmsController extends Controller
+class SoftcentsGroupSmsController extends Controller
 {
     public function __construct()
     {

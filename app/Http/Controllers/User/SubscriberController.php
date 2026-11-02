@@ -42,7 +42,7 @@ class SubscriberController extends Controller
         return view('users.subscribers.index', compact('subscribers'));
     }
 
-    public function acnooFilter(Request $request)
+    public function softcentsFilter(Request $request)
     {
         $subscribers = PlanSubscribe::with('plan:id,title')
             ->where('user_id', auth()->id())

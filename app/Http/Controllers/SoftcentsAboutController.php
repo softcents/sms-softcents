@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-class AcnooAboutController extends Controller
+class SoftcentsAboutController extends Controller
 {
     public function index()
     {

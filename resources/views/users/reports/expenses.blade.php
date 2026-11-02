@@ -237,7 +237,7 @@
                             <td><code>{{ $sms->number }}</code></td>
                             <td>
                                 @php $opName = \App\Services\ReportAnalyticsService::detectOperator($sms->number); @endphp
-                                <span class="badge bg-light text-dark border">{{ $opName }}</span>
+                                {!! operator_badge($opName) !!}
                             </td>
                             <td><span class="badge bg-light text-secondary border">{{ $sms->total_sms ?? 1 }}</span></td>
                             <td><strong class="text-danger">৳{{ number_format((float) $sms->charge, 4) }}</strong></td>

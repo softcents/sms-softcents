@@ -99,17 +99,7 @@
 
         {{-- 12. Operator --}}
         <td>
-            @if($operator == 'GP')
-                <span class="badge bg-primary text-white">GP</span>
-            @elseif($operator == 'BL')
-                <span class="badge bg-warning text-dark">BL</span>
-            @elseif($operator == 'Robi')
-                <span class="badge bg-danger text-white">Robi</span>
-            @elseif($operator == 'Teletalk')
-                <span class="badge bg-success text-white">Teletalk</span>
-            @else
-                <span class="badge bg-secondary text-white">{{ $operator }}</span>
-            @endif
+            {!! operator_badge($operator) !!}
         </td>
 
         {{-- 13. Channel --}}

@@ -293,3 +293,37 @@ function restorePublicImages()
         File::copyDirectory($sourcePath, $destinationPath);
     }
 }
+
+/**
+ * Render telecom operator icon badge
+ */
+function operator_badge($operator)
+{
+    $opKey = strtolower(trim((string)$operator));
+    $icon = null;
+    $label = $operator ?: 'Other';
+
+    if ($opKey === 'gp' || str_contains($opKey, 'grameen')) {
+        $icon = '01_grameenphone.png';
+        $label = 'GP';
+    } elseif ($opKey === 'robi' || str_contains($opKey, 'robi')) {
+        $icon = '02_robi.png';
+        $label = 'Robi';
+    } elseif ($opKey === 'airtel' || str_contains($opKey, 'airtel')) {
+        $icon = '03_airtel.png';
+        $label = 'Airtel';
+    } elseif ($opKey === 'bl' || str_contains($opKey, 'bangla')) {
+        $icon = '04_banglalink.png';
+        $label = 'Banglalink';
+    } elseif ($opKey === 'teletalk' || str_contains($opKey, 'tele')) {
+        $icon = '05_teletalk.png';
+        $label = 'Teletalk';
+    }
+
+    if ($icon) {
+        $url = asset('assets/images/operators/' . $icon);
+        return '<div class="d-inline-flex align-items-center gap-1"><img src="' . $url . '" alt="' . e($label) . '" title="' . e($label) . '" style="width: 28px; height: 22px; object-fit: contain; vertical-align: middle;"> <span class="fw-semibold small">' . e($label) . '</span></div>';
+    }
+
+    return '<span class="badge bg-secondary">' . e($label) . '</span>';
+}

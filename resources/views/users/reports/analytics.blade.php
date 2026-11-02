@@ -306,17 +306,7 @@
                                     </td>
                                     <td><span class="fw-bold font-monospace">{{ $sms->number }}</span></td>
                                     <td>
-                                        @if($op == 'GP')
-                                            <span class="badge text-white" style="background-color: #00a3e0;">GP</span>
-                                        @elseif($op == 'BL')
-                                            <span class="badge text-white" style="background-color: #f7931e;">BL</span>
-                                        @elseif($op == 'Robi')
-                                            <span class="badge text-white" style="background-color: #e4002b;">Robi</span>
-                                        @elseif($op == 'Teletalk')
-                                            <span class="badge text-white" style="background-color: #008855;">Teletalk</span>
-                                        @else
-                                            <span class="badge bg-secondary">{{ $op }}</span>
-                                        @endif
+                                        {!! operator_badge($op) !!}
                                     </td>
                                     <td class="fw-bold text-success">{{ number_format($sms->charge ?? 0, 2) }} BDT</td>
                                     <td>

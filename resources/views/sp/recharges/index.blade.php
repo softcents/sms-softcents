@@ -2,6 +2,12 @@
 
 @section('title', __('Customer Recharge Requests'))
 
+@push('css')
+<style>
+    .erp-table-section .card, .erp-table-section .cards { min-height: auto !important; height: auto; }
+</style>
+@endpush
+
 @section('main_content')
 <div class="erp-table-section">
     <div class="container-fluid">
@@ -59,8 +65,8 @@
             </div>
 
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                <div class="responsive-table" style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; min-height: auto; margin-top: 0;">
+                    <table class="table table-hover table-striped align-middle text-nowrap mb-0" style="min-width: 900px;">
                         <thead class="table-light">
                             <tr>
                                 <th>{{ __('Invoice') }}</th>

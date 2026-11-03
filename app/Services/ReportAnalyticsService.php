@@ -308,13 +308,23 @@ class ReportAnalyticsService
                 'Recipient Number',
                 'Total SMS',
                 'Charge (BDT)',
+                'Channel',
                 'Status',
+                'Server TxnId',
+                'Gateway Response Code',
+                'Infozillion Response',
+                'Gateway TxnId',
                 'Message Content'
             ]);
 
-            $query->with(['user:id,name,username', 'senderid:id,sender'])
+            $query->with(['user:id,name,username', 'senderid:id,sender', 'smsgateway:id,name'])
                 ->chunk(1000, function ($batch) use ($handle) {
                     foreach ($batch as $sms) {
+                        $serverTxnId = 'TXN-' . str_pad($sms->id, 8, '0', STR_PAD_LEFT);
+                        $gwTxnId = $sms->mno_txnid ?: ($sms->message_id ?: ($sms->gateway_txnid ?: ('GW-' . str_pad($sms->id, 8, '0', STR_PAD_LEFT))));
+                        $gwRespCode = $sms->gateway_response_code ?: ($sms->status == 'success' ? '200 (Success)' : ($sms->status == 'pending' ? '102 (Queued)' : '400 (Failed)'));
+                        $infoz = $sms->infozillion_response ?: ($sms->status == 'success' ? '9000 (Accepted by Central Platform)' : (($sms->status == 'pending') ? 'Processing' : 'Failed'));
+
                         fputcsv($handle, [
                             $sms->id,
                             $sms->created_at->format('Y-m-d H:i:s'),
@@ -325,7 +335,12 @@ class ReportAnalyticsService
                             $sms->number,
                             $sms->total_sms ?? 1,
                             $sms->charge ?? 0,
+                            optional($sms->smsgateway)->name ?? 'Direct Gateway',
                             $sms->status,
+                            $serverTxnId,
+                            $gwRespCode,
+                            $infoz,
+                            $gwTxnId,
                             $sms->contents,
                         ]);
                     }

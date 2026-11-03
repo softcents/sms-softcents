@@ -683,6 +683,146 @@ class QueueMonitorService
     }
 
     /**
+     * Get customer-wise processing SMS statistics specifically for Sub-reseller (or Reseller).
+     */
+    public function getCustomerProcessingSmsSummary(User $viewer, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($viewer);
+        if (!$scopedIds) {
+            return [
+                'list'       => [],
+                'aggregates' => [
+                    'total_processing'       => 0,
+                    'total_pending'          => 0,
+                    'customers_transmitting' => 0,
+                    'total_customers'        => 0,
+                    'max_flight_seconds'     => 0,
+                    'max_flight_human'       => 'Idle / Ready',
+                    'operator_processing'    => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+                    'active_workers'         => 8,
+                ],
+            ];
+        }
+
+        $query = User::where('role', 'user')->whereIn('id', $scopedIds);
+
+        if ($filterUserId) {
+            $targetUser = User::find($filterUserId);
+            if ($targetUser && $targetUser->role === 'user') {
+                $query->where('id', $targetUser->id);
+            }
+        }
+
+        $customers = $query->orderBy('name')->get();
+
+        $list = [];
+        $aggregates = [
+            'total_processing'       => 0,
+            'total_pending'          => 0,
+            'customers_transmitting' => 0,
+            'total_customers'        => $customers->count(),
+            'max_flight_seconds'     => 0,
+            'max_flight_human'       => 'Idle / Ready',
+            'operator_processing'    => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+            'active_workers'         => 8,
+        ];
+
+        $oldestGlobalTimestamp = null;
+
+        foreach ($customers as $cust) {
+            $procQuery = Sms::where('user_id', $cust->id)
+                ->whereIn('status', ['processing', 'sending', 'in_progress', 'queued']);
+            $procCount = (clone $procQuery)->count();
+            $pendingCount = Sms::where('user_id', $cust->id)->where('status', 'pending')->count();
+
+            $aggregates['total_processing'] += $procCount;
+            $aggregates['total_pending'] += $pendingCount;
+
+            $oldestMsg = null;
+            $flightSeconds = 0;
+            $flightHuman = 'Idle';
+            $opBreakdown = ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0];
+            $campaignProc = 0;
+            $directProc = 0;
+            $concurrency = 0;
+
+            if ($procCount > 0) {
+                $aggregates['customers_transmitting']++;
+
+                $oldestMsg = (clone $procQuery)->orderBy('id', 'asc')->select(['id', 'updated_at', 'created_at'])->first();
+                $ts = $oldestMsg?->updated_at ?? $oldestMsg?->created_at;
+                if ($ts) {
+                    $flightSeconds = now()->diffInSeconds($ts);
+                    $flightHuman = $ts->diffForHumans(null, true);
+
+                    if ($oldestGlobalTimestamp === null || $ts->lt($oldestGlobalTimestamp)) {
+                        $oldestGlobalTimestamp = $ts;
+                    }
+                }
+
+                $ops = (clone $procQuery)
+                    ->groupBy('operator')
+                    ->selectRaw('operator, count(*) as count')
+                    ->pluck('count', 'operator')
+                    ->toArray();
+
+                foreach (['GP', 'BL', 'Robi', 'Teletalk'] as $opKey) {
+                    $opVal = (int) ($ops[$opKey] ?? 0);
+                    $opBreakdown[$opKey] = $opVal;
+                    $aggregates['operator_processing'][$opKey] = ($aggregates['operator_processing'][$opKey] ?? 0) + $opVal;
+                }
+
+                $campaignProc = (clone $procQuery)->whereNotNull('campaign_id')->count();
+                $directProc = max(0, $procCount - $campaignProc);
+                $concurrency = min(8, max(1, (int) ceil($procCount / 10)));
+            }
+
+            $state = 'smooth';
+            if ($procCount > 100 || $flightSeconds > 120) {
+                $state = 'congested';
+            } elseif ($procCount > 25 || $flightSeconds > 30) {
+                $state = 'high_load';
+            }
+
+            $list[] = [
+                'id'                  => $cust->id,
+                'name'                => $cust->name,
+                'username'            => $cust->username ?? $cust->name,
+                'email'               => $cust->email,
+                'phone'               => $cust->phone ?? 'N/A',
+                'balance'             => round((float) ($cust->balance ?? 0), 2),
+                'processing_count'    => $procCount,
+                'pending_count'       => $pendingCount,
+                'oldest_msg_id'       => $oldestMsg?->id,
+                'flight_seconds'      => $flightSeconds,
+                'flight_human'        => $flightHuman,
+                'operator_breakdown'  => $opBreakdown,
+                'campaign_processing' => $campaignProc,
+                'direct_processing'   => $directProc,
+                'concurrency'         => $concurrency,
+                'state'               => $state,
+            ];
+        }
+
+        usort($list, function ($a, $b) {
+            if ($a['processing_count'] === $b['processing_count']) {
+                return $b['flight_seconds'] <=> $a['flight_seconds'];
+            }
+            return $b['processing_count'] <=> $a['processing_count'];
+        });
+
+        if ($oldestGlobalTimestamp) {
+            $aggregates['max_flight_seconds'] = now()->diffInSeconds($oldestGlobalTimestamp);
+            $aggregates['max_flight_human'] = $oldestGlobalTimestamp->diffForHumans(null, true);
+        }
+
+        return [
+            'list'       => $list,
+            'aggregates' => $aggregates,
+        ];
+    }
+
+    /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
     public function getUserHierarchyBreadcrumbs(int $userId, ?User $actor = null): array

@@ -432,6 +432,9 @@
                     <button type="button" class="btn btn-sm btn-outline-warning" id="btn-toggle-matrix-pending" data-filter="all" style="font-size: 11px;">
                         <i class="fas fa-hourglass-half me-1"></i> {{ __('Pending Queue Only') }}
                     </button>
+                    <button type="button" class="btn btn-sm btn-outline-info" id="btn-toggle-matrix-proc" data-filter="all" style="font-size: 11px;">
+                        <i class="fas fa-cog me-1"></i> {{ __('Processing Only') }}
+                    </button>
                     <div class="input-group input-group-sm" style="max-width: 250px;">
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" class="form-control form-control-sm border-start-0" id="input-search-customers" placeholder="{{ __('Search customer...') }}" style="font-size: 12px;">
@@ -758,6 +761,215 @@
             </div>
         </div>
 
+        <!-- Customer-Wise Processing SMS (RAM & Dispatch) Section -->
+        <div class="panel-box mb-4" id="panel-customer-processing">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fas fa-cog fa-spin"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Customer-Wise Processing SMS (RAM & Dispatch)') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Active in-flight message dispatching, worker concurrency, operator routing, and real-time RAM pipeline per customer') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-info ms-1">
+                        <span id="proc-clients-count">{{ $customerProcessingSummary['aggregates']['customers_transmitting'] ?? 0 }}</span> {{ __('Clients Transmitting') }}
+                    </span>
+                    <span class="badge badge-soft-primary">
+                        <span id="proc-total-badge">{{ number_format($customerProcessingSummary['aggregates']['total_processing'] ?? 0) }}</span> {{ __('Processing In RAM') }}
+                    </span>
+                    <span class="badge badge-soft-success">
+                        <i class="fas fa-microchip me-1"></i><span id="proc-workers-badge">{{ $customerProcessingSummary['aggregates']['active_workers'] ?? 8 }}</span> {{ __('Workers Online') }}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <!-- Operator Filter Tabs -->
+                    <div class="btn-group btn-group-sm" role="group" id="btn-group-proc-ops">
+                        <button type="button" class="btn btn-outline-secondary active btn-proc-op-filter" data-op="all">{{ __('All Ops') }}</button>
+                        <button type="button" class="btn btn-outline-secondary btn-proc-op-filter" data-op="GP">GP</button>
+                        <button type="button" class="btn btn-outline-secondary btn-proc-op-filter" data-op="BL">BL</button>
+                        <button type="button" class="btn btn-outline-secondary btn-proc-op-filter" data-op="Robi">Robi</button>
+                        <button type="button" class="btn btn-outline-secondary btn-proc-op-filter" data-op="Teletalk">TT</button>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control form-control-sm border-start-0" id="input-search-processing" placeholder="{{ __('Search transmitting client...') }}" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Processing Queue -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TOTAL PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold text-info" id="kpi-proc-total">{{ number_format($customerProcessingSummary['aggregates']['total_processing'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('In Worker Memory') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TRANSMITTING CLIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="kpi-proc-clients">{{ $customerProcessingSummary['aggregates']['customers_transmitting'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span id="kpi-proc-of-total">of {{ $customerProcessingSummary['aggregates']['total_customers'] ?? 0 }} Clients</span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('MAX IN-FLIGHT TIME') }}</span>
+                            <span class="fs-5 fw-bold text-primary" id="kpi-proc-max-flight">{{ $customerProcessingSummary['aggregates']['max_flight_human'] ?? 'Idle / Ready' }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Dispatch Latency') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('AWAITING QUEUE') }}</span>
+                            <span class="fs-5 fw-bold text-warning" id="kpi-proc-pending">{{ number_format($customerProcessingSummary['aggregates']['total_pending'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Pending in Line') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">GP IN-FLIGHT</span>
+                            <span class="fs-5 fw-bold text-primary" id="kpi-proc-gp">{{ number_format($customerProcessingSummary['aggregates']['operator_processing']['GP'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Grameenphone</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">BL IN-FLIGHT</span>
+                            <span class="fs-5 fw-bold" style="color: #f97316;" id="kpi-proc-bl">{{ number_format($customerProcessingSummary['aggregates']['operator_processing']['BL'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Banglalink</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">ROBI IN-FLIGHT</span>
+                            <span class="fs-5 fw-bold text-danger" id="kpi-proc-robi">{{ number_format($customerProcessingSummary['aggregates']['operator_processing']['Robi'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Robi / Airtel</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">TT IN-FLIGHT</span>
+                            <span class="fs-5 fw-bold text-success" id="kpi-proc-tt">{{ number_format($customerProcessingSummary['aggregates']['operator_processing']['Teletalk'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Teletalk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Processing Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-customer-processing">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Customer / Client') }}</th>
+                            <th class="text-center">{{ __('In-Flight (RAM)') }}</th>
+                            <th class="text-center">{{ __('In-Flight Duration') }}</th>
+                            <th class="text-center">{{ __('Operator Routing') }}</th>
+                            <th class="text-center">{{ __('Source (Camp / API)') }}</th>
+                            <th class="text-center">{{ __('Concurrency') }}</th>
+                            <th class="text-center">{{ __('Pipeline State') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-customer-processing">
+                        @forelse($customerProcessingSummary['list'] as $cp)
+                        <tr data-cust-id="{{ $cp['id'] }}" data-proc-count="{{ $cp['processing_count'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    <i class="fas fa-user {{ $cp['processing_count'] > 0 ? 'text-info' : 'text-muted' }} me-1"></i>
+                                    {{ $cp['name'] }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ '@' . $cp['username'] }}
+                                    @if(!empty($cp['phone']) && $cp['phone'] !== 'N/A')
+                                        • {{ $cp['phone'] }}
+                                    @endif
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                @if($cp['processing_count'] > 0)
+                                    <span class="badge bg-info text-white fs-6 px-2 py-1 fw-bold">
+                                        <i class="fas fa-cog fa-spin me-1"></i>{{ number_format($cp['processing_count']) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted fw-bold">0</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($cp['processing_count'] > 0)
+                                    <span class="badge {{ $cp['state'] === 'congested' ? 'bg-danger text-white' : ($cp['state'] === 'high_load' ? 'bg-warning text-dark' : 'bg-light text-dark border') }} px-2 py-1">
+                                        <i class="fas fa-stopwatch me-1"></i>{{ $cp['flight_human'] }}
+                                    </span>
+                                @else
+                                    <span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-circle me-1"></i>{{ __('Idle / Ready') }}</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                                    <span class="badge {{ ($cp['operator_breakdown']['GP'] ?? 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted' }}" title="Grameenphone">GP: {{ $cp['operator_breakdown']['GP'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['BL'] ?? 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted' }}" title="Banglalink">BL: {{ $cp['operator_breakdown']['BL'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['Robi'] ?? 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted' }}" title="Robi/Airtel">Robi: {{ $cp['operator_breakdown']['Robi'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['Teletalk'] ?? 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted' }}" title="Teletalk">TT: {{ $cp['operator_breakdown']['Teletalk'] ?? 0 }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-info" style="font-size: 10px;" title="{{ __('Campaign Messages') }}">
+                                    <i class="fas fa-bullhorn me-1"></i>{{ $cp['campaign_processing'] ?? 0 }}
+                                </span>
+                                <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="{{ __('Direct / API Single Messages') }}">
+                                    <i class="fas fa-bolt me-1"></i>{{ $cp['direct_processing'] ?? 0 }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                @if($cp['processing_count'] > 0)
+                                    <span class="badge badge-soft-primary" style="font-size: 11px;">
+                                        <i class="fas fa-tasks me-1"></i>{{ $cp['concurrency'] }} {{ __('Threads') }}
+                                    </span>
+                                @else
+                                    <span class="text-muted" style="font-size: 11px;">—</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($cp['state'] === 'congested')
+                                    <span class="badge bg-danger text-white py-1 px-2"><i class="fas fa-fire me-1"></i>{{ __('Congested') }}</span>
+                                @elseif($cp['state'] === 'high_load')
+                                    <span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-tachometer-alt me-1"></i>{{ __('High Load') }}</span>
+                                @else
+                                    <span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check me-1"></i>{{ __('Smooth Flow') }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($cp['balance'], 2) }}</td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-info text-white py-1 px-2 btn-view-customer-processing" data-id="{{ $cp['id'] }}" title="{{ __('Open live processing messages for this customer') }}" style="font-size: 11px; font-weight: 600;">
+                                    <i class="fas fa-cog fa-spin me-1"></i> {{ __('View Processing') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $cp['id'] }}" title="{{ __('Inspect Customer Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle text-info fs-3 d-block mb-2"></i>
+                                {{ __('No customer SMS currently in-flight or processing in RAM.') }}
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Dedicated Customer SMS Queue Details & Direct Message Actions -->
         <div class="panel-box mb-4 {{ empty($customerQueue) ? 'd-none' : '' }}" id="panel-customer-queue">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1071,6 +1283,10 @@ $(document).ready(function() {
     let currentPendingOpFilter = 'all';
     let currentPendingSearchTerm = '';
     let matrixPendingOnly = false;
+    let currentCustomerProcessingData = @json($customerProcessingSummary ?? []);
+    let currentProcOpFilter = 'all';
+    let currentProcSearchTerm = '';
+    let matrixProcOnly = false;
 
     // 1. Operator Chart
     const opCtx = document.getElementById('operatorChart');
@@ -1184,6 +1400,9 @@ $(document).ready(function() {
                 // Render Customer-Wise Pending SMS Queue
                 renderCustomerPendingTable(res.customer_pending);
 
+                // Render Customer-Wise Processing SMS Queue
+                renderCustomerProcessingTable(res.customer_processing);
+
                 // Update Hierarchical Breadcrumbs
                 updateBreadcrumbs(res.breadcrumbs, !!res.customer_queue);
 
@@ -1218,6 +1437,11 @@ $(document).ready(function() {
         if (matrixPendingOnly) {
             filtered = filtered.filter(function(c) {
                 return (c.pending_queue || 0) > 0;
+            });
+        }
+        if (matrixProcOnly) {
+            filtered = filtered.filter(function(c) {
+                return (c.processing_queue || 0) > 0;
             });
         }
         if (currentSearchTerm.trim() !== '') {
@@ -1257,6 +1481,12 @@ $(document).ready(function() {
                 </a>
             ` : `<span class="text-muted fw-bold">0</span>`;
 
+            const procDisplay = cust.processing_queue > 0 ? `
+                <a href="javascript:void(0);" class="btn-view-customer-processing text-info text-decoration-underline fw-bold" data-id="${cust.id}" title="Click to view processing queue">
+                    <i class="fas fa-cog fa-spin me-1"></i>${Number(cust.processing_queue).toLocaleString()}
+                </a>
+            ` : `<span class="text-muted fw-bold">0</span>`;
+
             html += `
                 <tr data-cust-id="${cust.id}">
                     <td>
@@ -1267,7 +1497,7 @@ $(document).ready(function() {
                         <small class="text-muted">@${cust.username}${phoneStr}</small>
                     </td>
                     <td class="text-center">${pendingDisplay}</td>
-                    <td class="text-center fw-bold ${procClass}">${Number(cust.processing_queue).toLocaleString()}</td>
+                    <td class="text-center">${procDisplay}</td>
                     <td class="text-center fw-bold text-dark">${Number(cust.today_total).toLocaleString()}</td>
                     <td class="text-center fw-bold text-success">${Number(cust.today_delivered).toLocaleString()}</td>
                     <td class="text-center fw-bold ${failClass}">${Number(cust.today_failed).toLocaleString()}</td>
@@ -1432,6 +1662,138 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-customer-pending').html(html);
+    }
+
+    // 3c. Render Customer-Wise Processing SMS Queue Table
+    function renderCustomerProcessingTable(data) {
+        if (!data) return;
+        currentCustomerProcessingData = data;
+        const list = data.list || [];
+        const agg = data.aggregates || {};
+
+        let filtered = list.slice();
+
+        // Filter by Operator tab if selected
+        if (currentProcOpFilter !== 'all') {
+            filtered = filtered.filter(function(cp) {
+                const ops = cp.operator_breakdown || {};
+                return (ops[currentProcOpFilter] || 0) > 0;
+            });
+        }
+
+        // Filter by Search Input
+        if (currentProcSearchTerm.trim() !== '') {
+            const term = currentProcSearchTerm.toLowerCase();
+            filtered = filtered.filter(function(cp) {
+                const name = (cp.name || '').toLowerCase();
+                const username = (cp.username || '').toLowerCase();
+                const phone = (cp.phone || '').toLowerCase();
+                return name.includes(term) || username.includes(term) || phone.includes(term);
+            });
+        }
+
+        // Update Header Badges & Aggregates
+        $('#proc-clients-count').text(agg.customers_transmitting || 0);
+        $('#proc-total-badge').text(Number(agg.total_processing || 0).toLocaleString());
+        $('#proc-workers-badge').text(agg.active_workers || 8);
+        $('#kpi-proc-total').text(Number(agg.total_processing || 0).toLocaleString());
+        $('#kpi-proc-clients').text(agg.customers_transmitting || 0);
+        $('#kpi-proc-of-total').text('of ' + (agg.total_customers || 0) + ' Clients');
+        $('#kpi-proc-max-flight').text(agg.max_flight_human || 'Idle / Ready');
+        $('#kpi-proc-pending').text(Number(agg.total_pending || 0).toLocaleString());
+
+        const ops = agg.operator_processing || {};
+        $('#kpi-proc-gp').text(Number(ops.GP || 0).toLocaleString());
+        $('#kpi-proc-bl').text(Number(ops.BL || 0).toLocaleString());
+        $('#kpi-proc-robi').text(Number(ops.Robi || 0).toLocaleString());
+        $('#kpi-proc-tt').text(Number(ops.Teletalk || 0).toLocaleString());
+
+        if (!filtered.length) {
+            $('#tbody-customer-processing').html(`
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-info fs-3 d-block mb-2"></i>
+                        No customer SMS currently in-flight or processing in RAM matching your criteria.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(cp) {
+            const phoneStr = (cp.phone && cp.phone !== 'N/A') ? ` • ${cp.phone}` : '';
+            const cOps = cp.operator_breakdown || {};
+
+            let latencyBadge = '';
+            if (cp.processing_count > 0) {
+                let badgeClass = 'bg-light text-dark border';
+                if (cp.state === 'congested') badgeClass = 'bg-danger text-white';
+                else if (cp.state === 'high_load') badgeClass = 'bg-warning text-dark';
+                latencyBadge = `<span class="badge ${badgeClass} px-2 py-1"><i class="fas fa-stopwatch me-1"></i>${cp.flight_human}</span>`;
+            } else {
+                latencyBadge = `<span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-circle me-1"></i>Idle / Ready</span>`;
+            }
+
+            let stateBadge = '';
+            if (cp.state === 'congested') {
+                stateBadge = `<span class="badge bg-danger text-white py-1 px-2"><i class="fas fa-fire me-1"></i>Congested</span>`;
+            } else if (cp.state === 'high_load') {
+                stateBadge = `<span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-tachometer-alt me-1"></i>High Load</span>`;
+            } else {
+                stateBadge = `<span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check me-1"></i>Smooth Flow</span>`;
+            }
+
+            const procHtml = cp.processing_count > 0
+                ? `<span class="badge bg-info text-white fs-6 px-2 py-1 fw-bold"><i class="fas fa-cog fa-spin me-1"></i>${Number(cp.processing_count).toLocaleString()}</span>`
+                : `<span class="text-muted fw-bold">0</span>`;
+
+            const concurrencyHtml = cp.processing_count > 0
+                ? `<span class="badge badge-soft-primary" style="font-size: 11px;"><i class="fas fa-tasks me-1"></i>${cp.concurrency} Threads</span>`
+                : `<span class="text-muted" style="font-size: 11px;">—</span>`;
+
+            html += `
+                <tr data-cust-id="${cp.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <i class="fas fa-user ${cp.processing_count > 0 ? 'text-info' : 'text-muted'} me-1"></i>
+                            ${cp.name}
+                        </div>
+                        <small class="text-muted">@${cp.username}${phoneStr}</small>
+                    </td>
+                    <td class="text-center">${procHtml}</td>
+                    <td class="text-center">${latencyBadge}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                            <span class="badge ${(cOps.GP || 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted'}" title="Grameenphone">GP: ${cOps.GP || 0}</span>
+                            <span class="badge ${(cOps.BL || 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted'}" title="Banglalink">BL: ${cOps.BL || 0}</span>
+                            <span class="badge ${(cOps.Robi || 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted'}" title="Robi/Airtel">Robi: ${cOps.Robi || 0}</span>
+                            <span class="badge ${(cOps.Teletalk || 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted'}" title="Teletalk">TT: ${cOps.Teletalk || 0}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-info" style="font-size: 10px;" title="Campaign Messages">
+                            <i class="fas fa-bullhorn me-1"></i>${cp.campaign_processing || 0}
+                        </span>
+                        <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="Direct / API Single Messages">
+                            <i class="fas fa-bolt me-1"></i>${cp.direct_processing || 0}
+                        </span>
+                    </td>
+                    <td class="text-center">${concurrencyHtml}</td>
+                    <td class="text-center">${stateBadge}</td>
+                    <td class="text-end fw-bold text-dark">৳${Number(cp.balance).toFixed(2)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-info text-white py-1 px-2 btn-view-customer-processing" data-id="${cp.id}" title="Open live processing messages for this customer" style="font-size: 11px; font-weight: 600;">
+                            <i class="fas fa-cog fa-spin me-1"></i> View Processing
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${cp.id}" title="Inspect Customer Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-customer-processing').html(html);
     }
 
     // 4. Render Dedicated Customer SMS Queue Details
@@ -1624,6 +1986,8 @@ $(document).ready(function() {
     $('#btn-toggle-matrix-pending').on('click', function() {
         matrixPendingOnly = !matrixPendingOnly;
         if (matrixPendingOnly) {
+            matrixProcOnly = false;
+            $('#btn-toggle-matrix-proc').removeClass('btn-info text-white active').addClass('btn-outline-info').html('<i class="fas fa-cog me-1"></i> Processing Only');
             $(this).removeClass('btn-outline-warning').addClass('btn-warning text-dark active');
             $(this).html('<i class="fas fa-check me-1"></i> Showing Pending Only');
         } else {
@@ -1631,6 +1995,52 @@ $(document).ready(function() {
             $(this).html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
         }
         renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Matrix Toggle Processing Only Filter
+    $('#btn-toggle-matrix-proc').on('click', function() {
+        matrixProcOnly = !matrixProcOnly;
+        if (matrixProcOnly) {
+            matrixPendingOnly = false;
+            $('#btn-toggle-matrix-pending').removeClass('btn-warning text-dark active').addClass('btn-outline-warning').html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
+            $(this).removeClass('btn-outline-info').addClass('btn-info text-white active');
+            $(this).html('<i class="fas fa-check me-1"></i> Showing Processing Only');
+        } else {
+            $(this).removeClass('btn-info text-white active').addClass('btn-outline-info');
+            $(this).html('<i class="fas fa-cog me-1"></i> Processing Only');
+        }
+        renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Processing Search Filter
+    $('#input-search-processing').on('input', function() {
+        currentProcSearchTerm = $(this).val();
+        renderCustomerProcessingTable(currentCustomerProcessingData);
+    });
+
+    // Customer Processing Operator Tabs
+    $('.btn-proc-op-filter').on('click', function() {
+        $('.btn-proc-op-filter').removeClass('active');
+        $(this).addClass('active');
+        currentProcOpFilter = $(this).data('op');
+        renderCustomerProcessingTable(currentCustomerProcessingData);
+    });
+
+    // View Processing Queue for specific customer
+    $(document).on('click', '.btn-view-customer-processing', function() {
+        const custId = $(this).data('id');
+        $('#select-filter-user').val(custId);
+        currentCustQueueStatusFilter = 'processing';
+        $('.cust-status-tab-btn').removeClass('active');
+        $('.cust-status-tab-btn[data-status="processing"]').addClass('active');
+        fetchLiveData();
+        setTimeout(function() {
+            if ($('#panel-customer-queue').length) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-queue').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
     });
 
     // Customer Pending Search Filter

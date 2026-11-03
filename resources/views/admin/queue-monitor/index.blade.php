@@ -238,28 +238,46 @@
             </div>
         </div>
 
-        <!-- 5 KPI Cards Row -->
+        <!-- 6 KPI Cards Row -->
         <div class="row g-3 mb-4">
-            <!-- 1. Total Queued SMS -->
-            <div class="col-xl col-md-6 col-12">
+            <!-- 1. Total Queued SMS (RabbitMQ Ready) -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Total Queued SMS') }}</div>
-                            <div class="kpi-val text-primary" id="val-queue-backlog">{{ number_format($broker['ready_messages'] + $metrics['pending_count']) }}</div>
+                            <div class="kpi-val text-primary" id="val-rmq-ready">{{ number_format($broker['ready_messages']) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #e0e7ff; color: #4f46e5;">
                             <i class="fas fa-layer-group"></i>
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>RabbitMQ Ready: <strong id="val-rmq-ready">{{ number_format($broker['ready_messages']) }}</strong></span>
+                        <span>{{ __('RabbitMQ Broker Queue') }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. In-Flight Processing -->
-            <div class="col-xl col-md-6 col-12">
+            <!-- 2. Pending SMS (Database Queued) -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Pending SMS') }}</div>
+                            <div class="kpi-val text-secondary" id="val-pending-count" style="color: #6366f1;">{{ number_format($metrics['pending_count']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ede9fe; color: #7c3aed;">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>{{ __('Awaiting Gateway Delivery') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. In-Flight Processing -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -271,31 +289,31 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>{{ __('Currently in worker RAM') }}</span>
+                        <span>{{ __('Active in Worker RAM') }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Real-Time TPS -->
-            <div class="col-xl col-md-6 col-12">
+            <!-- 4. Real-Time TPS -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Live Throughput') }}</div>
-                            <div class="kpi-val text-info"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 14px; font-weight: 600;">TPS</small></div>
+                            <div class="kpi-val text-info"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 13px; font-weight: 600;">TPS</small></div>
                         </div>
                         <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong> • 5m: <strong id="val-5m">{{ number_format($metrics['last_5_min_volume']) }}</strong></span>
+                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong></span>
                     </div>
                 </div>
             </div>
 
-            <!-- 4. Today's Dispatched & Rate -->
-            <div class="col-xl col-md-6 col-12">
+            <!-- 5. Today's Delivery & Rate -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -307,13 +325,13 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>Total: <strong id="val-today-total">{{ number_format($metrics['today_total']) }}</strong> (Fail: <span id="val-today-failed" class="text-danger">{{ number_format($metrics['today_failed']) }}</span>)</span>
+                        <span>Total: <strong id="val-today-total">{{ number_format($metrics['today_total']) }}</strong></span>
                     </div>
                 </div>
             </div>
 
-            <!-- 5. Active Workers Pool -->
-            <div class="col-xl col-md-6 col-12">
+            <!-- 6. Active Workers Pool -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -764,6 +782,7 @@ $(document).ready(function() {
                 const totalBacklog = (res.broker.ready_messages || 0) + (res.metrics.pending_count || 0);
                 $('#val-queue-backlog').text(totalBacklog.toLocaleString());
                 $('#val-rmq-ready').text(res.broker.ready_messages.toLocaleString());
+                $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-unack').text(res.broker.unack_messages.toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());

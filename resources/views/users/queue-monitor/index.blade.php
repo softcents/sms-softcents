@@ -199,10 +199,10 @@
             </div>
         </div>
 
-        <!-- 4 KPI Cards Row -->
+        <!-- 5 KPI Cards Row -->
         <div class="row g-3 mb-4">
             <!-- 1. Total Queued SMS -->
-            <div class="col-xl-3 col-md-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -214,31 +214,49 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>{{ __('Waiting for telecom gateway dispatch') }}</span>
+                        <span>{{ __('In Queue Pipeline') }}</span>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. Real-Time TPS -->
-            <div class="col-xl-3 col-md-6 col-12">
+            <!-- 2. Pending SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Pending SMS') }}</div>
+                            <div class="kpi-val text-secondary" id="val-pending-count" style="color: #6366f1;">{{ number_format($metrics['pending_count']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ede9fe; color: #7c3aed;">
+                            <i class="fas fa-hourglass-half"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>{{ __('Waiting for Gateway Delivery') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Real-Time TPS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Dispatch Throughput') }}</div>
-                            <div class="kpi-val text-info"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 14px; font-weight: 600;">TPS</small></div>
+                            <div class="kpi-val text-info"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 13px; font-weight: 600;">TPS</small></div>
                         </div>
                         <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
                             <i class="fas fa-tachometer-alt"></i>
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong> • 5m: <strong id="val-5m">{{ number_format($metrics['last_5_min_volume']) }}</strong></span>
+                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong></span>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Today's Dispatched Volume -->
-            <div class="col-xl-3 col-md-6 col-12">
+            <!-- 4. Today's Dispatched Volume -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -255,8 +273,8 @@
                 </div>
             </div>
 
-            <!-- 4. Delivery Rate -->
-            <div class="col-xl-3 col-md-6 col-12">
+            <!-- 5. Delivery Rate -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -459,6 +477,7 @@ $(document).ready(function() {
 
                 // KPI
                 $('#val-queue-backlog').text(res.metrics.pending_count.toLocaleString());
+                $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());

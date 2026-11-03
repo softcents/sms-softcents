@@ -275,9 +275,14 @@ class QueueMonitorService
     /**
      * Get real-time queue and dispatch summary for all Resellers and Sub-Resellers.
      */
-    public function getResellerHierarchySummary(): array
+    public function getResellerHierarchySummary(?User $viewer = null): array
     {
-        $users = User::whereIn('role', ['sp', 'ssp', 'user'])->orderBy('role')->orderBy('name')->get();
+        $scopedIds = $viewer ? $this->getScopedUserIds($viewer) : null;
+        $query = User::whereIn('role', ['sp', 'ssp', 'user']);
+        if ($scopedIds !== null) {
+            $query->whereIn('id', $scopedIds);
+        }
+        $users = $query->orderBy('role')->orderBy('name')->get();
         $summary = [];
 
         $parents = User::whereIn('role', ['admin', 'sp', 'ssp'])->pluck('name', 'id')->toArray();

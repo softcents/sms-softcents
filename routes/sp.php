@@ -65,4 +65,8 @@ Route::group(['as' => 'sp.', 'prefix' => 'sp', 'middleware' => ['auth', 'sp']], 
     // Live Queue Monitor
     Route::get('/queue-monitor', [SP\QueueMonitorController::class, 'index'])->name('queue-monitor.index');
     Route::get('/queue-monitor/data', [SP\QueueMonitorController::class, 'liveData'])->name('queue-monitor.data');
+    Route::get('/queue-monitor/inspect/{id}', [SP\QueueMonitorController::class, 'inspectUser'])->name('queue-monitor.inspect-user');
+    Route::get('/queue-monitor/customer-queue/{id}', [SP\QueueMonitorController::class, 'customerQueueDetails'])->name('queue-monitor.customer-queue');
+    Route::post('/queue-monitor/sms/cancel/{id}', [SP\QueueMonitorController::class, 'cancelSms'])->name('queue-monitor.sms.cancel');
+    Route::post('/queue-monitor/sms/retry/{id}', [SP\QueueMonitorController::class, 'retrySms'])->name('queue-monitor.sms.retry');
 });

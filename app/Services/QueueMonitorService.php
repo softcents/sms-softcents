@@ -178,6 +178,52 @@ class QueueMonitorService
     }
 
     /**
+     * Get real-time queue and dispatch summary for all Resellers and Sub-Resellers.
+     */
+    public function getResellerHierarchySummary(): array
+    {
+        $resellers = User::whereIn('role', ['sp', 'ssp'])->orderBy('role')->orderBy('name')->get();
+        $summary = [];
+
+        foreach ($resellers as $r) {
+            if ($r->role === 'sp') {
+                $sspIds = User::where('parent_id', $r->id)->where('role', 'ssp')->pluck('id')->toArray();
+                $downline = User::where(function ($q) use ($r, $sspIds) {
+                    $q->where('parent_id', $r->id);
+                    if (!empty($sspIds)) {
+                        $q->orWhereIn('parent_id', $sspIds);
+                    }
+                })->pluck('id')->toArray();
+                $allIds = array_unique(array_merge([$r->id], $sspIds, $downline));
+            } else {
+                $downline = User::where('parent_id', $r->id)->pluck('id')->toArray();
+                $allIds = array_unique(array_merge([$r->id], $downline));
+            }
+
+            $pending = Sms::whereIn('user_id', $allIds)->where('status', 'pending')->count();
+            $today = Sms::whereIn('user_id', $allIds)->whereDate('created_at', today())->count();
+            $todaySuccess = Sms::whereIn('user_id', $allIds)->whereDate('created_at', today())->where('status', 'success')->count();
+            $rate = $today > 0 ? round(($todaySuccess / $today) * 100, 1) : 100.0;
+
+            $summary[] = [
+                'id'            => $r->id,
+                'name'          => $r->name,
+                'username'      => $r->username ?? $r->name,
+                'role'          => $r->role,
+                'role_label'    => $r->role === 'sp' ? 'Reseller (SP)' : 'Sub-Reseller (SSP)',
+                'customers'     => count($downline),
+                'pending_queue' => $pending,
+                'today_total'   => $today,
+                'today_success' => $todaySuccess,
+                'delivery_rate' => $rate,
+                'balance'       => round((float) ($r->balance ?? 0), 2),
+            ];
+        }
+
+        return $summary;
+    }
+
+    /**
      * Get Scoped User IDs according to multi-tenant hierarchy.
      */
     public function getScopedUserIds(?User $user): ?array

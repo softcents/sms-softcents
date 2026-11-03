@@ -419,6 +419,66 @@
             </div>
         </div>
 
+        <!-- Resellers & Sub-Resellers Hierarchy Queue Matrix -->
+        <div class="panel-box mb-4">
+            <div class="panel-header">
+                <h5 class="panel-title">
+                    <i class="fas fa-sitemap text-primary"></i>
+                    {{ __('Reseller & Sub-Reseller Network Queue Matrix') }}
+                </h5>
+                <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Partners Monitored') }}</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-resellers">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Partner Name & Username') }}</th>
+                            <th>{{ __('Hierarchy Level') }}</th>
+                            <th class="text-center">{{ __('Active Customers') }}</th>
+                            <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Today Total SMS') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-resellers">
+                        @forelse($resellerSummary ?? [] as $res)
+                        <tr data-reseller-id="{{ $res['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark">{{ $res['name'] }}</div>
+                                <small class="text-muted">{{ '@' . $res['username'] }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {{ $res['role'] === 'sp' ? 'badge-soft-primary' : 'badge-soft-info' }}">
+                                    {{ $res['role_label'] }}
+                                </span>
+                            </td>
+                            <td class="text-center fw-bold">{{ $res['customers'] }}</td>
+                            <td class="text-center fw-bold {{ $res['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($res['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($res['today_total']) }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">{{ $res['delivery_rate'] }}%</span>
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($res['balance'], 2) }}</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="{{ $res['id'] }}" style="font-size: 11px;">
+                                    <i class="fas fa-filter me-1"></i> {{ __('Filter Traffic') }}
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">{{ __('No resellers or sub-resellers registered yet.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Bottom Section: Live Dispatched Stream & Failed Jobs Manager -->
         <div class="row g-4">
             <!-- Live SMS Stream -->
@@ -664,6 +724,9 @@ $(document).ready(function() {
                 // Update Queues Table
                 renderQueuesTable(res.queues);
 
+                // Update Resellers Hierarchy Matrix Table
+                renderResellersTable(res.resellers);
+
                 // Update Operator Chart
                 if (operatorChart && res.metrics.operators) {
                     const ops = res.metrics.operators;
@@ -729,6 +792,43 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-queues').html(html);
+    }
+
+    function renderResellersTable(resellers) {
+        if (!resellers) return;
+        $('#resellers-count').text(resellers.length);
+
+        if (!resellers.length) {
+            $('#tbody-resellers').html('<tr><td colspan="8" class="text-center py-4 text-muted">No resellers or sub-resellers registered yet.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        resellers.forEach(function(r) {
+            const roleBadge = r.role === 'sp' ? 'badge-soft-primary' : 'badge-soft-info';
+            const pendingClass = r.pending_queue > 0 ? 'text-warning' : 'text-muted';
+
+            html += `
+                <tr data-reseller-id="${r.id}">
+                    <td>
+                        <div class="fw-bold text-dark">${r.name}</div>
+                        <small class="text-muted">@${r.username}</small>
+                    </td>
+                    <td><span class="badge ${roleBadge}">${r.role_label}</span></td>
+                    <td class="text-center fw-bold">${r.customers}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(r.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-dark">${Number(r.today_total).toLocaleString()}</td>
+                    <td class="text-center"><span class="badge badge-soft-success">${r.delivery_rate}%</span></td>
+                    <td class="text-end fw-bold text-dark">৳${Number(r.balance).toFixed(2)}</td>
+                    <td class="text-end">
+                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="${r.id}" style="font-size: 11px;">
+                            <i class="fas fa-filter me-1"></i> Filter Traffic
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-resellers').html(html);
     }
 
     function renderStreamTable(stream) {
@@ -936,6 +1036,12 @@ $(document).ready(function() {
                 btn.prop('disabled', false);
             }
         });
+    });
+
+    $(document).on('click', '.btn-filter-reseller', function() {
+        const id = $(this).data('id');
+        $('#select-filter-user').val(id).trigger('change');
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
     });
 
     $('#select-filter-user').on('change', function() {

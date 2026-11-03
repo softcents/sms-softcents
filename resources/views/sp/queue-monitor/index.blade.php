@@ -177,7 +177,11 @@
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-1" style="font-size: 13px; color: #64748b;">
                         <span><i class="fas fa-sitemap me-1"></i> Reseller Network: <strong>{{ auth()->user()->name }}</strong> ({{ '@' . (auth()->user()->username ?? auth()->user()->name) }})</span>
                         <span>•</span>
-                        <span><i class="fas fa-microchip me-1"></i> Worker Engine: <strong class="text-success">{{ $workers['active_workers'] }} Workers Active</strong></span>
+                        <span><i class="fas fa-microchip me-1"></i> Worker Engine: <strong class="text-success">{{ $workers['active_workers'] }} Active</strong></span>
+                        <span>•</span>
+                        <span><i class="fas fa-tachometer-alt me-1 text-info"></i> Speed: <strong id="val-tps" class="text-info">{{ $metrics['current_tps'] }}</strong> TPS</span>
+                        <span>•</span>
+                        <span><i class="fas fa-check-circle me-1 text-success"></i> Delivery Rate: <strong id="val-delivery-rate" class="text-success">{{ $metrics['delivery_rate'] }}%</strong></span>
                         <span>•</span>
                         <span><i class="far fa-clock me-1"></i> Last Synced: <strong id="last-synced-time">{{ now()->format('H:i:s') }}</strong></span>
                     </div>
@@ -303,38 +307,20 @@
                 </div>
             </div>
 
-            <!-- 6. Real-Time TPS -->
+            <!-- 6. Failed SMS -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <div class="kpi-label">{{ __('Network Throughput') }}</div>
-                            <div class="kpi-val text-info"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 13px; font-weight: 600;">TPS</small></div>
+                            <div class="kpi-label">{{ __('Failed SMS') }}</div>
+                            <div class="kpi-val text-danger" id="val-today-failed">{{ number_format($metrics['today_failed']) }}</div>
                         </div>
-                        <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
-                            <i class="fas fa-tachometer-alt"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-sub">
-                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. Delivery Rate -->
-            <div class="col-xl col-md-4 col-sm-6 col-12">
-                <div class="kpi-card">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="kpi-label">{{ __('Delivery Success Rate') }}</div>
-                            <div class="kpi-val text-success"><span id="val-delivery-rate">{{ $metrics['delivery_rate'] }}%</span></div>
-                        </div>
-                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;">
+                            <i class="fas fa-times-circle"></i>
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>Failed: <span id="val-today-failed" class="text-danger">{{ number_format($metrics['today_failed']) }}</span></span>
+                        <span>Today: <strong id="val-sub-today-failed">{{ number_format($metrics['today_failed']) }}</strong> • All: <strong id="val-total-failed">{{ number_format($metrics['failed_count']) }}</strong></span>
                     </div>
                 </div>
             </div>
@@ -522,7 +508,9 @@ $(document).ready(function() {
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());
                 $('#val-today-total').text(res.metrics.today_total.toLocaleString());
                 $('#val-today-success').text(res.metrics.today_success.toLocaleString());
-                $('#val-today-failed').text(res.metrics.today_failed.toLocaleString());
+                $('#val-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
+                $('#val-sub-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
+                $('#val-total-failed').text((res.metrics.failed_count || 0).toLocaleString());
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
 
                 // Operator Chart

@@ -205,6 +205,10 @@
                         <span>•</span>
                         <span><i class="fas fa-microchip me-1"></i> Workers: <strong id="workers-count" class="text-success">{{ $workers['active_workers'] }}/{{ $workers['expected_workers'] }} Healthy</strong></span>
                         <span>•</span>
+                        <span><i class="fas fa-tachometer-alt me-1 text-info"></i> Speed: <strong id="val-tps" class="text-info">{{ $metrics['current_tps'] }}</strong> TPS</span>
+                        <span>•</span>
+                        <span><i class="fas fa-check-circle me-1 text-success"></i> Delivery Rate: <strong id="val-delivery-rate" class="text-success">{{ $metrics['delivery_rate'] }}%</strong></span>
+                        <span>•</span>
                         <span><i class="far fa-clock me-1"></i> Last Synced: <strong id="last-synced-time">{{ now()->format('H:i:s') }}</strong></span>
                     </div>
                 </div>
@@ -330,20 +334,20 @@
                 </div>
             </div>
 
-            <!-- 6. Real-Time TPS -->
+            <!-- 6. Failed SMS -->
             <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <div class="kpi-label">{{ __('Live Throughput') }}</div>
-                            <div class="kpi-val" style="color: #6366f1;"><span id="val-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 13px; font-weight: 600;">TPS</small></div>
+                            <div class="kpi-label">{{ __('Failed SMS') }}</div>
+                            <div class="kpi-val text-danger" id="val-today-failed">{{ number_format($metrics['today_failed']) }}</div>
                         </div>
-                        <div class="kpi-icon" style="background: #ede9fe; color: #6366f1;">
-                            <i class="fas fa-tachometer-alt"></i>
+                        <div class="kpi-icon" style="background: #fee2e2; color: #dc2626;">
+                            <i class="fas fa-times-circle"></i>
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>Workers: <strong id="val-workers-status">{{ $workers['active_workers'] }}/{{ $workers['expected_workers'] }}</strong> • Rate: <strong id="val-delivery-rate">{{ $metrics['delivery_rate'] }}%</strong></span>
+                        <span>Today: <strong id="val-sub-today-failed">{{ number_format($metrics['today_failed']) }}</strong> • All: <strong id="val-total-failed">{{ number_format($metrics['failed_count']) }}</strong></span>
                     </div>
                 </div>
             </div>
@@ -795,7 +799,9 @@ $(document).ready(function() {
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
                 $('#val-today-total').text(res.metrics.today_total.toLocaleString());
-                $('#val-today-failed').text(res.metrics.today_failed.toLocaleString());
+                $('#val-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
+                $('#val-sub-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
+                $('#val-total-failed').text((res.metrics.failed_count || 0).toLocaleString());
 
                 // Update Queues Table
                 renderQueuesTable(res.queues);

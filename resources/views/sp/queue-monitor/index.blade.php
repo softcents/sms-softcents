@@ -265,6 +265,87 @@
             </div>
         </div>
 
+        <!-- Own Total SMS Traffic (Direct Dispatches by Reseller) -->
+        <div class="panel-box mb-4" id="panel-own-traffic" style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border-left: 5px solid #10b981;">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2" style="background: transparent;">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #dcfce7; color: #15803d;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0" style="color: #065f46;">
+                            {{ __('Own Total SMS Traffic') }}
+                            <span class="badge bg-success ms-1" style="font-size: 10px;">{{ __('DIRECT DISPATCHES') }}</span>
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Traffic generated directly from this Reseller account (excluding downline Sub-resellers & Customers)') }}
+                        </small>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm {{ ($filterUserId ?? null) == auth()->id() ? 'btn-success' : 'btn-outline-success' }} py-1 px-3 d-flex align-items-center gap-1 shadow-sm" id="btn-toggle-own-traffic" data-own-id="{{ auth()->id() }}" style="font-size: 12px; font-weight: 600;">
+                        <i class="fas {{ ($filterUserId ?? null) == auth()->id() ? 'fa-check-circle' : 'fa-filter' }}"></i>
+                        <span id="btn-toggle-own-text">{{ ($filterUserId ?? null) == auth()->id() ? __('Viewing Own Direct Traffic') : __('Isolate Own Direct Traffic') }}</span>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 {{ ($filterUserId ?? null) == auth()->id() ? '' : 'd-none' }}" id="btn-switch-network" style="font-size: 11px;">
+                        <i class="fas fa-globe me-1"></i> {{ __('View All Network') }}
+                    </button>
+                </div>
+            </div>
+            <div class="p-3">
+                <div class="row g-3 text-center">
+                    <!-- 1. Lifetime Own Total SMS -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Total SMS (Lifetime)') }}</span>
+                            <span class="fs-4 fw-bold text-dark" id="val-own-lifetime">{{ number_format($metrics['own_traffic']['lifetime_total'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Direct Messages') }}</small>
+                        </div>
+                    </div>
+                    <!-- 2. Today Own Dispatched -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Today Dispatched') }}</span>
+                            <span class="fs-4 fw-bold text-success" id="val-own-today">{{ number_format($metrics['own_traffic']['today_total'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Dispatched Today') }}</small>
+                        </div>
+                    </div>
+                    <!-- 3. Own Pending in Queue -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Pending in Queue') }}</span>
+                            <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="val-own-pending">{{ number_format($metrics['own_traffic']['pending_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Dispatch') }}</small>
+                        </div>
+                    </div>
+                    <!-- 4. Own Processing (RAM) -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Processing (RAM)') }}</span>
+                            <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="val-own-processing">{{ number_format($metrics['own_traffic']['processing_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('In Worker RAM') }}</small>
+                        </div>
+                    </div>
+                    <!-- 5. Own Delivery Rate -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Delivery Rate') }}</span>
+                            <span class="fs-4 fw-bold text-success" id="val-own-rate">{{ $metrics['own_traffic']['delivery_rate'] ?? 100 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Success Ratio') }}</small>
+                        </div>
+                    </div>
+                    <!-- 6. Traffic Share of Network -->
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="p-2 bg-white rounded border shadow-sm">
+                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Traffic Share') }}</span>
+                            <span class="fs-4 fw-bold text-primary" id="val-own-share">{{ $metrics['own_traffic']['traffic_share'] ?? 0 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Of Network Total') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- 12 KPI Cards Row -->
         <div class="row g-3 mb-4">
             <!-- 1. Total Queued SMS -->
@@ -578,9 +659,14 @@
                     </thead>
                     <tbody id="tbody-resellers">
                         @forelse($resellerSummary ?? [] as $res)
-                        <tr data-reseller-id="{{ $res['id'] }}" data-role="{{ $res['role'] }}">
+                        <tr data-reseller-id="{{ $res['id'] }}" data-role="{{ $res['role'] }}" class="{{ !empty($res['is_own']) ? 'table-success' : '' }}" style="{{ !empty($res['is_own']) ? 'background-color: #f0fdf4 !important;' : '' }}">
                             <td>
-                                <div class="fw-bold text-dark">{{ $res['name'] }}</div>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    {{ $res['name'] }}
+                                    @if(!empty($res['is_own']))
+                                        <span class="badge bg-success" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>{{ __('YOU') }}</span>
+                                    @endif
+                                </div>
                                 <small class="text-muted">{{ '@' . $res['username'] }}</small>
                                 @if(!empty($res['parent_name']))
                                 <div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Parent: <strong>{{ $res['parent_name'] }}</strong></div>
@@ -1371,6 +1457,30 @@ $(document).ready(function() {
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
                 $('#live-indicator').removeClass('warning danger');
 
+                // Own Total SMS Traffic
+                if (res.metrics && res.metrics.own_traffic) {
+                    const ot = res.metrics.own_traffic;
+                    $('#val-own-lifetime').text(Number(ot.lifetime_total || 0).toLocaleString());
+                    $('#val-own-today').text(Number(ot.today_total || 0).toLocaleString());
+                    $('#val-own-pending').text(Number(ot.pending_queue || 0).toLocaleString());
+                    $('#val-own-processing').text(Number(ot.processing_queue || 0).toLocaleString());
+                    $('#val-own-rate').text((ot.delivery_rate || 100) + '%');
+                    $('#val-own-share').text((ot.traffic_share || 0) + '%');
+
+                    const isOwnActive = ($('#select-filter-user').val() == ot.user_id);
+                    if (isOwnActive) {
+                        $('#btn-toggle-own-traffic').removeClass('btn-outline-success').addClass('btn-success');
+                        $('#btn-toggle-own-traffic i').removeClass('fa-filter').addClass('fa-check-circle');
+                        $('#btn-toggle-own-text').text("Viewing Own Direct Traffic");
+                        $('#btn-switch-network').removeClass('d-none');
+                    } else {
+                        $('#btn-toggle-own-traffic').removeClass('btn-success').addClass('btn-outline-success');
+                        $('#btn-toggle-own-traffic i').removeClass('fa-check-circle').addClass('fa-filter');
+                        $('#btn-toggle-own-text').text("Isolate Own Direct Traffic");
+                        $('#btn-switch-network').addClass('d-none');
+                    }
+                }
+
                 // Operator Donut
                 if (operatorChart && res.metrics.operators) {
                     const ops = res.metrics.operators;
@@ -1450,6 +1560,9 @@ $(document).ready(function() {
             const pendingClass = r.pending_queue > 0 ? 'text-warning' : 'text-muted';
             const procClass = (r.processing_queue || 0) > 0 ? 'text-info' : 'text-muted';
             const parentHtml = r.parent_name ? `<div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Parent: <strong>${r.parent_name}</strong></div>` : '';
+            const isOwnBadge = r.is_own ? '<span class="badge bg-success ms-1" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>YOU</span>' : '';
+            const ownRowStyle = r.is_own ? 'background-color: #f0fdf4 !important;' : '';
+            const ownRowClass = r.is_own ? 'table-success' : '';
             const downlineBtn = (r.role === 'ssp') ? `
                 <button type="button" class="btn btn-sm ${currentDownlineParentId === r.id ? 'btn-info text-white' : 'btn-outline-info'} py-1 px-2 btn-downline-reseller" data-id="${r.id}" data-name="${r.name}" title="Filter hierarchy table to downline accounts" style="font-size: 11px;">
                     <i class="fas fa-sitemap me-1"></i> Downline
@@ -1457,9 +1570,9 @@ $(document).ready(function() {
             ` : '';
 
             html += `
-                <tr data-reseller-id="${r.id}" data-role="${r.role}">
+                <tr data-reseller-id="${r.id}" data-role="${r.role}" class="${ownRowClass}" style="${ownRowStyle}">
                     <td>
-                        <div class="fw-bold text-dark">${r.name}</div>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">${r.name} ${isOwnBadge}</div>
                         <small class="text-muted">@${r.username}</small>
                         ${parentHtml}
                     </td>
@@ -2118,6 +2231,24 @@ $(document).ready(function() {
 
     $('#select-filter-user').on('change', function() {
         fetchLiveData();
+    });
+
+    // Toggle Own Traffic Isolation
+    $(document).on('click', '#btn-toggle-own-traffic', function() {
+        const ownId = $(this).data('own-id');
+        const currentVal = $('#select-filter-user').val();
+        if (currentVal == ownId) {
+            $('#select-filter-user').val('').trigger('change');
+        } else {
+            $('#select-filter-user').val(ownId).trigger('change');
+        }
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    });
+
+    // Switch back to All Network
+    $(document).on('click', '#btn-switch-network', function() {
+        $('#select-filter-user').val('').trigger('change');
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
     });
 
     // Start Poller & initial sync

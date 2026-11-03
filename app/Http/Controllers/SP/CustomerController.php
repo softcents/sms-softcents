@@ -71,33 +71,58 @@ class CustomerController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'masking_rate' => 'nullable|numeric|min:0',
             'non_masking_rate' => 'nullable|numeric|min:0',
+        ], [
+            'name.required' => __('Full Name is required.'),
+            'email.required' => __('Email Address is required.'),
+            'email.email' => __('Please enter a valid email address.'),
+            'email.unique' => __('This email address is already registered.'),
+            'username.unique' => __('This username is already taken. Please choose another.'),
+            'password.required' => __('Password is required.'),
+            'password.min' => __('Password must be at least 6 characters.'),
+            'password.confirmed' => __('Confirm Password does not match Password.'),
         ]);
 
-        $customer = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'role' => 'user',
-            'parent_id' => $sp->id,
-            'balance' => 0,
-            'status' => 'active',
-            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($sp->masking_rate ?? 0.75),
-            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($sp->non_masking_rate ?? 0.39),
-            'client_secret' => Str::uuid(),
-        ]);
-
-        $defaultSender = Senderid::where('is_default', 1)->first();
-        if ($defaultSender) {
-            Senderid::create([
-                'user_id' => $customer->id,
-                'sender' => $defaultSender->sender,
-                'type' => $defaultSender->type,
-                'gateway_id' => $defaultSender->gateway_id ?? 0,
-                'rate' => null,
-                'status' => true,
+        DB::beginTransaction();
+        try {
+            $customer = User::create([
+                'name' => $request->name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'role' => 'user',
+                'parent_id' => $sp->id,
+                'balance' => 0,
+                'status' => 'active',
+                'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($sp->masking_rate ?? 0.75),
+                'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($sp->non_masking_rate ?? 0.39),
+                'client_secret' => Str::uuid(),
             ]);
+
+            $defaultSender = Senderid::where('is_default', 1)->first();
+            if ($defaultSender) {
+                Senderid::create([
+                    'user_id' => $customer->id,
+                    'sender' => $defaultSender->sender,
+                    'type' => $defaultSender->type,
+                    'gateway_id' => $defaultSender->gateway_id ?? 0,
+                    'rate' => null,
+                    'status' => true,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('Customer creation failed: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => __('Failed to create customer: ') . $e->getMessage()
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', __('Failed to create customer: ') . $e->getMessage());
         }
 
         try {
@@ -112,6 +137,13 @@ class CustomerController extends Controller
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Reseller welcome mail failed: ' . $e->getMessage());
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => __('Customer created successfully.'),
+                'redirect' => route('sp.customers.index')
+            ]);
         }
 
         return redirect()->route('sp.customers.index')->with('success', __('Customer created successfully.'));
@@ -157,6 +189,13 @@ class CustomerController extends Controller
         }
 
         $customer->update($data);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => __('Customer updated successfully.'),
+                'redirect' => route('sp.customers.index')
+            ]);
+        }
 
         return redirect()->route('sp.customers.index')->with('success', __('Customer updated successfully.'));
     }

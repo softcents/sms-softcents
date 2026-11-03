@@ -111,9 +111,15 @@ class User extends Authenticatable
         parent::boot();
 
         static::creating(function ($model) {
-            $count = User::where('role', 'user')->count() + 1;
-            $client_id = str_pad($count, 6, '0', STR_PAD_LEFT);
-            $model->client_id = $client_id;
+            if (empty($model->client_id)) {
+                $maxId = (int) User::max('id') + 1;
+                $candidate = str_pad($maxId, 6, '0', STR_PAD_LEFT);
+                while (User::where('client_id', $candidate)->exists()) {
+                    $maxId++;
+                    $candidate = str_pad($maxId, 6, '0', STR_PAD_LEFT);
+                }
+                $model->client_id = $candidate;
+            }
 
             if (empty($model->username)) {
                 $base = $model->email ? explode('@', $model->email)[0] : ($model->phone ?: 'user');

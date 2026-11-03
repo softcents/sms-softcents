@@ -54,23 +54,48 @@ class SSPController extends Controller
             'masking_rate' => 'nullable|numeric|min:0',
             'non_masking_rate' => 'nullable|numeric|min:0',
             'company_name' => 'nullable|string|max:191',
+        ], [
+            'name.required' => __('Full Name is required.'),
+            'email.required' => __('Email Address is required.'),
+            'email.email' => __('Please enter a valid email address.'),
+            'email.unique' => __('This email address is already registered.'),
+            'username.unique' => __('This username is already taken. Please choose another.'),
+            'password.required' => __('Password is required.'),
+            'password.min' => __('Password must be at least 6 characters.'),
+            'password.confirmed' => __('Confirm Password does not match Password.'),
         ]);
 
-        $ssp = User::create([
-            'name' => $request->name,
-            'username' => $request->username,
-            'email' => $request->email,
-            'phone' => $request->phone,
-            'password' => Hash::make($request->password),
-            'role' => 'ssp',
-            'parent_id' => $sp->id,
-            'balance' => 0,
-            'status' => 'active',
-            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($sp->masking_rate ?? 0.75),
-            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($sp->non_masking_rate ?? 0.39),
-            'company_name' => $request->company_name,
-            'client_secret' => Str::uuid(),
-        ]);
+        DB::beginTransaction();
+        try {
+            $ssp = User::create([
+                'name' => $request->name,
+                'username' => $request->username,
+                'email' => $request->email,
+                'phone' => $request->phone,
+                'password' => Hash::make($request->password),
+                'role' => 'ssp',
+                'parent_id' => $sp->id,
+                'balance' => 0,
+                'status' => 'active',
+                'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($sp->masking_rate ?? 0.75),
+                'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($sp->non_masking_rate ?? 0.39),
+                'company_name' => $request->company_name,
+                'client_secret' => Str::uuid(),
+            ]);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            \Illuminate\Support\Facades\Log::error('SSP creation failed: ' . $e->getMessage());
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'message' => __('Failed to create Sub Reseller: ') . $e->getMessage()
+                ], 422);
+            }
+
+            return back()->withInput()->with('error', __('Failed to create Sub Reseller: ') . $e->getMessage());
+        }
 
         try {
             if (\App\Helpers\ResellerMailHelper::configureMailer($sp) || env('MAIL_USERNAME')) {
@@ -84,6 +109,13 @@ class SSPController extends Controller
             }
         } catch (\Throwable $e) {
             \Illuminate\Support\Facades\Log::warning('Reseller welcome mail failed: ' . $e->getMessage());
+        }
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => __('Sub Reseller (SSP) created successfully.'),
+                'redirect' => route('sp.ssps.index')
+            ]);
         }
 
         return redirect()->route('sp.ssps.index')->with('success', __('Sub Reseller (SSP) created successfully.'));
@@ -131,6 +163,13 @@ class SSPController extends Controller
         }
 
         $ssp->update($data);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'message' => __('Sub Reseller (SSP) updated successfully.'),
+                'redirect' => route('sp.ssps.index')
+            ]);
+        }
 
         return redirect()->route('sp.ssps.index')->with('success', __('Sub Reseller (SSP) updated successfully.'));
     }

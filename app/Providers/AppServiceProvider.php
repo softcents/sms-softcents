@@ -24,5 +24,10 @@ class AppServiceProvider extends ServiceProvider
         Schema::defaultStringLength(191);
         URL::forceScheme('https');
 
+        view()->composer('*', function ($view) {
+            if (!$view->offsetExists('errors')) {
+                $view->with('errors', session('errors', new \Illuminate\Support\ViewErrorBag));
+            }
+        });
     }
 }

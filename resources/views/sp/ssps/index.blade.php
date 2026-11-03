@@ -64,8 +64,8 @@
                                 <td>
                                     <span class="fw-bold fs-6 text-success">{{ currency_format($ssp->balance) }}</span>
                                 </td>
-                                <td>{{ currency_format($ssp->masking_rate) }}</td>
-                                <td>{{ currency_format($ssp->non_masking_rate) }}</td>
+                                <td><span class="badge bg-light text-secondary border">M</span> <strong>৳{{ number_format((float)($ssp->masking_rate ?? 0), 4) }}</strong></td>
+                                <td><span class="badge bg-light text-primary border">NM</span> <strong>৳{{ number_format((float)($ssp->non_masking_rate ?? 0), 4) }}</strong></td>
                                 <td>
                                     <span class="badge {{ $ssp->status == 'active' ? 'bg-success' : 'bg-warning' }}">{{ ucfirst($ssp->status) }}</span>
                                 </td>
@@ -75,6 +75,10 @@
                                             <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login As') }}
                                         </a>
 
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#rateModal{{ $ssp->id }}" title="{{ __('Set Sub-Reseller SMS Rate') }}">
+                                            <i class="fas fa-tags me-1"></i> {{ __('Rate') }}
+                                        </button>
+
                                         <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#rechargeModal{{ $ssp->id }}" title="{{ __('Transfer / Deduct Balance') }}">
                                             <i class="fas fa-coins me-1"></i> {{ __('Balance') }}
                                         </button>
@@ -82,6 +86,39 @@
                                         <a href="{{ route('sp.ssps.edit', $ssp->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Edit') }}">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
+                                    </div>
+
+                                    <!-- Modal Quick Rate -->
+                                    <div class="modal fade" id="rateModal{{ $ssp->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content text-start">
+                                                <form action="{{ route('sp.ssps.rate', $ssp->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fw-bold"><i class="fas fa-tags text-primary me-2"></i>{{ __('Set SMS Rates for') }}: {{ $ssp->name }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4">
+                                                        <div class="alert alert-info py-2 small mb-3">
+                                                            <i class="fas fa-info-circle me-1"></i> {{ __('You can set whatever rate you want for this Sub-Reseller. Their buying cost will follow these rates.') }}
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">{{ __('Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                            <input type="number" step="any" min="0" name="masking_rate" value="{{ $ssp->masking_rate }}" class="form-control" required placeholder="0.75">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">{{ __('Non-Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                            <input type="number" step="any" min="0" name="non_masking_rate" value="{{ $ssp->non_masking_rate }}" class="form-control" required placeholder="0.39">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                                                        <button type="submit" class="btn btn-primary fw-bold px-3">{{ __('Save Rate') }}</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Modal Recharge -->

@@ -24,7 +24,9 @@ class CronScheduleSmsController extends Controller
             $total_sms = wordCountDown($isUnicode, $message->contents);
 
             $sender_id_info = Senderid::where('user_id', $user->id)->findOrFail($message->senderid_id);
-            $total_charges = calculateCharge($message, $total_sms, $sender_id_info, $user);
+            $total_numbers = count(explode(',', $message->numbers));
+            $grand_total_sms = $total_numbers * $total_sms;
+            $total_charges = calculateCharge($grand_total_sms, $sender_id_info, $user);
 
             if ($total_charges <= $user->balance) {
                 DB::beginTransaction();

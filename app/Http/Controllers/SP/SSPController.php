@@ -66,8 +66,8 @@ class SSPController extends Controller
             'parent_id' => $sp->id,
             'balance' => 0,
             'status' => 'active',
-            'masking_rate' => $request->masking_rate ?? $sp->masking_rate,
-            'non_masking_rate' => $request->non_masking_rate ?? $sp->non_masking_rate,
+            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($sp->masking_rate ?? 0.75),
+            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($sp->non_masking_rate ?? 0.39),
             'company_name' => $request->company_name,
             'client_secret' => Str::uuid(),
         ]);
@@ -120,8 +120,8 @@ class SSPController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'phone' => $request->phone,
-            'masking_rate' => $request->masking_rate ?? $ssp->masking_rate,
-            'non_masking_rate' => $request->non_masking_rate ?? $ssp->non_masking_rate,
+            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : $ssp->masking_rate,
+            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : $ssp->non_masking_rate,
             'company_name' => $request->company_name,
             'status' => $request->status ?? $ssp->status,
         ];
@@ -133,6 +133,31 @@ class SSPController extends Controller
         $ssp->update($data);
 
         return redirect()->route('sp.ssps.index')->with('success', __('Sub Reseller (SSP) updated successfully.'));
+    }
+
+    /**
+     * Quick update Sub Reseller SMS rates.
+     */
+    public function updateRate(Request $request, User $ssp)
+    {
+        if ($ssp->parent_id !== auth()->id() || $ssp->role !== 'ssp') {
+            abort(403);
+        }
+
+        $request->validate([
+            'masking_rate' => 'required|numeric|min:0',
+            'non_masking_rate' => 'required|numeric|min:0',
+        ]);
+
+        $ssp->update([
+            'masking_rate' => (float) $request->masking_rate,
+            'non_masking_rate' => (float) $request->non_masking_rate,
+        ]);
+
+        return back()->with('success', __('Sub Reseller SMS rate updated successfully: Masking: ৳:masking | Non-Masking: ৳:non_masking', [
+            'masking' => $ssp->masking_rate,
+            'non_masking' => $ssp->non_masking_rate,
+        ]));
     }
 
     public function recharge(Request $request, User $ssp)

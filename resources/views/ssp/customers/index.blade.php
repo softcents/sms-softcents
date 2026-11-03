@@ -64,7 +64,8 @@
                                     <span class="fw-bold fs-6 text-success">{{ currency_format($customer->balance) }}</span>
                                 </td>
                                 <td>
-                                    {{ currency_format($customer->masking_rate) }} / {{ currency_format($customer->non_masking_rate) }}
+                                    <div><small class="text-muted">M:</small> <span class="fw-bold text-dark">৳{{ number_format((float)($customer->masking_rate ?? 0), 4) }}</span></div>
+                                    <div><small class="text-muted">NM:</small> <span class="fw-bold text-primary">৳{{ number_format((float)($customer->non_masking_rate ?? 0), 4) }}</span></div>
                                 </td>
                                 <td>
                                     <span class="badge {{ $customer->status == 'active' ? 'bg-success' : 'bg-warning' }}">{{ ucfirst($customer->status) }}</span>
@@ -75,6 +76,10 @@
                                             <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login As') }}
                                         </a>
 
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#rateModal{{ $customer->id }}" title="{{ __('Set Custom SMS Rate') }}">
+                                            <i class="fas fa-tags me-1"></i> {{ __('Rate') }}
+                                        </button>
+
                                         <button type="button" class="btn btn-sm btn-outline-success" data-bs-toggle="modal" data-bs-target="#rechargeModal{{ $customer->id }}" title="{{ __('Transfer / Deduct Balance') }}">
                                             <i class="fas fa-coins me-1"></i> {{ __('Balance') }}
                                         </button>
@@ -82,6 +87,39 @@
                                         <a href="{{ route('ssp.customers.edit', $customer->id) }}" class="btn btn-sm btn-outline-secondary" title="{{ __('Edit') }}">
                                             <i class="fas fa-pencil-alt"></i>
                                         </a>
+                                    </div>
+
+                                    <!-- Modal Quick Rate -->
+                                    <div class="modal fade" id="rateModal{{ $customer->id }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content text-start">
+                                                <form action="{{ route('ssp.customers.rate', $customer->id) }}" method="POST">
+                                                    @csrf
+                                                    @method('PUT')
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title fw-bold"><i class="fas fa-tags text-primary me-2"></i>{{ __('Set SMS Rates for') }}: {{ $customer->name }}</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body p-4">
+                                                        <div class="alert alert-info py-2 small mb-3">
+                                                            <i class="fas fa-info-circle me-1"></i> {{ __('You can set whatever rate you want for this customer. SMS charges will strictly follow these rates.') }}
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">{{ __('Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                            <input type="number" step="any" min="0" name="masking_rate" value="{{ $customer->masking_rate }}" class="form-control" required placeholder="0.75">
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">{{ __('Non-Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                            <input type="number" step="any" min="0" name="non_masking_rate" value="{{ $customer->non_masking_rate }}" class="form-control" required placeholder="0.39">
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                                                        <button type="submit" class="btn btn-primary fw-bold px-3">{{ __('Save Rate') }}</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <!-- Modal Recharge -->

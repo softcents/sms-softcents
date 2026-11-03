@@ -66,8 +66,8 @@ class CustomerController extends Controller
             'parent_id' => $ssp->id,
             'balance' => 0,
             'status' => 'active',
-            'masking_rate' => $request->masking_rate ?? $ssp->masking_rate,
-            'non_masking_rate' => $request->non_masking_rate ?? $ssp->non_masking_rate,
+            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : (float)($ssp->masking_rate ?? 0.75),
+            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : (float)($ssp->non_masking_rate ?? 0.39),
             'client_secret' => Str::uuid(),
         ]);
 
@@ -78,7 +78,7 @@ class CustomerController extends Controller
                 'sender' => $defaultSender->sender,
                 'type' => $defaultSender->type,
                 'gateway_id' => $defaultSender->gateway_id ?? 0,
-                'rate' => $defaultSender->rate,
+                'rate' => null,
                 'status' => true,
             ]);
         }
@@ -130,8 +130,8 @@ class CustomerController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'phone' => $request->phone,
-            'masking_rate' => $request->masking_rate ?? $customer->masking_rate,
-            'non_masking_rate' => $request->non_masking_rate ?? $customer->non_masking_rate,
+            'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : $customer->masking_rate,
+            'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : $customer->non_masking_rate,
             'status' => $request->status ?? $customer->status,
         ];
 
@@ -142,6 +142,31 @@ class CustomerController extends Controller
         $customer->update($data);
 
         return redirect()->route('ssp.customers.index')->with('success', __('Customer updated successfully.'));
+    }
+
+    /**
+     * Quick update customer rates.
+     */
+    public function updateRate(Request $request, User $customer)
+    {
+        if ($customer->parent_id !== auth()->id() || $customer->role !== 'user') {
+            abort(403);
+        }
+
+        $request->validate([
+            'masking_rate' => 'required|numeric|min:0',
+            'non_masking_rate' => 'required|numeric|min:0',
+        ]);
+
+        $customer->update([
+            'masking_rate' => (float) $request->masking_rate,
+            'non_masking_rate' => (float) $request->non_masking_rate,
+        ]);
+
+        return back()->with('success', __('Customer SMS rate updated successfully: Masking: ৳:masking | Non-Masking: ৳:non_masking', [
+            'masking' => $customer->masking_rate,
+            'non_masking' => $customer->non_masking_rate,
+        ]));
     }
 
     public function recharge(Request $request, User $customer)

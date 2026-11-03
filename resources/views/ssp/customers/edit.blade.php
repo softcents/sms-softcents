@@ -52,12 +52,14 @@
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">{{ __('Masking Rate (BDT)') }}</label>
-                            <input type="number" step="0.001" name="masking_rate" value="{{ old('masking_rate', $customer->masking_rate) }}" class="form-control">
+                            <input type="number" step="any" min="0" name="masking_rate" value="{{ old('masking_rate', $customer->masking_rate) }}" class="form-control" placeholder="0.75">
+                            <small class="text-muted">{{ __('Set whatever rate you want to charge this customer for Masking SMS.') }}</small>
                         </div>
 
                         <div class="col-md-6">
                             <label class="form-label fw-bold">{{ __('Non-Masking Rate (BDT)') }}</label>
-                            <input type="number" step="0.001" name="non_masking_rate" value="{{ old('non_masking_rate', $customer->non_masking_rate) }}" class="form-control">
+                            <input type="number" step="any" min="0" name="non_masking_rate" value="{{ old('non_masking_rate', $customer->non_masking_rate) }}" class="form-control" placeholder="0.39">
+                            <small class="text-muted">{{ __('Set whatever rate you want to charge this customer for Non-Masking SMS.') }}</small>
                         </div>
 
                         <div class="col-md-6">

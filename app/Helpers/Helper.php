@@ -113,7 +113,7 @@ function sendNotification($id, $url, $message)
 
 function currency_format($amount, $type = "icon", $decimals = 2, $currency = null)
 {
-    $amount = number_format($amount, $decimals);
+    $amount = number_format((float) ($amount ?? 0), $decimals);
     $currency = $currency ?? default_currency();
 
     if ($type == "icon" || $type == "symbol") {
@@ -179,18 +179,51 @@ function sendMessage($numbers, $contents, Senderid $sender)
     }
 }
 
+/**
+ * Determine the exact SMS rate to charge.
+ * Resellers (SP) & Sub-Resellers (SSP) can give whatever rate they want to their customers.
+ * If user belongs to a Reseller or Sub-reseller ($user->parent_id), the reseller-assigned
+ * customer rate ($user->non_masking_rate / $user->masking_rate) always takes precedence.
+ */
+function getEffectiveSmsRate($sender_id_info, $user)
+{
+    $type = $sender_id_info->type ?? 'Non-Masking';
+    $isMasking = (stripos($type, 'masking') !== false && stripos($type, 'non') === false);
+
+    // If user has a parent (Customer of Reseller SP or Sub-Reseller SSP)
+    // Their parent Reseller / Sub-Reseller sets their custom rate freely.
+    if (!empty($user->parent_id)) {
+        if ($isMasking && isset($user->masking_rate) && (float)$user->masking_rate > 0) {
+            return (float)$user->masking_rate;
+        } elseif (!$isMasking && isset($user->non_masking_rate) && (float)$user->non_masking_rate > 0) {
+            return (float)$user->non_masking_rate;
+        }
+    }
+
+    // If sender ID has a specific custom rate assigned
+    if (!empty($sender_id_info->rate) && (float)$sender_id_info->rate > 0) {
+        return (float)$sender_id_info->rate;
+    }
+
+    // Default to user's assigned rates
+    if ($isMasking) {
+        return (float)($user->masking_rate ?? 0.75);
+    } else {
+        return (float)($user->non_masking_rate ?? 0.39);
+    }
+}
+
 function calculateCharge($grand_total_sms, $sender_id_info, $user)
 {
-    if($sender_id_info->rate){
-        return $grand_total_sms * $sender_id_info->rate;
-    }else{
-        $sms_price = $sender_id_info->type == 'Non-Masking' ? $user->non_masking_rate : $user->masking_rate;
-        return $grand_total_sms * $sms_price;
-    }
+    $rate = getEffectiveSmsRate($sender_id_info, $user);
+    return $grand_total_sms * $rate;
 }
 
 function makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $response)
 {
+    $rate = getEffectiveSmsRate($sender_id_info, $user);
+    $charge = $rate * $total_sms;
+
     $message_details = [];
     foreach (explode(',', $campaign_sms->numbers) as $key => $number) {
         $message_details[$key] = $campaign_sms->only('campaign_id', 'contents', 'schedule', 'is_unicode', 'ip_address', 'user_id', 'senderid_id', 'status', 'total_sms') + [
@@ -198,7 +231,7 @@ function makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $res
             'created_at' => now(),
             'updated_at' => now(),
             'smsgateway_id' => session('gateway_id'),
-            'charge' => $sender_id_info->type == 'Non-Masking' ? ($user->non_masking_rate * $total_sms) : ($user->masking_rate * $total_sms),
+            'charge' => $charge,
         ];
     }
 
@@ -207,13 +240,11 @@ function makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $res
 
 function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms)
 {
+    $rate = getEffectiveSmsRate($sender_id_info, $user);
+    $charge = $rate * $total_sms;
+
     $message_details = [];
     foreach (explode(',', $request->numbers) as $key => $number) {
-        if($sender_id_info->rate){
-            $charge = $sender_id_info->rate * $total_sms;
-        }else{
-            $charge = $sender_id_info->type == 'Non-Masking' ? ($user->non_masking_rate * $total_sms) : ($user->masking_rate * $total_sms);
-        }
         $message_details[$key] = $request->only('group_id', 'campaign_id', 'range', 'contents', 'schedule') + [
             'number' => $number,
             'created_at' => now(),

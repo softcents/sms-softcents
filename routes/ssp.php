@@ -16,6 +16,7 @@ Route::group(['as' => 'ssp.', 'prefix' => 'ssp', 'middleware' => ['auth', 'ssp']
     Route::post('/customers', [SSP\CustomerController::class, 'store'])->name('customers.store');
     Route::get('/customers/{customer}/edit', [SSP\CustomerController::class, 'edit'])->name('customers.edit');
     Route::put('/customers/{customer}', [SSP\CustomerController::class, 'update'])->name('customers.update');
+    Route::put('/customers/{customer}/rate', [SSP\CustomerController::class, 'updateRate'])->name('customers.rate');
     Route::post('/customers/{customer}/recharge', [SSP\CustomerController::class, 'recharge'])->name('customers.recharge');
     Route::get('/customers/{customer}/login-as', [SSP\CustomerController::class, 'loginAs'])->name('customers.login-as');
 

@@ -15,7 +15,7 @@
         <td>{{ $user->phone }}</td>
         <td>{{ $user->email }}</td>
         @if (request('users', 'user') != 'admin')
-        <td>
+        <td class="user-plan-cell-{{ $user->id }}">
             @if ($user->role == 'user' && $user->plan)
                 <span class="badge bg-info text-dark">{{ $user->plan->title }}</span>
             @else
@@ -42,6 +42,18 @@
                     style="font-size: 12px; font-weight: 500; white-space: nowrap;">
                     <i class="fas fa-wallet me-1"></i> {{ __('Recharge') }}
                 </button>
+                @if ($user->role == 'user')
+                <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center py-1 px-2 btn-open-assign-plan-modal"
+                    data-id="{{ $user->id }}"
+                    data-name="{{ $user->name }}"
+                    data-username="{{ $user->username }}"
+                    data-plan="{{ $user->plan ? $user->plan->title : 'None' }}"
+                    data-plan-id="{{ $user->plan_id ?? '' }}"
+                    title="{{ __('Assign / Change Plan') }}"
+                    style="font-size: 12px; font-weight: 500; white-space: nowrap;">
+                    <i class="fas fa-layer-group me-1"></i> {{ __('Plan') }}
+                </button>
+                @endif
                 <a href="{{ route('admin.users.login-as', $user->id) }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" title="{{ __('Login As ') . strtoupper($user->role) }}" style="font-size: 12px; font-weight: 500; white-space: nowrap;">
                     <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login As') }}
                 </a>
@@ -64,6 +76,19 @@
                                 {{ __('Recharge / Adjust Balance') }}
                             </a>
                         </li>
+                        @if ($user->role == 'user')
+                        <li>
+                            <a href="javascript:void(0)" class="btn-open-assign-plan-modal"
+                                data-id="{{ $user->id }}"
+                                data-name="{{ $user->name }}"
+                                data-username="{{ $user->username }}"
+                                data-plan="{{ $user->plan ? $user->plan->title : 'None' }}"
+                                data-plan-id="{{ $user->plan_id ?? '' }}">
+                                <i class="fal fa-layer-group text-info"></i>
+                                {{ __('Assign / Change Plan') }}
+                            </a>
+                        </li>
+                        @endif
                         <li>
                             <a href="{{ route('admin.users.login-as', $user->id) }}">
                                 <i class="fal fa-sign-in-alt text-primary"></i>

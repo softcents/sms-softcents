@@ -56,11 +56,13 @@ class UserController extends Controller
                     })
                     ->latest();
 
+        $allPlans = Plan::where('status', 1)->latest()->get();
+
         if ($request->ajax()) {
             $users = $users->get();
 
             return response()->json([
-                'data' => view('admin.users.datas', compact('users'))->render()
+                'data' => view('admin.users.datas', compact('users', 'allPlans'))->render()
             ]);
         }
 
@@ -73,7 +75,7 @@ class UserController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.users.index', compact('users', 'allRechargeableUsers'));
+        return view('admin.users.index', compact('users', 'allRechargeableUsers', 'allPlans'));
     }
 
     public function create()
@@ -259,6 +261,21 @@ class UserController extends Controller
                 'white_label_favicon' => $request->white_label_favicon ? $this->upload($request, 'white_label_favicon', $user->white_label_favicon) : $user->white_label_favicon,
                 'password' => $request->password ? Hash::make($request->password) : $user->password,
             ]);
+
+            if (!empty($plan) && $plan->id != $user->getOriginal('plan_id')) {
+                PlanSubscribe::create([
+                    'plan_data' => $plan->toArray(),
+                    'status' => 'approved',
+                    'plan_id' => $plan->id,
+                    'user_id' => $user->id,
+                    'price' => $plan->price,
+                    'total_sms' => $plan->total_sms,
+                    'masking_rate' => $user->masking_rate,
+                    'non_masking_rate' => $user->non_masking_rate,
+                    'will_expire' => $user->will_expire,
+                    'notes' => 'Updated via User Profile Edit',
+                ]);
+            }
 
             DB::commit();
             return response()->json([
@@ -451,6 +468,119 @@ class UserController extends Controller
                 ], 500);
             }
             return back()->with('error', __('Failed to update balance: ') . $e->getMessage());
+        }
+    }
+
+    /**
+     * Assign or upgrade a subscription plan to a user
+     */
+    public function assignPlan(Request $request, ?User $user = null)
+    {
+        if (!$user || !$user->exists) {
+            $request->validate(['user_id' => 'required|exists:users,id']);
+            $user = User::findOrFail($request->user_id);
+        }
+
+        if ($user->role === 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'message' => __('Cannot assign plan to superadmin.')
+            ], 422);
+        }
+
+        $request->validate([
+            'plan_id' => 'required|exists:plans,id',
+            'duration_days' => 'nullable|integer|min:1',
+            'add_balance' => 'nullable|boolean',
+            'update_rates' => 'nullable|boolean',
+            'custom_masking_rate' => 'nullable|numeric|min:0',
+            'custom_non_masking_rate' => 'nullable|numeric|min:0',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $plan = Plan::findOrFail($request->plan_id);
+        $admin = auth()->user();
+
+        // Calculate validity
+        $days = (int) $request->duration_days;
+        if ($days <= 0) {
+            $days = $plan->duration == 'yearly' ? 365 : ($plan->duration == '6_monthly' ? 180 : ($plan->duration == '3_monthly' ? 90 : ($plan->duration == 'monthly' ? 30 : ($plan->duration == '15_days' ? 15 : ($plan->duration == 'weekly' ? 7 : 365)))));
+        }
+        $willExpire = now()->addDays($days);
+
+        $planNonMasking = (float) $plan->non_masking_rate;
+        if ($planNonMasking > 5) {
+            $planNonMasking = $planNonMasking / 100;
+        }
+
+        $maskingRate = $request->filled('custom_masking_rate') ? (float) $request->custom_masking_rate : (float) $plan->masking_rate;
+        $nonMaskingRate = $request->filled('custom_non_masking_rate') ? (float) $request->custom_non_masking_rate : $planNonMasking;
+
+        DB::beginTransaction();
+        try {
+            $subscribe = PlanSubscribe::create([
+                'plan_data' => $plan->toArray(),
+                'status' => 'approved',
+                'plan_id' => $plan->id,
+                'user_id' => $user->id,
+                'price' => $plan->price,
+                'total_sms' => $plan->total_sms,
+                'masking_rate' => $maskingRate,
+                'non_masking_rate' => $nonMaskingRate,
+                'will_expire' => $willExpire,
+                'notes' => $request->notes ?: "Plan assigned by Admin ({$admin->name})",
+            ]);
+
+            $updateData = [
+                'plan_id' => $plan->id,
+                'allow_api' => $plan->allow_api ?? true,
+                'will_expire' => $willExpire,
+            ];
+
+            if ($request->boolean('update_rates', true)) {
+                $updateData['masking_rate'] = $maskingRate;
+                $updateData['non_masking_rate'] = $nonMaskingRate;
+            }
+
+            if ($request->boolean('add_balance', false)) {
+                $updateData['balance'] = (float) $user->balance + (float) $plan->price;
+            }
+
+            $user->update($updateData);
+
+            DB::commit();
+
+            $message = __("Plan ':plan' assigned successfully to :user. Validity until :date.", [
+                'plan' => $plan->title,
+                'user' => $user->name,
+                'date' => $willExpire->format('d M Y'),
+            ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'user_id' => $user->id,
+                    'plan_id' => $plan->id,
+                    'plan_title' => $plan->title,
+                    'masking_rate' => $user->masking_rate,
+                    'non_masking_rate' => $user->non_masking_rate,
+                    'will_expire' => $willExpire->format('d M Y'),
+                    'balance' => $user->balance,
+                    'formatted_balance' => currency_format($user->balance),
+                ]);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Failed to assign plan: ') . $e->getMessage()
+                ], 500);
+            }
+            return back()->with('error', __('Failed to assign plan: ') . $e->getMessage());
         }
     }
 }

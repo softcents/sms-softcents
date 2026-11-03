@@ -88,5 +88,6 @@
 
 @push('modal')
     @include('admin.users.recharge-modal')
+    @include('admin.users.assign-plan-modal')
     @include('admin.components.multi-delete-modal')
 @endpush

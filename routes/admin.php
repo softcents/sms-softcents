@@ -12,6 +12,8 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::get('users/{user}/login-as', [ADMIN\UserController::class, 'loginAs'])->name('users.login-as');
     Route::post('users/recharge', [ADMIN\UserController::class, 'recharge'])->name('users.recharge');
     Route::post('users/{user}/recharge', [ADMIN\UserController::class, 'recharge'])->name('users.recharge.user');
+    Route::post('users/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan');
+    Route::post('users/{user}/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan.user');
     Route::resource('users', ADMIN\UserController::class);
     Route::post('users/filter', [ADMIN\UserController::class, 'softcentsFilter'])->name('users.filter');
     Route::post('users/status/{id}', [ADMIN\UserController::class,'status'])->name('users.status');

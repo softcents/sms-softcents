@@ -94,7 +94,7 @@
                                                 </div>
                                             </div>
 
-                                            @if (request('users') == 'user')
+                                            @if ($user->role == 'user' || request('users') == 'user')
                                             <div class="col-lg-6 mt-2">
                                                 <label>{{ __('Plans') }}</label>
                                                 <div class="blade-up-down-arrow position-relative">

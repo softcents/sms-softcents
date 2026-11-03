@@ -429,6 +429,9 @@
                     <span class="badge badge-soft-success ms-1"><span id="customers-matrix-count">{{ count($customerSummary['list'] ?? []) }}</span> {{ __('Customers Monitored') }}</span>
                 </div>
                 <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="btn-toggle-matrix-pending" data-filter="all" style="font-size: 11px;">
+                        <i class="fas fa-hourglass-half me-1"></i> {{ __('Pending Queue Only') }}
+                    </button>
                     <div class="input-group input-group-sm" style="max-width: 250px;">
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" class="form-control form-control-sm border-start-0" id="input-search-customers" placeholder="{{ __('Search customer...') }}" style="font-size: 12px;">
@@ -547,6 +550,207 @@
                         @empty
                         <tr>
                             <td colspan="10" class="text-center py-4 text-muted">{{ __('No customers registered under your Sub-Reseller account.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Customer-Wise Pending SMS Queue Section -->
+        <div class="panel-box mb-4" id="panel-customer-pending">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #fef3c7; color: #d97706;">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Customer-Wise Pending SMS Queue') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Real-time client backlog tracking, wait time latency, operator routing, and immediate queue control per customer') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-warning ms-1">
+                        <span id="pending-clients-count">{{ $customerPendingSummary['aggregates']['customers_with_pending'] ?? 0 }}</span> {{ __('Clients with Backlog') }}
+                    </span>
+                    <span class="badge badge-soft-primary">
+                        <span id="pending-total-badge">{{ number_format($customerPendingSummary['aggregates']['total_pending'] ?? 0) }}</span> {{ __('Total Pending') }}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <!-- Operator Filter Tabs -->
+                    <div class="btn-group btn-group-sm" role="group" id="btn-group-pending-ops">
+                        <button type="button" class="btn btn-outline-secondary active btn-pending-op-filter" data-op="all">{{ __('All Ops') }}</button>
+                        <button type="button" class="btn btn-outline-secondary btn-pending-op-filter" data-op="GP">GP</button>
+                        <button type="button" class="btn btn-outline-secondary btn-pending-op-filter" data-op="BL">BL</button>
+                        <button type="button" class="btn btn-outline-secondary btn-pending-op-filter" data-op="Robi">Robi</button>
+                        <button type="button" class="btn btn-outline-secondary btn-pending-op-filter" data-op="Teletalk">TT</button>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control form-control-sm border-start-0" id="input-search-pending" placeholder="{{ __('Search pending client...') }}" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Pending Queue -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TOTAL PENDING SMS') }}</span>
+                            <span class="fs-5 fw-bold text-warning" id="kpi-pending-total">{{ number_format($customerPendingSummary['aggregates']['total_pending'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Dispatch') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('CLIENTS WITH BACKLOG') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="kpi-pending-clients">{{ $customerPendingSummary['aggregates']['customers_with_pending'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span id="kpi-pending-of-total">of {{ $customerPendingSummary['aggregates']['total_customers'] ?? 0 }} Clients</span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('MAX WAIT LATENCY') }}</span>
+                            <span class="fs-5 fw-bold text-danger" id="kpi-pending-max-wait">{{ $customerPendingSummary['aggregates']['max_wait_human'] ?? 'Queue Clear' }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Oldest Message Age') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING IN RAM') }}</span>
+                            <span class="fs-5 fw-bold text-info" id="kpi-pending-proc">{{ number_format($customerPendingSummary['aggregates']['total_processing'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Active Dispatching') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">GP PENDING</span>
+                            <span class="fs-5 fw-bold text-primary" id="kpi-pending-gp">{{ number_format($customerPendingSummary['aggregates']['operator_pending']['GP'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Grameenphone</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">BL PENDING</span>
+                            <span class="fs-5 fw-bold" style="color: #f97316;" id="kpi-pending-bl">{{ number_format($customerPendingSummary['aggregates']['operator_pending']['BL'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Banglalink</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">ROBI PENDING</span>
+                            <span class="fs-5 fw-bold text-danger" id="kpi-pending-robi">{{ number_format($customerPendingSummary['aggregates']['operator_pending']['Robi'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Robi / Airtel</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">TT PENDING</span>
+                            <span class="fs-5 fw-bold text-success" id="kpi-pending-tt">{{ number_format($customerPendingSummary['aggregates']['operator_pending']['Teletalk'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Teletalk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Pending Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-customer-pending">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Customer / Client') }}</th>
+                            <th class="text-center">{{ __('Pending Queue') }}</th>
+                            <th class="text-center">{{ __('Oldest Wait Latency') }}</th>
+                            <th class="text-center">{{ __('Operator Breakdown') }}</th>
+                            <th class="text-center">{{ __('Source (Camp / API)') }}</th>
+                            <th class="text-center">{{ __('Queue Health') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-customer-pending">
+                        @forelse($customerPendingSummary['list'] as $cp)
+                        <tr data-cust-id="{{ $cp['id'] }}" data-pending-count="{{ $cp['pending_count'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    <i class="fas fa-user {{ $cp['pending_count'] > 0 ? 'text-warning' : 'text-muted' }} me-1"></i>
+                                    {{ $cp['name'] }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ '@' . $cp['username'] }}
+                                    @if(!empty($cp['phone']) && $cp['phone'] !== 'N/A')
+                                        • {{ $cp['phone'] }}
+                                    @endif
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                @if($cp['pending_count'] > 0)
+                                    <span class="badge bg-warning text-dark fs-6 px-2 py-1 fw-bold">
+                                        <i class="fas fa-hourglass-half me-1"></i>{{ number_format($cp['pending_count']) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted fw-bold">0</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                @if($cp['pending_count'] > 0)
+                                    <span class="badge {{ $cp['urgency'] === 'critical' ? 'bg-danger text-white' : ($cp['urgency'] === 'warning' ? 'bg-warning text-dark' : 'bg-light text-dark border') }} px-2 py-1">
+                                        <i class="fas fa-clock me-1"></i>{{ $cp['wait_time_human'] }}
+                                    </span>
+                                @else
+                                    <span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-circle me-1"></i>{{ __('Queue Clear') }}</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                                    <span class="badge {{ ($cp['operator_breakdown']['GP'] ?? 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted' }}" title="Grameenphone">GP: {{ $cp['operator_breakdown']['GP'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['BL'] ?? 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted' }}" title="Banglalink">BL: {{ $cp['operator_breakdown']['BL'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['Robi'] ?? 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted' }}" title="Robi/Airtel">Robi: {{ $cp['operator_breakdown']['Robi'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cp['operator_breakdown']['Teletalk'] ?? 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted' }}" title="Teletalk">TT: {{ $cp['operator_breakdown']['Teletalk'] ?? 0 }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-info" style="font-size: 10px;" title="{{ __('Campaign Messages') }}">
+                                    <i class="fas fa-bullhorn me-1"></i>{{ $cp['campaign_pending'] ?? 0 }}
+                                </span>
+                                <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="{{ __('Direct / API Single Messages') }}">
+                                    <i class="fas fa-bolt me-1"></i>{{ $cp['direct_pending'] ?? 0 }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                @if($cp['urgency'] === 'critical')
+                                    <span class="badge bg-danger text-white py-1 px-2"><i class="fas fa-exclamation-triangle me-1"></i>{{ __('High Backlog') }}</span>
+                                @elseif($cp['urgency'] === 'warning')
+                                    <span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-exclamation-circle me-1"></i>{{ __('Moderate') }}</span>
+                                @else
+                                    <span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check me-1"></i>{{ __('Normal Flow') }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($cp['balance'], 2) }}</td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-warning py-1 px-2 btn-view-customer-pending" data-id="{{ $cp['id'] }}" title="{{ __('Open live pending messages for this customer') }}" style="font-size: 11px; font-weight: 600;">
+                                    <i class="fas fa-layer-group me-1"></i> {{ __('View Pending') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $cp['id'] }}" title="{{ __('Inspect Customer Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                @if($cp['pending_count'] > 0)
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-customer-pending" data-id="{{ $cp['id'] }}" data-name="{{ $cp['name'] }}" data-count="{{ $cp['pending_count'] }}" title="{{ __('Cancel all pending SMS for this customer') }}" style="font-size: 11px;">
+                                    <i class="fas fa-ban"></i>
+                                </button>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle text-success fs-3 d-block mb-2"></i>
+                                {{ __('All customer queues are optimal. No pending backlog found.') }}
+                            </td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -862,7 +1066,11 @@ $(document).ready(function() {
     let isFetching = false;
     let currentCustQueueStatusFilter = 'all';
     let currentCustomerMatrixData = @json($customerSummary ?? []);
+    let currentCustomerPendingData = @json($customerPendingSummary ?? []);
     let currentSearchTerm = '';
+    let currentPendingOpFilter = 'all';
+    let currentPendingSearchTerm = '';
+    let matrixPendingOnly = false;
 
     // 1. Operator Chart
     const opCtx = document.getElementById('operatorChart');
@@ -973,6 +1181,9 @@ $(document).ready(function() {
                 // Render Customer-Wise Queue Matrix & Mini Counters
                 renderCustomersMatrixTable(res.customers);
 
+                // Render Customer-Wise Pending SMS Queue
+                renderCustomerPendingTable(res.customer_pending);
+
                 // Update Hierarchical Breadcrumbs
                 updateBreadcrumbs(res.breadcrumbs, !!res.customer_queue);
 
@@ -1004,6 +1215,11 @@ $(document).ready(function() {
         const agg = customerSummary.aggregates || {};
 
         let filtered = list.slice();
+        if (matrixPendingOnly) {
+            filtered = filtered.filter(function(c) {
+                return (c.pending_queue || 0) > 0;
+            });
+        }
         if (currentSearchTerm.trim() !== '') {
             const term = currentSearchTerm.toLowerCase();
             filtered = filtered.filter(function(c) {
@@ -1024,7 +1240,7 @@ $(document).ready(function() {
         $('#cust-agg-rate').text((agg.delivery_rate || 100) + '%');
 
         if (!filtered.length) {
-            $('#tbody-customers-matrix').html('<tr><td colspan="10" class="text-center py-4 text-muted">No customers match this search.</td></tr>');
+            $('#tbody-customers-matrix').html('<tr><td colspan="10" class="text-center py-4 text-muted">No customers match this filter/search.</td></tr>');
             return;
         }
 
@@ -1035,6 +1251,12 @@ $(document).ready(function() {
             const failClass = cust.today_failed > 0 ? 'text-danger' : 'text-muted';
             const phoneStr = (cust.phone && cust.phone !== 'N/A') ? ` • ${cust.phone}` : '';
 
+            const pendingDisplay = cust.pending_queue > 0 ? `
+                <a href="javascript:void(0);" class="btn-view-customer-pending text-warning text-decoration-underline fw-bold" data-id="${cust.id}" title="Click to view pending queue">
+                    <i class="fas fa-hourglass-half me-1"></i>${Number(cust.pending_queue).toLocaleString()}
+                </a>
+            ` : `<span class="text-muted fw-bold">0</span>`;
+
             html += `
                 <tr data-cust-id="${cust.id}">
                     <td>
@@ -1044,7 +1266,7 @@ $(document).ready(function() {
                         </div>
                         <small class="text-muted">@${cust.username}${phoneStr}</small>
                     </td>
-                    <td class="text-center fw-bold ${pendingClass}">${Number(cust.pending_queue).toLocaleString()}</td>
+                    <td class="text-center">${pendingDisplay}</td>
                     <td class="text-center fw-bold ${procClass}">${Number(cust.processing_queue).toLocaleString()}</td>
                     <td class="text-center fw-bold text-dark">${Number(cust.today_total).toLocaleString()}</td>
                     <td class="text-center fw-bold text-success">${Number(cust.today_delivered).toLocaleString()}</td>
@@ -1077,6 +1299,139 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-customers-matrix').html(html);
+    }
+
+    // 3b. Render Customer-Wise Pending SMS Queue Table
+    function renderCustomerPendingTable(data) {
+        if (!data) return;
+        currentCustomerPendingData = data;
+        const list = data.list || [];
+        const agg = data.aggregates || {};
+
+        let filtered = list.slice();
+
+        // Filter by Operator tab if selected
+        if (currentPendingOpFilter !== 'all') {
+            filtered = filtered.filter(function(cp) {
+                const ops = cp.operator_breakdown || {};
+                return (ops[currentPendingOpFilter] || 0) > 0;
+            });
+        }
+
+        // Filter by Search Input
+        if (currentPendingSearchTerm.trim() !== '') {
+            const term = currentPendingSearchTerm.toLowerCase();
+            filtered = filtered.filter(function(cp) {
+                const name = (cp.name || '').toLowerCase();
+                const username = (cp.username || '').toLowerCase();
+                const phone = (cp.phone || '').toLowerCase();
+                return name.includes(term) || username.includes(term) || phone.includes(term);
+            });
+        }
+
+        // Update Header Badges & Aggregates
+        $('#pending-clients-count').text(agg.customers_with_pending || 0);
+        $('#pending-total-badge').text(Number(agg.total_pending || 0).toLocaleString());
+        $('#kpi-pending-total').text(Number(agg.total_pending || 0).toLocaleString());
+        $('#kpi-pending-clients').text(agg.customers_with_pending || 0);
+        $('#kpi-pending-of-total').text('of ' + (agg.total_customers || 0) + ' Clients');
+        $('#kpi-pending-max-wait').text(agg.max_wait_human || 'Queue Clear');
+        $('#kpi-pending-proc').text(Number(agg.total_processing || 0).toLocaleString());
+
+        const ops = agg.operator_pending || {};
+        $('#kpi-pending-gp').text(Number(ops.GP || 0).toLocaleString());
+        $('#kpi-pending-bl').text(Number(ops.BL || 0).toLocaleString());
+        $('#kpi-pending-robi').text(Number(ops.Robi || 0).toLocaleString());
+        $('#kpi-pending-tt').text(Number(ops.Teletalk || 0).toLocaleString());
+
+        if (!filtered.length) {
+            $('#tbody-customer-pending').html(`
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-success fs-3 d-block mb-2"></i>
+                        No pending SMS backlog found matching your criteria.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(cp) {
+            const phoneStr = (cp.phone && cp.phone !== 'N/A') ? ` • ${cp.phone}` : '';
+            const cOps = cp.operator_breakdown || {};
+
+            let latencyBadge = '';
+            if (cp.pending_count > 0) {
+                let badgeClass = 'bg-light text-dark border';
+                if (cp.urgency === 'critical') badgeClass = 'bg-danger text-white';
+                else if (cp.urgency === 'warning') badgeClass = 'bg-warning text-dark';
+                latencyBadge = `<span class="badge ${badgeClass} px-2 py-1"><i class="fas fa-clock me-1"></i>${cp.wait_time_human}</span>`;
+            } else {
+                latencyBadge = `<span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-circle me-1"></i>Queue Clear</span>`;
+            }
+
+            let urgencyBadge = '';
+            if (cp.urgency === 'critical') {
+                urgencyBadge = `<span class="badge bg-danger text-white py-1 px-2"><i class="fas fa-exclamation-triangle me-1"></i>High Backlog</span>`;
+            } else if (cp.urgency === 'warning') {
+                urgencyBadge = `<span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-exclamation-circle me-1"></i>Moderate</span>`;
+            } else {
+                urgencyBadge = `<span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check me-1"></i>Normal Flow</span>`;
+            }
+
+            const pendingHtml = cp.pending_count > 0
+                ? `<span class="badge bg-warning text-dark fs-6 px-2 py-1 fw-bold"><i class="fas fa-hourglass-half me-1"></i>${Number(cp.pending_count).toLocaleString()}</span>`
+                : `<span class="text-muted fw-bold">0</span>`;
+
+            const cancelBtn = cp.pending_count > 0 ? `
+                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-customer-pending" data-id="${cp.id}" data-name="${cp.name}" data-count="${cp.pending_count}" title="Cancel all pending SMS for this customer" style="font-size: 11px;">
+                    <i class="fas fa-ban"></i>
+                </button>
+            ` : '';
+
+            html += `
+                <tr data-cust-id="${cp.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <i class="fas fa-user ${cp.pending_count > 0 ? 'text-warning' : 'text-muted'} me-1"></i>
+                            ${cp.name}
+                        </div>
+                        <small class="text-muted">@${cp.username}${phoneStr}</small>
+                    </td>
+                    <td class="text-center">${pendingHtml}</td>
+                    <td class="text-center">${latencyBadge}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                            <span class="badge ${(cOps.GP || 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted'}" title="Grameenphone">GP: ${cOps.GP || 0}</span>
+                            <span class="badge ${(cOps.BL || 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted'}" title="Banglalink">BL: ${cOps.BL || 0}</span>
+                            <span class="badge ${(cOps.Robi || 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted'}" title="Robi/Airtel">Robi: ${cOps.Robi || 0}</span>
+                            <span class="badge ${(cOps.Teletalk || 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted'}" title="Teletalk">TT: ${cOps.Teletalk || 0}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-info" style="font-size: 10px;" title="Campaign Messages">
+                            <i class="fas fa-bullhorn me-1"></i>${cp.campaign_pending || 0}
+                        </span>
+                        <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="Direct / API Single Messages">
+                            <i class="fas fa-bolt me-1"></i>${cp.direct_pending || 0}
+                        </span>
+                    </td>
+                    <td class="text-center">${urgencyBadge}</td>
+                    <td class="text-end fw-bold text-dark">৳${Number(cp.balance).toFixed(2)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-warning py-1 px-2 btn-view-customer-pending" data-id="${cp.id}" title="Open live pending messages for this customer" style="font-size: 11px; font-weight: 600;">
+                            <i class="fas fa-layer-group me-1"></i> View Pending
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${cp.id}" title="Inspect Customer Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                        ${cancelBtn}
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-customer-pending').html(html);
     }
 
     // 4. Render Dedicated Customer SMS Queue Details
@@ -1263,6 +1618,81 @@ $(document).ready(function() {
     $('#input-search-customers').on('input', function() {
         currentSearchTerm = $(this).val();
         renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Matrix Toggle Pending Only Filter
+    $('#btn-toggle-matrix-pending').on('click', function() {
+        matrixPendingOnly = !matrixPendingOnly;
+        if (matrixPendingOnly) {
+            $(this).removeClass('btn-outline-warning').addClass('btn-warning text-dark active');
+            $(this).html('<i class="fas fa-check me-1"></i> Showing Pending Only');
+        } else {
+            $(this).removeClass('btn-warning text-dark active').addClass('btn-outline-warning');
+            $(this).html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
+        }
+        renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Pending Search Filter
+    $('#input-search-pending').on('input', function() {
+        currentPendingSearchTerm = $(this).val();
+        renderCustomerPendingTable(currentCustomerPendingData);
+    });
+
+    // Customer Pending Operator Tabs
+    $('.btn-pending-op-filter').on('click', function() {
+        $('.btn-pending-op-filter').removeClass('active');
+        $(this).addClass('active');
+        currentPendingOpFilter = $(this).data('op');
+        renderCustomerPendingTable(currentCustomerPendingData);
+    });
+
+    // View Pending Queue for specific customer
+    $(document).on('click', '.btn-view-customer-pending', function() {
+        const custId = $(this).data('id');
+        $('#select-filter-user').val(custId);
+        currentCustQueueStatusFilter = 'pending';
+        $('.cust-status-tab-btn').removeClass('active');
+        $('.cust-status-tab-btn[data-status="pending"]').addClass('active');
+        fetchLiveData();
+        setTimeout(function() {
+            if ($('#panel-customer-queue').length) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-queue').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
+    });
+
+    // Cancel all pending SMS for a specific customer
+    $(document).on('click', '.btn-cancel-customer-pending', function() {
+        const id = $(this).data('id');
+        const name = $(this).data('name') || ('#' + id);
+        const count = $(this).data('count') || 'all';
+        if (!confirm('Are you sure you want to cancel ' + count + ' pending SMS for customer ' + name + '?')) return;
+
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i>');
+        $.ajax({
+            url: "{{ url('ssp/queue-monitor/cancel-customer-pending') }}/" + id,
+            type: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            dataType: "json",
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    fetchLiveData();
+                } else {
+                    toastr.error(res.message || 'Failed to cancel customer pending SMS.');
+                }
+            },
+            error: function() {
+                toastr.error('Failed to cancel customer pending SMS.');
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-ban"></i>');
+            }
+        });
     });
 
     // Customer Queue Status Tabs

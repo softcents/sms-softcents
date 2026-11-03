@@ -548,6 +548,141 @@ class QueueMonitorService
     }
 
     /**
+     * Get customer-wise pending SMS statistics specifically for Sub-reseller (or Reseller).
+     */
+    public function getCustomerPendingSmsSummary(User $viewer, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($viewer);
+        if (!$scopedIds) {
+            return [
+                'list'       => [],
+                'aggregates' => [
+                    'total_pending'          => 0,
+                    'total_processing'       => 0,
+                    'customers_with_pending' => 0,
+                    'total_customers'        => 0,
+                    'max_wait_seconds'       => 0,
+                    'max_wait_human'         => 'Queue Clear',
+                    'operator_pending'       => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+                ],
+            ];
+        }
+
+        $query = User::where('role', 'user')->whereIn('id', $scopedIds);
+
+        if ($filterUserId) {
+            $targetUser = User::find($filterUserId);
+            if ($targetUser && $targetUser->role === 'user') {
+                $query->where('id', $targetUser->id);
+            }
+        }
+
+        $customers = $query->orderBy('name')->get();
+
+        $list = [];
+        $aggregates = [
+            'total_pending'          => 0,
+            'total_processing'       => 0,
+            'customers_with_pending' => 0,
+            'total_customers'        => $customers->count(),
+            'max_wait_seconds'       => 0,
+            'max_wait_human'         => 'Queue Clear',
+            'operator_pending'       => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+        ];
+
+        $oldestGlobalTimestamp = null;
+
+        foreach ($customers as $cust) {
+            $pendingQuery = Sms::where('user_id', $cust->id)->where('status', 'pending');
+            $pendingCount = (clone $pendingQuery)->count();
+            $processingCount = Sms::where('user_id', $cust->id)
+                ->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])
+                ->count();
+
+            $aggregates['total_pending'] += $pendingCount;
+            $aggregates['total_processing'] += $processingCount;
+
+            $oldestMsg = null;
+            $waitTimeSeconds = 0;
+            $waitTimeHuman = 'Queue Clear';
+            $opBreakdown = ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0];
+            $campaignPending = 0;
+            $directPending = 0;
+
+            if ($pendingCount > 0) {
+                $aggregates['customers_with_pending']++;
+
+                $oldestMsg = (clone $pendingQuery)->orderBy('id', 'asc')->select(['id', 'created_at'])->first();
+                if ($oldestMsg && $oldestMsg->created_at) {
+                    $waitTimeSeconds = now()->diffInSeconds($oldestMsg->created_at);
+                    $waitTimeHuman = $oldestMsg->created_at->diffForHumans(null, true);
+
+                    if ($oldestGlobalTimestamp === null || $oldestMsg->created_at->lt($oldestGlobalTimestamp)) {
+                        $oldestGlobalTimestamp = $oldestMsg->created_at;
+                    }
+                }
+
+                $ops = (clone $pendingQuery)
+                    ->groupBy('operator')
+                    ->selectRaw('operator, count(*) as count')
+                    ->pluck('count', 'operator')
+                    ->toArray();
+
+                foreach (['GP', 'BL', 'Robi', 'Teletalk'] as $opKey) {
+                    $opVal = (int) ($ops[$opKey] ?? 0);
+                    $opBreakdown[$opKey] = $opVal;
+                    $aggregates['operator_pending'][$opKey] = ($aggregates['operator_pending'][$opKey] ?? 0) + $opVal;
+                }
+
+                $campaignPending = (clone $pendingQuery)->whereNotNull('campaign_id')->count();
+                $directPending = max(0, $pendingCount - $campaignPending);
+            }
+
+            $urgency = 'normal';
+            if ($pendingCount > 100 || $waitTimeSeconds > 300) {
+                $urgency = 'critical';
+            } elseif ($pendingCount > 20 || $waitTimeSeconds > 60) {
+                $urgency = 'warning';
+            }
+
+            $list[] = [
+                'id'                 => $cust->id,
+                'name'               => $cust->name,
+                'username'           => $cust->username ?? $cust->name,
+                'email'              => $cust->email,
+                'phone'              => $cust->phone ?? 'N/A',
+                'balance'            => round((float) ($cust->balance ?? 0), 2),
+                'pending_count'      => $pendingCount,
+                'processing_count'   => $processingCount,
+                'oldest_msg_id'      => $oldestMsg?->id,
+                'wait_time_seconds'  => $waitTimeSeconds,
+                'wait_time_human'    => $waitTimeHuman,
+                'operator_breakdown' => $opBreakdown,
+                'campaign_pending'   => $campaignPending,
+                'direct_pending'     => $directPending,
+                'urgency'            => $urgency,
+            ];
+        }
+
+        usort($list, function ($a, $b) {
+            if ($a['pending_count'] === $b['pending_count']) {
+                return $b['wait_time_seconds'] <=> $a['wait_time_seconds'];
+            }
+            return $b['pending_count'] <=> $a['pending_count'];
+        });
+
+        if ($oldestGlobalTimestamp) {
+            $aggregates['max_wait_seconds'] = now()->diffInSeconds($oldestGlobalTimestamp);
+            $aggregates['max_wait_human'] = $oldestGlobalTimestamp->diffForHumans(null, true);
+        }
+
+        return [
+            'list'       => $list,
+            'aggregates' => $aggregates,
+        ];
+    }
+
+    /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
     public function getUserHierarchyBreadcrumbs(int $userId, ?User $actor = null): array
@@ -571,8 +706,8 @@ class QueueMonitorService
                 }
             ];
 
-            // If viewer is Reseller (SP), stop upward traversal at the Reseller level
-            if ($actor && $actor->role === 'sp' && $curr->id === $actor->id) {
+            // If viewer is Reseller (SP) or Sub-Reseller (SSP), stop upward traversal at viewer level
+            if ($actor && in_array($actor->role, ['sp', 'ssp']) && $curr->id === $actor->id) {
                 break;
             }
 

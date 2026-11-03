@@ -58,5 +58,6 @@ Route::group(['as' => 'ssp.', 'prefix' => 'ssp', 'middleware' => ['auth', 'ssp']
     Route::get('/queue-monitor/inspect/{id}', [SSP\QueueMonitorController::class, 'inspectUser'])->name('queue-monitor.inspect');
     Route::get('/queue-monitor/customer-queue/{id}', [SSP\QueueMonitorController::class, 'customerQueueDetails'])->name('queue-monitor.customer-queue');
     Route::post('/queue-monitor/cancel-sms/{id}', [SSP\QueueMonitorController::class, 'cancelSms'])->name('queue-monitor.cancel-sms');
+    Route::post('/queue-monitor/cancel-customer-pending/{id}', [SSP\QueueMonitorController::class, 'cancelCustomerPendingSms'])->name('queue-monitor.cancel-customer-pending');
     Route::post('/queue-monitor/retry-sms/{id}', [SSP\QueueMonitorController::class, 'retrySms'])->name('queue-monitor.retry-sms');
 });

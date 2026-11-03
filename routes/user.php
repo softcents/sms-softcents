@@ -115,6 +115,11 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
     // Live Queue Monitor
     Route::get('/queue-monitor', [User\QueueMonitorController::class, 'index'])->name('queue-monitor.index');
     Route::get('/queue-monitor/data', [User\QueueMonitorController::class, 'liveData'])->name('queue-monitor.data');
+    Route::post('/queue-monitor/cancel-sms/{id}', [User\QueueMonitorController::class, 'cancelSms'])->name('queue-monitor.cancel-sms');
+    Route::post('/queue-monitor/cancel-pending', [User\QueueMonitorController::class, 'cancelAllPendingSms'])->name('queue-monitor.cancel-pending');
+    Route::post('/queue-monitor/retry-sms/{id}', [User\QueueMonitorController::class, 'retrySms'])->name('queue-monitor.retry-sms');
+    Route::post('/queue-monitor/retry-failed', [User\QueueMonitorController::class, 'retryAllFailedSms'])->name('queue-monitor.retry-failed');
+    Route::post('/queue-monitor/cancel-campaign/{id}', [User\QueueMonitorController::class, 'cancelCampaignPending'])->name('queue-monitor.cancel-campaign');
 
     Route::get('download-contacts-file', function() {
         $filePath = public_path('assets/contacts.xlsx');

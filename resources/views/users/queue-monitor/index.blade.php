@@ -1,6 +1,6 @@
 @extends('layouts.users.master')
 
-@section('title', __('Live SMS Monitoring'))
+@section('title', __('My Live SMS Queue Monitoring'))
 
 @push('css')
 <style>
@@ -150,6 +150,7 @@
     .badge-soft-danger  { background: #fee2e2; color: #b91c1c; border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; }
     .badge-soft-info    { background: #e0f2fe; color: #0369a1; border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; }
     .badge-soft-primary { background: #e0e7ff; color: #4338ca; border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; }
+    .badge-soft-secondary { background: #f1f5f9; color: #475569; border-radius: 6px; padding: 4px 8px; font-weight: 600; font-size: 11px; }
 
     .stream-row-new {
         animation: highlight-row 1.5s ease-out;
@@ -171,11 +172,13 @@
                 <div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="pulse-indicator" id="live-indicator"></span>
-                        <h4 class="m-0 fw-bold text-dark">{{ __('Live SMS Monitoring') }}</h4>
+                        <h4 class="m-0 fw-bold text-dark">{{ __('My Live SMS Queue Monitoring') }}</h4>
                         <span class="badge badge-soft-success ms-1" style="font-size: 11px;">REAL-TIME</span>
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-1" style="font-size: 13px; color: #64748b;">
                         <span><i class="fas fa-user-circle me-1"></i> Account: <strong>{{ auth()->user()->name }}</strong> ({{ '@' . (auth()->user()->username ?? auth()->user()->name) }})</span>
+                        <span>•</span>
+                        <span><i class="fas fa-wallet text-success me-1"></i> Balance: <strong class="text-success">৳{{ number_format(auth()->user()->balance ?? 0, 2) }}</strong></span>
                         <span>•</span>
                         <span><i class="fas fa-broadcast-tower me-1"></i> Engine: <strong class="text-success">Active & Dispatching</strong></span>
                         <span>•</span>
@@ -203,7 +206,7 @@
             </div>
         </div>
 
-        <!-- 5 KPI Cards Row -->
+        <!-- 12 KPI Cards Row -->
         <div class="row g-3 mb-4">
             <!-- 1. Total Queued SMS -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
@@ -229,7 +232,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Pending SMS') }}</div>
-                            <div class="kpi-val text-secondary" id="val-pending-count" style="color: #6366f1;">{{ number_format($metrics['pending_count']) }}</div>
+                            <div class="kpi-val text-warning" id="val-pending-count">{{ number_format($metrics['pending_count']) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #ede9fe; color: #7c3aed;">
                             <i class="fas fa-hourglass-half"></i>
@@ -247,7 +250,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Processing SMS') }}</div>
-                            <div class="kpi-val text-warning" id="val-processing-count">{{ number_format($metrics['processing_count'] ?? 0) }}</div>
+                            <div class="kpi-val text-info" id="val-processing-count">{{ number_format($metrics['processing_count'] ?? 0) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #fef3c7; color: #d97706;">
                             <i class="fas fa-cog fa-spin"></i>
@@ -422,18 +425,324 @@
             </div>
         </div>
 
-        <!-- Middle Section: Operator Distribution & Quick Actions -->
+        <!-- Dedicated Outgoing SMS Queue & Message Actions Panel -->
+        <div class="panel-box mb-4" id="panel-my-queue">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0e7ff; color: #4338ca;">
+                        <i class="fas fa-layer-group"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('My Outgoing SMS Queue & Message Dispatches') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Live inspection of your queued messages, wait latency, status breakdown, and instant cancel / retry actions') }}
+                        </small>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <!-- Queue Status Filter Tabs -->
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Queue Status Filter">
+                        <button type="button" class="btn btn-outline-primary cust-status-tab-btn active" data-status="all">{{ __('All Messages') }}</button>
+                        <button type="button" class="btn btn-outline-warning cust-status-tab-btn" data-status="pending">{{ __('Pending Queue') }}</button>
+                        <button type="button" class="btn btn-outline-info cust-status-tab-btn" data-status="processing">{{ __('Processing') }}</button>
+                        <button type="button" class="btn btn-outline-success cust-status-tab-btn" data-status="delivered">{{ __('Delivered') }}</button>
+                        <button type="button" class="btn btn-outline-danger cust-status-tab-btn" data-status="failed">{{ __('Failed') }}</button>
+                    </div>
+
+                    <!-- Bulk Actions -->
+                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" id="btn-cancel-all-pending" title="{{ __('Cancel all pending messages') }}" style="font-size: 11px; font-weight: 600;">
+                        <i class="fas fa-ban me-1"></i> {{ __('Cancel All Pending') }}
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning py-1 px-2" id="btn-retry-all-failed" title="{{ __('Retry all failed messages') }}" style="font-size: 11px; font-weight: 600;">
+                        <i class="fas fa-redo me-1"></i> {{ __('Retry All Failed') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mini Summary Counters for Customer Queue -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-md col-sm-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING IN QUEUE') }}</span>
+                            <span class="fs-5 fw-bold text-warning" id="cust-kpi-pending">{{ number_format($customerQueue['summary']['pending_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Dispatch') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md col-sm-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold text-info" id="cust-kpi-processing">{{ number_format($customerQueue['summary']['processing_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('In-Flight Concurrency') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md col-sm-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERED TODAY') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="cust-kpi-delivered">{{ number_format($customerQueue['summary']['today_delivered'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Handset Confirmed') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md col-sm-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('FAILED TODAY') }}</span>
+                            <span class="fs-5 fw-bold text-danger" id="cust-kpi-failed">{{ number_format($customerQueue['summary']['today_failed'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Errors / Undelivered') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-md col-sm-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERY RATE') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="cust-kpi-rate">{{ $customerQueue['summary']['delivery_rate'] ?? 100 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Success Ratio') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Message Dispatches Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-my-queue">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Queued Time') }}</th>
+                            <th>{{ __('Recipient') }}</th>
+                            <th>{{ __('Sender ID') }}</th>
+                            <th>{{ __('Operator') }}</th>
+                            <th>{{ __('Route / Gateway') }}</th>
+                            <th class="text-center">{{ __('Total Parts') }}</th>
+                            <th class="text-center">{{ __('Charge') }}</th>
+                            <th>{{ __('Status & Response') }}</th>
+                            <th class="text-center">{{ __('Latency') }}</th>
+                            <th class="text-end">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-my-queue">
+                        @forelse($customerQueue['messages'] ?? [] as $msg)
+                        <tr data-sms-id="{{ $msg['id'] }}">
+                            <td class="text-muted" style="font-size: 11px;">
+                                <i class="far fa-clock me-1"></i> {{ $msg['queued_at'] }}
+                            </td>
+                            <td>
+                                <strong class="text-dark">{{ $msg['recipient'] }}</strong>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-primary px-2 py-1">{{ $msg['sender'] }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-secondary">{{ $msg['operator'] }}</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 12px;">{{ $msg['gateway'] }}</td>
+                            <td class="text-center fw-semibold">{{ $msg['total_parts'] }} Part(s)</td>
+                            <td class="text-center fw-bold text-dark">৳{{ number_format($msg['charge'], 2) }}</td>
+                            <td>
+                                <span class="badge {{ $msg['status_badge'] }}">
+                                    {{ $msg['status'] }}
+                                </span>
+                                <small class="text-muted d-block mt-1" style="font-size: 10px;">{{ $msg['response_code'] }}</small>
+                            </td>
+                            <td class="text-center text-muted" style="font-size: 11px;">
+                                <i class="fas fa-stopwatch me-1 text-info"></i> {{ $msg['latency'] }}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if($msg['can_cancel'])
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-cancel-sms" data-id="{{ $msg['id'] }}" title="{{ __('Cancel this pending SMS') }}" style="font-size: 11px;">
+                                    <i class="fas fa-times me-1"></i> {{ __('Cancel') }}
+                                </button>
+                                @elseif($msg['can_retry'])
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-retry-sms" data-id="{{ $msg['id'] }}" title="{{ __('Re-queue failed SMS') }}" style="font-size: 11px;">
+                                    <i class="fas fa-redo-alt me-1"></i> {{ __('Retry') }}
+                                </button>
+                                @endif
+                                <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="{{ $msg['id'] }}" data-content="{{ rawurlencode($msg['content']) }}" data-recipient="{{ $msg['recipient'] }}" data-sender="{{ $msg['sender'] }}" data-time="{{ $msg['queued_at'] }}" data-status="{{ $msg['status'] }}" data-charge="{{ number_format($msg['charge'], 2) }}" title="{{ __('View message content') }}" style="font-size: 11px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle text-success fs-3 d-block mb-2"></i>
+                                {{ __('No queued or dispatched SMS found for this status.') }}
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Campaign-Wise SMS Statistics & Queue Progress Panel -->
+        <div class="panel-box mb-4" id="panel-campaigns">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(220, 53, 69, 0.12); color: #dc3545;">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('My Bulk Broadcast Campaigns & Dispatch Tracker') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Real-time recipient completion velocity, worker dispatch progress, and queue backlog for your campaigns') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-danger ms-1"><span id="campaigns-count">{{ count($campaigns ?? []) }}</span> {{ __('Campaigns Monitored') }}</span>
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                    <div class="input-group input-group-sm" style="max-width: 240px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control form-control-sm border-start-0" id="input-search-campaigns" placeholder="{{ __('Search my campaigns...') }}" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Campaigns -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE CAMPAIGNS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-total">{{ $campaignAggregates['total_campaigns'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Broadcast Batches') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TOTAL RECIPIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-recipients">{{ number_format($campaignAggregates['total_recipients'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Target Mobile Contacts') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING IN QUEUE') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="camp-agg-pending">{{ number_format($campaignAggregates['pending_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Worker RAM') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="camp-agg-processing">{{ number_format($campaignAggregates['processing_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Active Dispatches') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERED SMS') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="camp-agg-delivered">{{ number_format($campaignAggregates['delivered_count'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span class="text-danger fw-bold">{{ __('Failed') }}: <span id="camp-agg-failed">{{ number_format($campaignAggregates['failed_count'] ?? 0) }}</span></span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('AVG PROGRESS') }}</span>
+                            <span class="fs-5 fw-bold text-primary" id="camp-agg-progress">{{ $campaignAggregates['avg_progress'] ?? 0 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Completion Velocity') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-campaigns">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Campaign & ID') }}</th>
+                            <th class="text-center">{{ __('Sender ID') }}</th>
+                            <th class="text-center">{{ __('Recipients') }}</th>
+                            <th class="text-center">{{ __('Pending') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
+                            <th class="text-center">{{ __('Delivered') }}</th>
+                            <th class="text-center">{{ __('Failed') }}</th>
+                            <th class="text-center" style="min-width: 140px;">{{ __('Progress') }}</th>
+                            <th class="text-end">{{ __('Status / Time') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-campaigns">
+                        @forelse($campaigns ?? [] as $camp)
+                        <tr data-campaign-id="{{ $camp['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                        <i class="fas fa-bullhorn"></i>
+                                    </div>
+                                    <span>{{ $camp['name'] }}</span>
+                                </div>
+                                <small class="text-muted ms-4">ID: #{{ $camp['id'] }} @if(!empty($camp['charges'])) • ৳{{ $camp['charges'] }} @endif</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-primary px-2 py-1">{{ $camp['sender'] }}</span>
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($camp['total_recipients']) }}</td>
+                            <td class="text-center fw-bold {{ $camp['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($camp['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($camp['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['delivered_count'] > 0 ? 'text-success' : 'text-muted' }}">
+                                {{ number_format($camp['delivered_count']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['failed_count'] > 0 ? 'text-danger' : 'text-muted' }}">
+                                {{ number_format($camp['failed_count']) }}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $camp['progress_percent'] }}%</span>
+                                    <small class="text-muted">{{ $camp['delivery_rate'] }}% rate</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ $camp['progress_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ $camp['progress_percent'] }}%;" aria-valuenow="{{ $camp['progress_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge {{ $camp['status_badge'] }}">
+                                    {{ $camp['status'] }}
+                                </span>
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;">{{ $camp['created_at'] }}</small>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if($camp['pending_queue'] > 0)
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-campaign-pending" data-id="{{ $camp['id'] }}" data-name="{{ $camp['name'] }}" data-count="{{ $camp['pending_queue'] }}" title="{{ __('Cancel pending SMS in this campaign') }}" style="font-size: 11px;">
+                                    <i class="fas fa-ban me-1"></i> {{ __('Cancel Pending') }}
+                                </button>
+                                @else
+                                <span class="text-muted" style="font-size: 11px;"><i class="fas fa-check text-success me-1"></i> Completed</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">
+                                <i class="fas fa-bullhorn text-muted fs-3 d-block mb-2"></i>
+                                {{ __('No broadcast campaigns in queue. System ready for new campaigns.') }}
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Middle Section: Operator Distribution & Live Stream -->
         <div class="row g-4 mb-4">
             <!-- Operator Breakdown Donut Chart -->
-            <div class="col-lg-6 col-12">
+            <div class="col-lg-5 col-12">
                 <div class="panel-box h-100">
                     <div class="panel-header">
                         <h5 class="panel-title">
                             <i class="fas fa-chart-pie text-success"></i>
-                            {{ __('Recipient Operator Breakdown (24h)') }}
+                            {{ __('My Recipient Operator Breakdown (24h)') }}
                         </h5>
                     </div>
-                    <div class="p-3 d-flex flex-column align-items-center justify-content-center" style="min-height: 220px;">
+                    <div class="p-3 d-flex flex-column align-items-center justify-content-center" style="min-height: 240px;">
                         <div style="position: relative; width: 100%; max-width: 220px; height: 180px;">
                             <canvas id="operatorChart"></canvas>
                         </div>
@@ -447,117 +756,103 @@
                 </div>
             </div>
 
-            <!-- Live Campaign Queue & Progress Tracker -->
-            <div class="col-lg-6 col-12">
+            <!-- Live Outgoing SMS Stream -->
+            <div class="col-lg-7 col-12">
                 <div class="panel-box h-100">
                     <div class="panel-header">
                         <h5 class="panel-title">
-                            <i class="fas fa-tasks text-primary"></i>
-                            {{ __('Campaign Dispatch & Queue Tracker') }}
+                            <i class="fas fa-stream text-primary"></i>
+                            {{ __('My Live Outgoing SMS Stream') }}
                         </h5>
-                        <span class="badge badge-soft-info" id="active-campaigns-badge">{{ count($metrics['active_campaigns'] ?? []) }} {{ __('Recent') }}</span>
+                        <span class="badge badge-soft-success"><i class="fas fa-satellite-dish me-1"></i> {{ __('Live Stream') }}</span>
                     </div>
-                    <div class="p-3" id="active-campaigns-container">
-                        @forelse($metrics['active_campaigns'] ?? [] as $camp)
-                        <div class="border rounded p-3 mb-3 bg-light">
-                            <div class="d-flex align-items-center justify-content-between mb-2">
-                                <div class="fw-bold text-dark fs-6">{{ $camp['name'] }}</div>
-                                <span class="badge {{ $camp['pending'] > 0 ? 'badge-soft-warning' : 'badge-soft-success' }}">
-                                    {{ $camp['pending'] > 0 ? __('In-Queue: ') . number_format($camp['pending']) : __('Completed') }}
-                                </span>
-                            </div>
-
-                            <div class="progress mb-2" style="height: 8px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $camp['progress_percent'] }}%;" aria-valuenow="{{ $camp['progress_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-
-                            <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
-                                <span>Sent: <strong class="text-success">{{ number_format($camp['success']) }}</strong> / {{ number_format($camp['total']) }} ({{ $camp['progress_percent'] }}%)</span>
-                                <span>ETA: <strong class="text-primary">{{ $camp['eta'] }}</strong></span>
-                            </div>
-                        </div>
-                        @empty
-                        <div class="p-4 d-flex flex-column justify-content-center text-center h-100">
-                            <i class="fas fa-check-circle text-success fs-1 mb-2"></i>
-                            <h6 class="fw-bold text-dark">{{ __('No Active Campaigns in Queue') }}</h6>
-                            <p class="text-muted mb-3" style="font-size: 13px;">
-                                {{ __('All your scheduled campaigns have finished processing. Start a new campaign or send quick messages at any time.') }}
-                            </p>
-                            <div class="d-flex justify-content-center gap-2">
-                                <a href="{{ route('users.quick-sms.index') }}" class="btn btn-outline-primary btn-sm px-3 py-1">
-                                    <i class="fas fa-paper-plane me-1"></i> {{ __('Send Quick SMS') }}
-                                </a>
-                                <a href="{{ route('users.bulk-sms.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-1">
-                                    <i class="fas fa-mail-bulk me-1"></i> {{ __('Launch Bulk Campaign') }}
-                                </a>
-                            </div>
-                        </div>
-                        @endforelse
+                    <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                        <table class="table table-modern align-middle" id="table-stream">
+                            <thead>
+                                <tr>
+                                    <th>{{ __('Time') }}</th>
+                                    <th>{{ __('Recipient') }}</th>
+                                    <th>{{ __('Sender ID') }}</th>
+                                    <th>{{ __('Operator') }}</th>
+                                    <th>{{ __('Status') }}</th>
+                                    <th>{{ __('Gateway Response') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-stream">
+                                @forelse($metrics['live_stream'] as $sms)
+                                <tr data-id="{{ $sms['id'] }}">
+                                    <td class="text-muted" style="font-size: 12px;">{{ $sms['time'] }}</td>
+                                    <td class="fw-semibold text-dark">{{ $sms['recipient'] }}</td>
+                                    <td class="text-muted" style="font-size: 12px;">{{ $sms['sender'] }}</td>
+                                    <td><span class="badge badge-soft-primary">{{ $sms['operator'] }}</span></td>
+                                    <td>
+                                        @if($sms['status'] === 'success')
+                                            <span class="badge badge-soft-success">{{ __('Success') }}</span>
+                                        @elseif($sms['status'] === 'pending')
+                                            <span class="badge badge-soft-warning">{{ __('Queued') }}</span>
+                                        @else
+                                            <span class="badge badge-soft-danger">{{ ucfirst($sms['status']) }}</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-muted" style="font-size: 12px;">{{ $sms['response_code'] }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">{{ __('No dispatched traffic detected yet.') }}</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Live SMS Stream -->
-        <div class="panel-box">
-            <div class="panel-header">
-                <h5 class="panel-title">
-                    <i class="fas fa-stream text-primary"></i>
-                    {{ __('Live Outgoing SMS Stream') }}
+    </div>
+</div>
+
+<!-- Modal: View Message Content -->
+<div class="modal fade" id="modal-view-sms" tabindex="-1" aria-labelledby="modal-view-sms-label" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modal-view-sms-label">
+                    <i class="fas fa-envelope-open-text text-primary me-2"></i> {{ __('SMS Message Details') }}
                 </h5>
-                <span class="badge badge-soft-success"><i class="fas fa-satellite-dish me-1"></i> {{ __('Live Stream') }}</span>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="table-responsive">
-                <table class="table table-modern align-middle" id="table-stream">
-                    <thead>
-                        <tr>
-                            <th>{{ __('Time') }}</th>
-                            <th>{{ __('Recipient') }}</th>
-                            <th>{{ __('Sender ID') }}</th>
-                            <th>{{ __('Operator') }}</th>
-                            <th>{{ __('Status') }}</th>
-                            <th>{{ __('Gateway Response') }}</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-stream">
-                        @forelse($metrics['live_stream'] as $sms)
-                        <tr data-id="{{ $sms['id'] }}">
-                            <td class="text-muted" style="font-size: 12px;">{{ $sms['time'] }}</td>
-                            <td class="fw-semibold text-dark">{{ $sms['recipient'] }}</td>
-                            <td class="text-muted" style="font-size: 12px;">{{ $sms['sender'] }}</td>
-                            <td><span class="badge badge-soft-primary">{{ $sms['operator'] }}</span></td>
-                            <td>
-                                @if($sms['status'] === 'success')
-                                    <span class="badge badge-soft-success">{{ __('Success') }}</span>
-                                @elseif($sms['status'] === 'pending')
-                                    <span class="badge badge-soft-warning">{{ __('Queued') }}</span>
-                                @else
-                                    <span class="badge badge-soft-danger">{{ ucfirst($sms['status']) }}</span>
-                                @endif
-                            </td>
-                            <td class="text-muted" style="font-size: 12px;">{{ $sms['response_code'] }}</td>
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="6" class="text-center py-4 text-muted">{{ __('No dispatched traffic detected yet.') }}</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="modal-body">
+                <div class="mb-3 d-flex flex-wrap gap-2 justify-content-between bg-light p-2 rounded" style="font-size: 12px;">
+                    <div><strong>Recipient:</strong> <span id="modal-sms-recipient"></span></div>
+                    <div><strong>Sender:</strong> <span id="modal-sms-sender"></span></div>
+                    <div><strong>Time:</strong> <span id="modal-sms-time"></span></div>
+                    <div><strong>Status:</strong> <span id="modal-sms-status"></span></div>
+                    <div><strong>Charge:</strong> ৳<span id="modal-sms-charge"></span></div>
+                </div>
+                <label class="form-label fw-bold text-dark">{{ __('SMS Text Content') }}</label>
+                <div class="p-3 border rounded bg-light" id="modal-sms-content" style="white-space: pre-wrap; word-break: break-word; font-size: 13px; font-family: monospace;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">{{ __('Close') }}</button>
             </div>
         </div>
-
     </div>
 </div>
 @endsection
 
 @push('js')
 <script src="{{ asset('assets/js/chart.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function() {
     let pollingInterval = 2000;
     let pollTimer = null;
     let isFetching = false;
+    let currentQueueStatusFilter = 'all';
+    let currentCustomerQueueData = @json($customerQueue ?? []);
+    let currentCampaignsData = @json($campaigns ?? []);
+    let currentCampaignAggregates = @json($campaignAggregates ?? []);
+    let currentCampaignSearchTerm = '';
 
     // 1. Operator Chart
     const opCtx = document.getElementById('operatorChart');
@@ -598,6 +893,9 @@ $(document).ready(function() {
         $.ajax({
             url: "{{ route('users.queue-monitor.data') }}",
             type: "GET",
+            data: {
+                status_filter: currentQueueStatusFilter
+            },
             dataType: "json",
             timeout: 5000,
             success: function(res) {
@@ -605,36 +903,36 @@ $(document).ready(function() {
 
                 $('#last-synced-time').text(res.timestamp);
 
-                // KPI
-                $('#val-total-queued').text(res.metrics.pending_count.toLocaleString());
-                $('#val-queue-backlog').text((res.metrics.queue_backlog ?? res.metrics.pending_count).toLocaleString());
+                // KPI counters
+                $('#val-total-queued').text(Number(res.metrics.pending_count || 0).toLocaleString());
+                $('#val-queue-backlog').text(Number(res.metrics.queue_backlog ?? res.metrics.pending_count ?? 0).toLocaleString());
                 $('#val-backlog-drain').text(res.metrics.drain_eta || 'Optimal Flow');
-                $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
-                $('#val-processing-count').text((res.metrics.processing_count || 0).toLocaleString());
-                $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());
-                $('#val-today-submitted').text((res.metrics.today_submitted || 0).toLocaleString());
-                $('#val-total-submitted').text((res.metrics.submitted_count || 0).toLocaleString());
-                $('#val-delivered-count').text((res.metrics.today_delivered || 0).toLocaleString());
-                $('#val-today-delivered').text((res.metrics.today_delivered || 0).toLocaleString());
-                $('#val-total-delivered').text((res.metrics.delivered_count || 0).toLocaleString());
+                $('#val-pending-count').text(Number(res.metrics.pending_count || 0).toLocaleString());
+                $('#val-processing-count').text(Number(res.metrics.processing_count || 0).toLocaleString());
+                $('#val-submitted-count').text(Number(res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-today-submitted').text(Number(res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-total-submitted').text(Number(res.metrics.submitted_count || 0).toLocaleString());
+                $('#val-delivered-count').text(Number(res.metrics.today_delivered || 0).toLocaleString());
+                $('#val-today-delivered').text(Number(res.metrics.today_delivered || 0).toLocaleString());
+                $('#val-total-delivered').text(Number(res.metrics.delivered_count || 0).toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
-                $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
-                $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());
-                $('#val-today-total').text(res.metrics.today_total.toLocaleString());
-                $('#val-today-success').text(res.metrics.today_success.toLocaleString());
-                $('#val-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
-                $('#val-sub-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
-                $('#val-total-failed').text((res.metrics.failed_count || 0).toLocaleString());
-                $('#val-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
-                $('#val-sub-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
-                $('#val-total-rejected').text((res.metrics.rejected_count || 0).toLocaleString());
-                $('#val-today-expired').text((res.metrics.today_expired || 0).toLocaleString());
-                $('#val-sub-today-expired').text((res.metrics.today_expired || 0).toLocaleString());
-                $('#val-total-expired').text((res.metrics.expired_count || 0).toLocaleString());
-                $('#val-retry-queue').text((res.metrics.retry_queue_count || 0).toLocaleString());
+                $('#val-1m').text(Number(res.metrics.last_1_min_volume || 0).toLocaleString());
+                $('#val-5m').text(Number(res.metrics.last_5_min_volume || 0).toLocaleString());
+                $('#val-today-total').text(Number(res.metrics.today_total || 0).toLocaleString());
+                $('#val-today-success').text(Number(res.metrics.today_success || 0).toLocaleString());
+                $('#val-today-failed').text(Number(res.metrics.today_failed || 0).toLocaleString());
+                $('#val-sub-today-failed').text(Number(res.metrics.today_failed || 0).toLocaleString());
+                $('#val-total-failed').text(Number(res.metrics.failed_count || 0).toLocaleString());
+                $('#val-today-rejected').text(Number(res.metrics.today_rejected || 0).toLocaleString());
+                $('#val-sub-today-rejected').text(Number(res.metrics.today_rejected || 0).toLocaleString());
+                $('#val-total-rejected').text(Number(res.metrics.rejected_count || 0).toLocaleString());
+                $('#val-today-expired').text(Number(res.metrics.today_expired || 0).toLocaleString());
+                $('#val-sub-today-expired').text(Number(res.metrics.today_expired || 0).toLocaleString());
+                $('#val-total-expired').text(Number(res.metrics.expired_count || 0).toLocaleString());
+                $('#val-retry-queue').text(Number(res.metrics.retry_queue_count || 0).toLocaleString());
                 $('#val-kpi-tps').text(res.metrics.current_tps);
-                $('#val-kpi-1m').text(res.metrics.last_1_min_volume.toLocaleString());
-                $('#val-kpi-5m').text(res.metrics.last_5_min_volume.toLocaleString());
+                $('#val-kpi-1m').text(Number(res.metrics.last_1_min_volume || 0).toLocaleString());
+                $('#val-kpi-5m').text(Number(res.metrics.last_5_min_volume || 0).toLocaleString());
                 const activeW = (res.metrics.active_workers ?? (res.workers ? res.workers.active_workers : 8));
                 $('#val-kpi-workers').text(activeW);
                 const wStat = (res.metrics.worker_status ?? (res.workers ? res.workers.status : 'healthy'));
@@ -659,8 +957,11 @@ $(document).ready(function() {
                     $('#leg-tt').text(ops.Teletalk || 0);
                 }
 
-                // Active Campaigns
-                renderActiveCampaigns(res.metrics.active_campaigns);
+                // Render Customer Own Queue Table
+                renderCustomerQueueTable(res.customer_queue);
+
+                // Render Customer Own Campaigns
+                renderCampaignsTable(res.campaigns, res.campaign_aggregates);
 
                 // Live Stream
                 renderStreamTable(res.metrics.live_stream);
@@ -676,54 +977,194 @@ $(document).ready(function() {
         });
     }
 
-    function renderActiveCampaigns(campaigns) {
-        if (!campaigns || !campaigns.length) {
-            $('#active-campaigns-badge').text('0 Recent');
-            $('#active-campaigns-container').html(`
-                <div class="p-4 d-flex flex-column justify-content-center text-center h-100">
-                    <i class="fas fa-check-circle text-success fs-1 mb-2"></i>
-                    <h6 class="fw-bold text-dark">No Active Campaigns in Queue</h6>
-                    <p class="text-muted mb-3" style="font-size: 13px;">
-                        All your scheduled campaigns have finished processing. Start a new campaign or send quick messages at any time.
-                    </p>
-                    <div class="d-flex justify-content-center gap-2">
-                        <a href="{{ route('users.quick-sms.index') }}" class="btn btn-outline-primary btn-sm px-3 py-1">
-                            <i class="fas fa-paper-plane me-1"></i> Send Quick SMS
-                        </a>
-                        <a href="{{ route('users.bulk-sms.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-1">
-                            <i class="fas fa-mail-bulk me-1"></i> Launch Bulk Campaign
-                        </a>
-                    </div>
-                </div>
+    // 3. Render Customer Queue Table & Mini Counters
+    function renderCustomerQueueTable(cq) {
+        if (!cq) return;
+        currentCustomerQueueData = cq;
+        const s = cq.summary || {};
+        const msgs = cq.messages || [];
+
+        // Mini KPI counters
+        $('#cust-kpi-pending').text(Number(s.pending_queue || 0).toLocaleString());
+        $('#cust-kpi-processing').text(Number(s.processing_queue || 0).toLocaleString());
+        $('#cust-kpi-delivered').text(Number(s.today_delivered || 0).toLocaleString());
+        $('#cust-kpi-failed').text(Number(s.today_failed || 0).toLocaleString());
+        $('#cust-kpi-rate').text((s.delivery_rate || 100) + '%');
+
+        if (!msgs.length) {
+            $('#tbody-my-queue').html(`
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-success fs-3 d-block mb-2"></i>
+                        No queued or dispatched SMS found for this status.
+                    </td>
+                </tr>
             `);
             return;
         }
 
-        $('#active-campaigns-badge').text(campaigns.length + ' Recent');
         let html = '';
-        campaigns.forEach(function(c) {
-            const badgeClass = c.pending > 0 ? 'badge-soft-warning' : 'badge-soft-success';
-            const badgeText = c.pending > 0 ? 'In-Queue: ' + Number(c.pending).toLocaleString() : 'Completed';
+        msgs.forEach(function(msg) {
+            let actionHtml = '';
+            if (msg.can_cancel) {
+                actionHtml += `
+                    <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-cancel-sms" data-id="${msg.id}" title="Cancel this pending SMS" style="font-size: 11px;">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                `;
+            } else if (msg.can_retry) {
+                actionHtml += `
+                    <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-retry-sms" data-id="${msg.id}" title="Re-queue failed SMS" style="font-size: 11px;">
+                        <i class="fas fa-redo-alt me-1"></i> Retry
+                    </button>
+                `;
+            }
+            actionHtml += `
+                <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="${msg.id}" data-content="${encodeURIComponent(msg.content)}" data-recipient="${msg.recipient}" data-sender="${msg.sender}" data-time="${msg.queued_at}" data-status="${msg.status}" data-charge="${Number(msg.charge).toFixed(2)}" title="View message content" style="font-size: 11px;">
+                    <i class="fas fa-eye"></i>
+                </button>
+            `;
 
             html += `
-                <div class="border rounded p-3 mb-3 bg-light">
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <div class="fw-bold text-dark fs-6">${c.name}</div>
-                        <span class="badge ${badgeClass}">${badgeText}</span>
-                    </div>
-                    <div class="progress mb-2" style="height: 8px;">
-                        <div class="progress-bar bg-success" role="progressbar" style="width: ${c.progress_percent}%;" aria-valuenow="${c.progress_percent}" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                    <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
-                        <span>Sent: <strong class="text-success">${Number(c.success).toLocaleString()}</strong> / ${Number(c.total).toLocaleString()} (${c.progress_percent}%)</span>
-                        <span>ETA: <strong class="text-primary">${c.eta}</strong></span>
-                    </div>
-                </div>
+                <tr data-sms-id="${msg.id}">
+                    <td class="text-muted" style="font-size: 11px;">
+                        <i class="far fa-clock me-1"></i> ${msg.queued_at}
+                    </td>
+                    <td>
+                        <strong class="text-dark">${msg.recipient}</strong>
+                    </td>
+                    <td>
+                        <span class="badge badge-soft-primary px-2 py-1">${msg.sender}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-soft-secondary">${msg.operator}</span>
+                    </td>
+                    <td class="text-muted" style="font-size: 12px;">${msg.gateway}</td>
+                    <td class="text-center fw-semibold">${msg.total_parts} Part(s)</td>
+                    <td class="text-center fw-bold text-dark">৳${Number(msg.charge).toFixed(2)}</td>
+                    <td>
+                        <span class="badge ${msg.status_badge}">
+                            ${msg.status}
+                        </span>
+                        <small class="text-muted d-block mt-1" style="font-size: 10px;">${msg.response_code}</small>
+                    </td>
+                    <td class="text-center text-muted" style="font-size: 11px;">
+                        <i class="fas fa-stopwatch me-1 text-info"></i> ${msg.latency}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        ${actionHtml}
+                    </td>
+                </tr>
             `;
         });
-        $('#active-campaigns-container').html(html);
+        $('#tbody-my-queue').html(html);
     }
 
+    // 4. Render Campaigns Table & Aggregates
+    function renderCampaignsTable(campaigns, aggregates) {
+        if (campaigns) currentCampaignsData = campaigns;
+        if (aggregates) currentCampaignAggregates = aggregates;
+
+        const allCamps = currentCampaignsData || [];
+        const agg = currentCampaignAggregates || {};
+
+        let filtered = allCamps.slice();
+
+        if (currentCampaignSearchTerm.trim() !== '') {
+            const term = currentCampaignSearchTerm.toLowerCase();
+            filtered = filtered.filter(function(c) {
+                const name = (c.name || '').toLowerCase();
+                const sender = (c.sender || '').toLowerCase();
+                const cId = String(c.id || '');
+                return name.includes(term) || sender.includes(term) || cId.includes(term);
+            });
+        }
+
+        $('#campaigns-count').text(filtered.length);
+        $('#camp-agg-total').text(agg.total_campaigns || 0);
+        $('#camp-agg-recipients').text(Number(agg.total_recipients || 0).toLocaleString());
+        $('#camp-agg-pending').text(Number(agg.pending_queue || 0).toLocaleString());
+        $('#camp-agg-processing').text(Number(agg.processing_queue || 0).toLocaleString());
+        $('#camp-agg-delivered').text(Number(agg.delivered_count || 0).toLocaleString());
+        $('#camp-agg-failed').text(Number(agg.failed_count || 0).toLocaleString());
+        $('#camp-agg-progress').text((agg.avg_progress || 0) + '%');
+
+        if (!filtered.length) {
+            $('#tbody-campaigns').html(`
+                <tr>
+                    <td colspan="10" class="text-center py-4 text-muted">
+                        <i class="fas fa-bullhorn text-muted fs-3 d-block mb-2"></i>
+                        No broadcast campaigns in queue. System ready for new campaigns.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(camp) {
+            const pendingClass = camp.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = camp.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const delivClass = camp.delivered_count > 0 ? 'text-success' : 'text-muted';
+            const failClass = camp.failed_count > 0 ? 'text-danger' : 'text-muted';
+            const progressBg = camp.progress_percent >= 100 ? 'bg-success' : 'bg-primary';
+            const chargeText = camp.charges ? ` • ৳${camp.charges}` : '';
+
+            let actionBtn = '';
+            if (camp.pending_queue > 0) {
+                actionBtn = `
+                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-campaign-pending" data-id="${camp.id}" data-name="${camp.name}" data-count="${camp.pending_queue}" title="Cancel pending SMS in this campaign" style="font-size: 11px;">
+                        <i class="fas fa-ban me-1"></i> Cancel Pending
+                    </button>
+                `;
+            } else {
+                actionBtn = `<span class="text-muted" style="font-size: 11px;"><i class="fas fa-check text-success me-1"></i> Completed</span>`;
+            }
+
+            html += `
+                <tr data-campaign-id="${camp.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <span>${camp.name}</span>
+                        </div>
+                        <small class="text-muted ms-4">ID: #${camp.id}${chargeText}</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-primary px-2 py-1">${camp.sender}</span>
+                    </td>
+                    <td class="text-center fw-bold text-dark">${Number(camp.total_recipients).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(camp.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(camp.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${delivClass}">${Number(camp.delivered_count).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${failClass}">${Number(camp.failed_count).toLocaleString()}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${camp.progress_percent}%</span>
+                            <small class="text-muted">${camp.delivery_rate}% rate</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar ${progressBg}" role="progressbar" style="width: ${camp.progress_percent}%;" aria-valuenow="${camp.progress_percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <span class="badge ${camp.status_badge}">
+                            ${camp.status}
+                        </span>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">${camp.created_at}</small>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        ${actionBtn}
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-campaigns').html(html);
+    }
+
+    // 5. Render Live Stream Table
     function renderStreamTable(stream) {
         if (!stream || !stream.length) return;
         const currentFirstId = $('#tbody-stream tr:first').data('id');
@@ -752,6 +1193,200 @@ $(document).ready(function() {
         $('#tbody-stream').html(html);
     }
 
+    // Queue Status Tab Filter
+    $(document).on('click', '.cust-status-tab-btn', function() {
+        $('.cust-status-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentQueueStatusFilter = $(this).data('status');
+        fetchLiveData();
+    });
+
+    // Campaign Search Filter
+    $('#input-search-campaigns').on('input', function() {
+        currentCampaignSearchTerm = $(this).val();
+        renderCampaignsTable(currentCampaignsData, currentCampaignAggregates);
+    });
+
+    // Cancel Single Pending SMS
+    $(document).on('click', '.btn-cancel-sms', function() {
+        const smsId = $(this).data('id');
+        Swal.fire({
+            title: 'Cancel this SMS?',
+            text: 'Are you sure you want to cancel queued SMS #' + smsId + '?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Yes, Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ url('user/queue-monitor/cancel-sms') }}/" + smsId,
+                    type: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Cancelled', text: res.message, timer: 2000, showConfirmButton: false });
+                            fetchLiveData();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Failed to cancel SMS.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Retry Single Failed SMS
+    $(document).on('click', '.btn-retry-sms', function() {
+        const smsId = $(this).data('id');
+        $.ajax({
+            url: "{{ url('user/queue-monitor/retry-sms') }}/" + smsId,
+            type: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            dataType: "json",
+            success: function(res) {
+                if (res.success) {
+                    Swal.fire({ icon: 'success', title: 'Re-queued', text: res.message, timer: 2000, showConfirmButton: false });
+                    fetchLiveData();
+                } else {
+                    Swal.fire('Error', res.message, 'error');
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'Failed to retry SMS.', 'error');
+            }
+        });
+    });
+
+    // Bulk Cancel All Pending SMS
+    $('#btn-cancel-all-pending').on('click', function() {
+        Swal.fire({
+            title: 'Cancel All Pending SMS?',
+            text: 'Are you sure you want to cancel all your pending SMS currently in the dispatch queue?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-ban me-1"></i> Yes, Cancel All'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('users.queue-monitor.cancel-pending') }}",
+                    type: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Cancelled!', text: res.message, timer: 2500, showConfirmButton: false });
+                            fetchLiveData();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Failed to cancel pending messages.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Bulk Retry All Failed SMS
+    $('#btn-retry-all-failed').on('click', function() {
+        Swal.fire({
+            title: 'Retry All Failed SMS?',
+            text: 'Are you sure you want to re-queue all your failed messages back into the transmission queue?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-redo me-1"></i> Yes, Retry All'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('users.queue-monitor.retry-failed') }}",
+                    type: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Re-Queued!', text: res.message, timer: 2500, showConfirmButton: false });
+                            fetchLiveData();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Failed to retry failed messages.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // Cancel Campaign Pending SMS
+    $(document).on('click', '.btn-cancel-campaign-pending', function() {
+        const campId = $(this).data('id');
+        const campName = $(this).data('name') || ('#' + campId);
+        const count = $(this).data('count') || 'all';
+
+        Swal.fire({
+            title: 'Cancel Campaign Pending SMS?',
+            html: `Are you sure you want to cancel <strong>${Number(count).toLocaleString()}</strong> pending SMS in campaign <strong>${campName}</strong>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-ban me-1"></i> Yes, Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ url('user/queue-monitor/cancel-campaign') }}/" + campId,
+                    type: "POST",
+                    data: { _token: "{{ csrf_token() }}" },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({ icon: 'success', title: 'Cancelled', text: res.message, timer: 2000, showConfirmButton: false });
+                            fetchLiveData();
+                        } else {
+                            Swal.fire('Error', res.message, 'error');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error', 'Failed to cancel campaign SMS.', 'error');
+                    }
+                });
+            }
+        });
+    });
+
+    // View SMS Content Modal
+    $(document).on('click', '.btn-view-sms', function() {
+        const content = decodeURIComponent($(this).data('content') || '');
+        const recipient = $(this).data('recipient') || 'N/A';
+        const sender = $(this).data('sender') || 'N/A';
+        const time = $(this).data('time') || 'N/A';
+        const status = $(this).data('status') || 'N/A';
+        const charge = $(this).data('charge') || '0.00';
+
+        $('#modal-sms-recipient').text(recipient);
+        $('#modal-sms-sender').text(sender);
+        $('#modal-sms-time').text(time);
+        $('#modal-sms-status').text(status);
+        $('#modal-sms-charge').text(charge);
+        $('#modal-sms-content').text(content || '(Empty content)');
+
+        const modal = new bootstrap.Modal(document.getElementById('modal-view-sms'));
+        modal.show();
+    });
+
+    // Polling Intervals
     function startPolling() {
         if (pollTimer) clearInterval(pollTimer);
         if (pollingInterval > 0) {

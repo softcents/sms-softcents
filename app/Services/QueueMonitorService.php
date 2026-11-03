@@ -1401,7 +1401,7 @@ class QueueMonitorService
                 'queued_at'     => $m->created_at ? $m->created_at->format('M d, H:i:s') : 'N/A',
                 'dispatched_at' => $m->updated_at ? $m->updated_at->format('M d, H:i:s') : 'N/A',
                 'can_cancel'    => $statusStr === 'pending',
-                'can_retry'     => in_array($statusStr, ['failed', 'rejected']),
+                'can_retry'     => in_array($statusStr, ['failed', 'rejected', 'undelivered']),
             ];
         }
 

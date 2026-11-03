@@ -312,18 +312,32 @@
                     </div>
                     <!-- 3. Own Pending in Queue -->
                     <div class="col-lg col-md-4 col-6">
-                        <div class="p-2 bg-white rounded border shadow-sm">
-                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Pending in Queue') }}</span>
-                            <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="val-own-pending">{{ number_format($metrics['own_traffic']['pending_queue'] ?? 0) }}</span>
-                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Dispatch') }}</small>
+                        <div class="p-2 bg-white rounded border shadow-sm h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Pending in Queue') }}</span>
+                                <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="val-own-pending">{{ number_format($metrics['own_traffic']['pending_queue'] ?? 0) }}</span>
+                                <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Gateway Dispatch') }}</small>
+                            </div>
+                            <div class="mt-2 pt-1 border-top">
+                                <button type="button" class="btn btn-xs btn-outline-warning py-0 px-2 btn-view-own-queue-status w-100" data-status="pending" style="font-size: 10px; font-weight: 600;">
+                                    <i class="fas fa-eye me-1"></i> {{ __('View Pending SMS') }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <!-- 4. Own Processing (RAM) -->
                     <div class="col-lg col-md-4 col-6">
-                        <div class="p-2 bg-white rounded border shadow-sm">
-                            <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Processing (RAM)') }}</span>
-                            <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="val-own-processing">{{ number_format($metrics['own_traffic']['processing_queue'] ?? 0) }}</span>
-                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('In Worker RAM') }}</small>
+                        <div class="p-2 bg-white rounded border shadow-sm h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <span class="text-muted fw-bold d-block text-uppercase" style="font-size: 10px;">{{ __('Own Processing (RAM)') }}</span>
+                                <span class="fs-4 fw-bold {{ ($metrics['own_traffic']['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="val-own-processing">{{ number_format($metrics['own_traffic']['processing_queue'] ?? 0) }}</span>
+                                <small class="text-muted d-block" style="font-size: 10px;">{{ __('In Worker RAM / Dispatching') }}</small>
+                            </div>
+                            <div class="mt-2 pt-1 border-top">
+                                <button type="button" class="btn btn-xs btn-outline-info py-0 px-2 btn-view-own-queue-status w-100" data-status="processing" style="font-size: 10px; font-weight: 600;">
+                                    <i class="fas fa-cog fa-spin me-1"></i> {{ __('View Processing SMS') }}
+                                </button>
+                            </div>
                         </div>
                     </div>
                     <!-- 5. Own Delivery Rate -->
@@ -379,7 +393,7 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>{{ __('Awaiting Gateway Dispatch') }}</span>
+                        <span>Own: <strong id="val-sub-own-pending" class="text-success">{{ number_format($metrics['own_traffic']['pending_queue'] ?? 0) }}</strong> • Downline: <strong id="val-sub-downline-pending">{{ number_format(max(0, $metrics['pending_count'] - ($metrics['own_traffic']['pending_queue'] ?? 0))) }}</strong></span>
                     </div>
                 </div>
             </div>
@@ -397,7 +411,7 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>{{ __('In Worker RAM / Dispatching') }}</span>
+                        <span>Own: <strong id="val-sub-own-processing" class="text-success">{{ number_format($metrics['own_traffic']['processing_queue'] ?? 0) }}</strong> • Downline: <strong id="val-sub-downline-processing">{{ number_format(max(0, ($metrics['processing_count'] ?? 0) - ($metrics['own_traffic']['processing_queue'] ?? 0))) }}</strong></span>
                     </div>
                 </div>
             </div>
@@ -965,13 +979,18 @@
                     </div>
                     <div>
                         <h5 class="panel-title mb-0">
-                            {{ __('Customer SMS Queue Details') }}:
+                            <span id="cust-queue-title-prefix">{{ ($customerQueue['customer']['id'] ?? 0) == auth()->id() ? __('Own SMS Queue Details (Direct Dispatches)') : __('Customer SMS Queue Details') }}</span>:
                             <span class="text-primary" id="cust-queue-name">{{ $customerQueue['customer']['name'] ?? '' }}</span>
                         </h5>
                         <div class="text-muted" style="font-size: 11px;" id="cust-queue-hierarchy-path">
-                            Reseller: {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1"></i>
-                            {{ $customerQueue['customer']['parent_subreseller']['name'] ?? 'Direct' }} <i class="fas fa-angle-right mx-1"></i>
-                            <strong class="text-dark">{{ $customerQueue['customer']['name'] ?? 'Customer' }}</strong>
+                            @if(($customerQueue['customer']['id'] ?? 0) == auth()->id())
+                                <span class="badge bg-success me-1"><i class="fas fa-user-check me-1"></i>{{ __('OWN DIRECT TRAFFIC') }}</span>
+                                Reseller: <strong class="text-dark">{{ auth()->user()->name }}</strong> (Self Account)
+                            @else
+                                Reseller: {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1"></i>
+                                {{ $customerQueue['customer']['parent_subreseller']['name'] ?? 'Direct' }} <i class="fas fa-angle-right mx-1"></i>
+                                <strong class="text-dark">{{ $customerQueue['customer']['name'] ?? 'Customer' }}</strong>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -1479,6 +1498,16 @@ $(document).ready(function() {
                         $('#btn-toggle-own-text').text("Isolate Own Direct Traffic");
                         $('#btn-switch-network').addClass('d-none');
                     }
+
+                    const ownPend = Number(ot.pending_queue || 0);
+                    const downPend = Math.max(0, Number(res.metrics.pending_count || 0) - ownPend);
+                    $('#val-sub-own-pending').text(ownPend.toLocaleString());
+                    $('#val-sub-downline-pending').text(downPend.toLocaleString());
+
+                    const ownProc = Number(ot.processing_queue || 0);
+                    const downProc = Math.max(0, Number(res.metrics.processing_count || 0) - ownProc);
+                    $('#val-sub-own-processing').text(ownProc.toLocaleString());
+                    $('#val-sub-downline-processing').text(downProc.toLocaleString());
                 }
 
                 // Operator Donut
@@ -1804,12 +1833,22 @@ $(document).ready(function() {
         $('#cust-queue-name').text(c.name ? c.name + ' (@' + c.username + ')' : '');
         $('#cust-queue-balance').text(Number(c.balance || 0).toFixed(2));
 
-        const subName = c.parent_subreseller ? c.parent_subreseller.name : 'Direct';
-        $('#cust-queue-hierarchy-path').html(`
-            Reseller: <strong>{{ auth()->user()->name }}</strong> <i class="fas fa-angle-right mx-1"></i>
-            ${subName} <i class="fas fa-angle-right mx-1"></i>
-            <strong class="text-dark">${c.name || 'Customer'}</strong>
-        `);
+        const isOwn = (c.id == {{ auth()->id() }});
+        if (isOwn) {
+            $('#cust-queue-title-prefix').text("{{ __('Own SMS Queue Details (Direct Dispatches)') }}");
+            $('#cust-queue-hierarchy-path').html(`
+                <span class="badge bg-success me-1"><i class="fas fa-user-check me-1"></i>{{ __('OWN DIRECT TRAFFIC') }}</span>
+                Reseller: <strong class="text-dark">{{ auth()->user()->name }}</strong> (Self Account)
+            `);
+        } else {
+            $('#cust-queue-title-prefix').text("{{ __('Customer SMS Queue Details') }}");
+            const subName = c.parent_subreseller ? c.parent_subreseller.name : 'Direct';
+            $('#cust-queue-hierarchy-path').html(`
+                Reseller: <strong>{{ auth()->user()->name }}</strong> <i class="fas fa-angle-right mx-1"></i>
+                ${subName} <i class="fas fa-angle-right mx-1"></i>
+                <strong class="text-dark">${c.name || 'Customer'}</strong>
+            `);
+        }
 
         $('#cust-kpi-pending').text(Number(s.pending_queue || 0).toLocaleString());
         $('#cust-kpi-processing').text(Number(s.processing_queue || 0).toLocaleString());
@@ -2249,6 +2288,24 @@ $(document).ready(function() {
     $(document).on('click', '#btn-switch-network', function() {
         $('#select-filter-user').val('').trigger('change');
         $('html, body').animate({ scrollTop: 0 }, 'fast');
+    });
+
+    // Direct View Own Queue Status (Pending / Processing)
+    $(document).on('click', '.btn-view-own-queue-status', function() {
+        const targetStatus = $(this).data('status');
+        const ownId = {{ auth()->id() }};
+        $('#select-filter-user').val(ownId);
+        $('.cust-status-tab-btn').removeClass('active');
+        $(`.cust-status-tab-btn[data-status="${targetStatus}"]`).addClass('active');
+        currentCustQueueStatusFilter = targetStatus;
+        fetchLiveData();
+        setTimeout(function() {
+            if ($('#panel-customer-queue').length && !$('#panel-customer-queue').hasClass('d-none')) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-queue').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
     });
 
     // Start Poller & initial sync

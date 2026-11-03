@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Sms;
+use App\Models\Smsgateway;
 use App\Models\User;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -240,6 +241,63 @@ class QueueMonitorService
                 'today_failed'     => $todayFailed,
                 'delivery_rate'    => $rate,
                 'balance'          => round((float) ($r->balance ?? 0), 2),
+            ];
+        }
+
+        return $summary;
+    }
+
+    /**
+     * Get real-time provider/gateway-wise SMS queue and dispatch traffic distribution.
+     */
+    public function getProviderTrafficSummary(?User $user = null, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($user);
+        if ($filterUserId) {
+            $scopedIds = [$filterUserId];
+        }
+
+        $baseQuery = Sms::query();
+        if ($scopedIds !== null) {
+            $baseQuery->whereIn('user_id', $scopedIds);
+        }
+
+        $allTotal = (clone $baseQuery)->count();
+        $todayTotal = (clone $baseQuery)->whereDate('created_at', today())->count();
+
+        $gateways = Smsgateway::orderByDesc('status')->orderBy('priority')->orderBy('name')->get();
+        $summary = [];
+
+        foreach ($gateways as $gw) {
+            $gwQuery = (clone $baseQuery)->where('smsgateway_id', $gw->id);
+
+            $pending = (clone $gwQuery)->where('status', 'pending')->count();
+            $processing = (clone $gwQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+            $today = (clone $gwQuery)->whereDate('created_at', today())->count();
+            $todaySuccess = (clone $gwQuery)->whereDate('created_at', today())->whereIn('status', ['success', 'delivered'])->count();
+            $todayFailed = (clone $gwQuery)->whereDate('created_at', today())->where('status', 'failed')->count();
+            $total = (clone $gwQuery)->count();
+
+            $rate = $today > 0 ? round(($todaySuccess / $today) * 100, 1) : 100.0;
+            $share = $allTotal > 0 ? round(($total / $allTotal) * 100, 1) : 0.0;
+            $todayShare = $todayTotal > 0 ? round(($today / $todayTotal) * 100, 1) : 0.0;
+
+            $summary[] = [
+                'id'               => $gw->id,
+                'name'             => $gw->name,
+                'driver'           => $gw->driver ?? 'custom',
+                'priority'         => $gw->priority ?? 1,
+                'is_active'        => (bool) $gw->status,
+                'status_label'     => $gw->status ? 'Active / Primary' : 'Inactive / Standby',
+                'pending_queue'    => $pending,
+                'processing_queue' => $processing,
+                'today_total'      => $today,
+                'today_success'    => $todaySuccess,
+                'today_failed'     => $todayFailed,
+                'delivery_rate'    => $rate,
+                'lifetime_total'   => $total,
+                'traffic_share'    => $share,
+                'today_share'      => $todayShare,
             ];
         }
 

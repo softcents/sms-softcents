@@ -651,6 +651,83 @@
             </div>
         </div>
 
+        <!-- Provider-Wise SMS Gateway Traffic & Route Health -->
+        <div class="panel-box mb-4">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-network-wired text-success"></i>
+                        {{ __('Provider-Wise SMS Gateway Traffic') }}
+                    </h5>
+                    <span class="badge badge-soft-success"><span id="providers-count">{{ count($providers ?? []) }}</span> {{ __('Gateway Providers') }}</span>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">
+                    <i class="fas fa-shield-alt text-success me-1"></i>{{ __('Multi-Channel Gateway Route Distribution & Performance') }}
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-providers">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Gateway Provider') }}</th>
+                            <th>{{ __('Status & Driver') }}</th>
+                            <th class="text-center">{{ __('Priority') }}</th>
+                            <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
+                            <th class="text-center">{{ __('Today Dispatched') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate') }}</th>
+                            <th class="text-center" style="min-width: 140px;">{{ __('Traffic Share') }}</th>
+                            <th class="text-end">{{ __('Lifetime Volume') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-providers">
+                        @forelse($providers ?? [] as $prov)
+                        <tr data-provider-id="{{ $prov['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: {{ $prov['is_active'] ? '#10b981' : '#94a3b8' }};"></span>
+                                    {{ $prov['name'] }}
+                                </div>
+                                <small class="text-muted ms-3">ID: #{{ $prov['id'] }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {{ $prov['is_active'] ? 'badge-soft-success' : 'badge-soft-secondary' }}">
+                                    {{ $prov['status_label'] }}
+                                </span>
+                                <small class="text-muted d-block mt-1" style="font-size: 10px;">Driver: {{ strtoupper($prov['driver']) }}</small>
+                            </td>
+                            <td class="text-center fw-semibold">{{ $prov['priority'] }}</td>
+                            <td class="text-center fw-bold {{ $prov['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($prov['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $prov['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($prov['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($prov['today_total']) }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">{{ $prov['delivery_rate'] }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $prov['traffic_share'] }}%</span>
+                                    <small class="text-muted">{{ number_format($prov['lifetime_total']) }}</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ $prov['is_active'] ? 'bg-success' : 'bg-secondary' }}" role="progressbar" style="width: {{ $prov['traffic_share'] }}%;" aria-valuenow="{{ $prov['traffic_share'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold text-dark">{{ number_format($prov['lifetime_total']) }} SMS</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No SMS gateway providers configured.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Bottom Section: Live Dispatched Stream & Failed Jobs Manager -->
         <div class="row g-4">
             <!-- Live SMS Stream -->
@@ -965,6 +1042,9 @@ $(document).ready(function() {
                 // Update Resellers Hierarchy Matrix Table
                 renderResellersTable(res.resellers);
 
+                // Update Providers Table
+                renderProvidersTable(res.providers);
+
                 // Update TPS Line Chart
                 if (tpsChart) {
                     $('#live-tps-badge').text(res.metrics.current_tps + ' TPS');
@@ -1101,6 +1181,59 @@ $(document).ready(function() {
         currentPartnerRoleFilter = $(this).data('role');
         renderResellersTable();
     });
+
+    function renderProvidersTable(providers) {
+        if (!providers) return;
+        $('#providers-count').text(providers.length);
+
+        if (!providers.length) {
+            $('#tbody-providers').html('<tr><td colspan="9" class="text-center py-4 text-muted">No SMS gateway providers configured.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        providers.forEach(function(prov) {
+            const statusBadge = prov.is_active ? 'badge-soft-success' : 'badge-soft-secondary';
+            const dotColor = prov.is_active ? '#10b981' : '#94a3b8';
+            const pendingClass = prov.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = prov.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const barClass = prov.is_active ? 'bg-success' : 'bg-secondary';
+
+            html += `
+                <tr data-provider-id="${prov.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-block" style="width: 8px; height: 8px; background: ${dotColor};"></span>
+                            ${prov.name}
+                        </div>
+                        <small class="text-muted ms-3">ID: #${prov.id}</small>
+                    </td>
+                    <td>
+                        <span class="badge ${statusBadge}">${prov.status_label}</span>
+                        <small class="text-muted d-block mt-1" style="font-size: 10px;">Driver: ${prov.driver.toUpperCase()}</small>
+                    </td>
+                    <td class="text-center fw-semibold">${prov.priority}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(prov.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(prov.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-dark">${Number(prov.today_total).toLocaleString()}</td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success">${prov.delivery_rate}%</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${prov.traffic_share}%</span>
+                            <small class="text-muted">${Number(prov.lifetime_total).toLocaleString()}</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar ${barClass}" role="progressbar" style="width: ${prov.traffic_share}%;" aria-valuenow="${prov.traffic_share}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark">${Number(prov.lifetime_total).toLocaleString()} SMS</td>
+                </tr>
+            `;
+        });
+        $('#tbody-providers').html(html);
+    }
 
     function renderStreamTable(stream) {
         if (!stream || !stream.length) return;

@@ -1599,6 +1599,189 @@
             </div>
         </div>
 
+        <!-- Campaign-Wise SMS Statistics & Queue Progress Matrix -->
+        <div class="panel-box mb-4" id="panel-campaigns">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(220, 53, 69, 0.12); color: #dc3545;">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Campaign-Wise SMS Statistics & Queue Progress') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Bulk marketing & notification campaigns, recipient completion, and queue backlog in your network') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-danger ms-1"><span id="campaigns-count">{{ count($campaigns ?? []) }}</span> {{ __('Campaigns Monitored') }}</span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Campaign Type Filter">
+                        <button type="button" class="btn btn-outline-danger camp-type-tab-btn active" data-type="all">{{ __('All Campaigns') }}</button>
+                        <button type="button" class="btn btn-outline-danger camp-type-tab-btn" data-type="own">{{ __('Own Campaigns') }}</button>
+                        <button type="button" class="btn btn-outline-danger camp-type-tab-btn" data-type="customer">{{ __('Customers') }}</button>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control form-control-sm border-start-0" id="input-search-campaigns" placeholder="{{ __('Search campaign...') }}" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Campaigns -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE CAMPAIGNS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-total">{{ $campaignAggregates['total_campaigns'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">
+                                <span class="text-success fw-bold">{{ __('Own') }}: <span id="camp-agg-own">{{ $campaignAggregates['own_campaigns'] ?? 0 }}</span></span> • 
+                                <span class="text-primary fw-bold">{{ __('Customers') }}: <span id="camp-agg-customer">{{ $campaignAggregates['customer_campaigns'] ?? 0 }}</span></span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TOTAL RECIPIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-recipients">{{ number_format($campaignAggregates['total_recipients'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Target Mobile Contacts') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING IN QUEUE') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="camp-agg-pending">{{ number_format($campaignAggregates['pending_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Worker RAM') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="camp-agg-processing">{{ number_format($campaignAggregates['processing_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Active Dispatches') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERED SMS') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="camp-agg-delivered">{{ number_format($campaignAggregates['delivered_count'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span class="text-danger fw-bold">{{ __('Failed') }}: <span id="camp-agg-failed">{{ number_format($campaignAggregates['failed_count'] ?? 0) }}</span></span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('AVG PROGRESS') }}</span>
+                            <span class="fs-5 fw-bold text-primary" id="camp-agg-progress">{{ $campaignAggregates['avg_progress'] ?? 0 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Completion Velocity') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-campaigns">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Campaign & ID') }}</th>
+                            <th>{{ __('Initiator / Account') }}</th>
+                            <th class="text-center">{{ __('Sender ID') }}</th>
+                            <th class="text-center">{{ __('Recipients') }}</th>
+                            <th class="text-center">{{ __('Pending') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
+                            <th class="text-center">{{ __('Delivered') }}</th>
+                            <th class="text-center">{{ __('Failed') }}</th>
+                            <th class="text-center" style="min-width: 140px;">{{ __('Progress') }}</th>
+                            <th class="text-end">{{ __('Status / Time') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-campaigns">
+                        @forelse($campaigns ?? [] as $camp)
+                        <tr data-campaign-id="{{ $camp['id'] }}" data-creator-type="{{ $camp['creator_type'] ?? 'customer' }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                        <i class="fas fa-bullhorn"></i>
+                                    </div>
+                                    <span>{{ $camp['name'] }}</span>
+                                </div>
+                                <small class="text-muted ms-4">ID: #{{ $camp['id'] }} @if(!empty($camp['charges'])) • ৳{{ $camp['charges'] }} @endif</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    {{ $camp['creator_name'] }}
+                                    @if(($camp['creator_type'] ?? '') === 'own')
+                                        <span class="badge bg-success" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>{{ __('YOU (Direct)') }}</span>
+                                    @else
+                                        <span class="badge badge-soft-info" style="font-size: 10px;">{{ __('Customer') }}</span>
+                                    @endif
+                                </div>
+                                <small class="text-muted d-block" style="font-size: 11px;">@<span>{{ $camp['creator_username'] }}</span></small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-primary px-2 py-1">{{ $camp['sender'] }}</span>
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($camp['total_recipients']) }}</td>
+                            <td class="text-center fw-bold {{ $camp['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($camp['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($camp['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['delivered_count'] > 0 ? 'text-success' : 'text-muted' }}">
+                                {{ number_format($camp['delivered_count']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['failed_count'] > 0 ? 'text-danger' : 'text-muted' }}">
+                                {{ number_format($camp['failed_count']) }}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $camp['progress_percent'] }}%</span>
+                                    <small class="text-muted">{{ $camp['delivery_rate'] }}% rate</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ $camp['progress_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ $camp['progress_percent'] }}%;" aria-valuenow="{{ $camp['progress_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge {{ $camp['status_badge'] }}">
+                                    {{ $camp['status'] }}
+                                </span>
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;">{{ $camp['created_at'] }}</small>
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if(!empty($camp['creator_id']))
+                                <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-open-customer-queue" data-id="{{ $camp['creator_id'] }}" title="{{ __('Inspect Queue Messages') }}" style="font-size: 11px;">
+                                    <i class="fas fa-layer-group me-1"></i> {{ __('View Queue') }}
+                                </button>
+                                @endif
+                                @if($camp['pending_queue'] > 0)
+                                <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-campaign-pending" data-id="{{ $camp['id'] }}" data-name="{{ $camp['name'] }}" data-count="{{ $camp['pending_queue'] }}" title="{{ __('Cancel pending SMS in this campaign') }}" style="font-size: 11px;">
+                                    <i class="fas fa-ban me-1"></i> {{ __('Cancel') }}
+                                </button>
+                                @endif
+                                @if(!empty($camp['creator_id']))
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $camp['creator_id'] }}" title="{{ __('Inspect Account Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="11" class="text-center py-4 text-muted">
+                                <i class="fas fa-bullhorn text-muted fs-3 d-block mb-2"></i>
+                                {{ __('No campaigns match this filter. System ready for bulk broadcasts.') }}
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Dedicated Customer SMS Queue Details & Direct Message Actions -->
         <div class="panel-box mb-4 {{ empty($customerQueue) ? 'd-none' : '' }}" id="panel-customer-queue">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1928,6 +2111,10 @@ $(document).ready(function() {
     let currentFailOpFilter = 'all';
     let currentFailSearchTerm = '';
     let matrixFailOnly = false;
+    let currentCampaignsData = @json($campaigns ?? []);
+    let currentCampaignAggregates = @json($campaignAggregates ?? []);
+    let currentCampaignTypeFilter = 'all';
+    let currentCampaignSearchTerm = '';
 
     // 1. Operator Chart
     const opCtx = document.getElementById('operatorChart');
@@ -2052,6 +2239,9 @@ $(document).ready(function() {
 
                 // Render Customer-Wise Failed SMS Queue
                 renderCustomerFailedTable(res.customer_failed);
+
+                // Render Campaign-Wise SMS Statistics & Queue Progress
+                renderCampaignsTable(res.campaigns, res.campaign_aggregates);
 
                 // Update Hierarchical Breadcrumbs
                 updateBreadcrumbs(res.breadcrumbs, !!res.customer_queue);
@@ -2876,6 +3066,151 @@ $(document).ready(function() {
         $('#tbody-customer-failed').html(html);
     }
 
+    // 3g. Render Campaign-Wise SMS Table & Aggregates
+    function renderCampaignsTable(campaigns, aggregates) {
+        if (campaigns) currentCampaignsData = campaigns;
+        if (aggregates) currentCampaignAggregates = aggregates;
+
+        const allCamps = currentCampaignsData || [];
+        const agg = currentCampaignAggregates || {};
+
+        let filtered = allCamps.slice();
+
+        // 1. Filter by Type (All / Own / Customer)
+        if (currentCampaignTypeFilter === 'own') {
+            filtered = filtered.filter(c => c.creator_type === 'own');
+        } else if (currentCampaignTypeFilter === 'customer') {
+            filtered = filtered.filter(c => c.creator_type === 'customer');
+        }
+
+        // 2. Filter by Search input
+        if (currentCampaignSearchTerm.trim() !== '') {
+            const term = currentCampaignSearchTerm.toLowerCase();
+            filtered = filtered.filter(function(c) {
+                const name = (c.name || '').toLowerCase();
+                const sender = (c.sender || '').toLowerCase();
+                const cName = (c.creator_name || '').toLowerCase();
+                const cUser = (c.creator_username || '').toLowerCase();
+                const cId = String(c.id || '');
+                return name.includes(term) || sender.includes(term) || cName.includes(term) || cUser.includes(term) || cId.includes(term);
+            });
+        }
+
+        // Update count badges
+        $('#campaigns-count').text(filtered.length);
+
+        // Update aggregate mini KPI counters
+        $('#camp-agg-total').text(agg.total_campaigns || 0);
+        $('#camp-agg-own').text(agg.own_campaigns || 0);
+        $('#camp-agg-customer').text(agg.customer_campaigns || (agg.downline_campaigns || 0));
+        $('#camp-agg-recipients').text(Number(agg.total_recipients || 0).toLocaleString());
+        $('#camp-agg-pending').text(Number(agg.pending_queue || 0).toLocaleString());
+        $('#camp-agg-processing').text(Number(agg.processing_queue || 0).toLocaleString());
+        $('#camp-agg-delivered').text(Number(agg.delivered_count || 0).toLocaleString());
+        $('#camp-agg-failed').text(Number(agg.failed_count || 0).toLocaleString());
+        $('#camp-agg-progress').text((agg.avg_progress || 0) + '%');
+
+        if (!filtered.length) {
+            $('#tbody-campaigns').html(`
+                <tr>
+                    <td colspan="11" class="text-center py-4 text-muted">
+                        <i class="fas fa-bullhorn text-muted fs-3 d-block mb-2"></i>
+                        No campaigns match this filter. System ready for bulk broadcasts.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(camp) {
+            const pendingClass = camp.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = camp.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const delivClass = camp.delivered_count > 0 ? 'text-success' : 'text-muted';
+            const failClass = camp.failed_count > 0 ? 'text-danger' : 'text-muted';
+            const progressBg = camp.progress_percent >= 100 ? 'bg-success' : 'bg-primary';
+            const chargeText = camp.charges ? ` • ৳${camp.charges}` : '';
+
+            let creatorBadge = '';
+            if (camp.creator_type === 'own') {
+                creatorBadge = `<span class="badge bg-success" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>YOU (Direct)</span>`;
+            } else {
+                creatorBadge = `<span class="badge badge-soft-info" style="font-size: 10px;">Customer</span>`;
+            }
+
+            let actionBtns = '';
+            if (camp.creator_id) {
+                actionBtns += `
+                    <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-open-customer-queue" data-id="${camp.creator_id}" title="Inspect Queue Messages" style="font-size: 11px;">
+                        <i class="fas fa-layer-group me-1"></i> View Queue
+                    </button>
+                `;
+            }
+            if (camp.pending_queue > 0) {
+                actionBtns += `
+                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2 btn-cancel-campaign-pending" data-id="${camp.id}" data-name="${camp.name}" data-count="${camp.pending_queue}" title="Cancel pending SMS in this campaign" style="font-size: 11px;">
+                        <i class="fas fa-ban me-1"></i> Cancel
+                    </button>
+                `;
+            }
+            if (camp.creator_id) {
+                actionBtns += `
+                    <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${camp.creator_id}" title="Inspect Account Details" style="font-size: 11px;">
+                        <i class="fas fa-search-plus"></i>
+                    </button>
+                `;
+            }
+
+            html += `
+                <tr data-campaign-id="${camp.id}" data-creator-type="${camp.creator_type || 'customer'}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <span>${camp.name}</span>
+                        </div>
+                        <small class="text-muted ms-4">ID: #${camp.id}${chargeText}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            ${camp.creator_name}
+                            ${creatorBadge}
+                        </div>
+                        <small class="text-muted d-block" style="font-size: 11px;">@<span>${camp.creator_username}</span></small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-primary px-2 py-1">${camp.sender}</span>
+                    </td>
+                    <td class="text-center fw-bold text-dark">${Number(camp.total_recipients).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(camp.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(camp.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${delivClass}">${Number(camp.delivered_count).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${failClass}">${Number(camp.failed_count).toLocaleString()}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${camp.progress_percent}%</span>
+                            <small class="text-muted">${camp.delivery_rate}% rate</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar ${progressBg}" role="progressbar" style="width: ${camp.progress_percent}%;" aria-valuenow="${camp.progress_percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <span class="badge ${camp.status_badge}">
+                            ${camp.status}
+                        </span>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">${camp.created_at}</small>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        ${actionBtns}
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-campaigns').html(html);
+    }
+
     // 4. Render Dedicated Customer SMS Queue Details
     function renderCustomerQueueDetails(cq) {
         if (!cq) {
@@ -3412,6 +3747,73 @@ $(document).ready(function() {
         $(this).addClass('active');
         currentCustQueueStatusFilter = $(this).data('status');
         fetchLiveData();
+    });
+
+    // Campaign Type Filter Tabs
+    $('.camp-type-tab-btn').on('click', function() {
+        $('.camp-type-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentCampaignTypeFilter = $(this).data('type');
+        renderCampaignsTable(currentCampaignsData, currentCampaignAggregates);
+    });
+
+    // Campaign Search Filter
+    $('#input-search-campaigns').on('input', function() {
+        currentCampaignSearchTerm = $(this).val();
+        renderCampaignsTable(currentCampaignsData, currentCampaignAggregates);
+    });
+
+    // Cancel all pending SMS in a campaign
+    $(document).on('click', '.btn-cancel-campaign-pending', function() {
+        const campId = $(this).data('id');
+        const campName = $(this).data('name') || ('#' + campId);
+        const count = $(this).data('count') || 'all';
+
+        Swal.fire({
+            title: 'Cancel Campaign Pending SMS?',
+            html: `Are you sure you want to cancel <strong>${Number(count).toLocaleString()}</strong> pending SMS in campaign <strong>${campName}</strong>?<br><small class="text-muted">Unprocessed messages will be removed from the worker dispatch queue.</small>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc3545',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-ban me-1"></i> Yes, Cancel Pending',
+            cancelButtonText: 'Abort'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Cancelling Campaign SMS...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                $.ajax({
+                    url: "{{ url('/ssp/queue-monitor/cancel-campaign') }}/" + campId,
+                    type: "POST",
+                    data: {
+                        _token: "{{ csrf_token() }}"
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        if (res.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Cancelled!',
+                                text: res.message || 'Pending campaign SMS cancelled successfully.',
+                                timer: 2500,
+                                showConfirmButton: false
+                            });
+                            fetchLiveData();
+                        } else {
+                            Swal.fire('Error', res.message || 'Failed to cancel campaign SMS.', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        const errMsg = (xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Server error occurred while cancelling campaign SMS.';
+                        Swal.fire('Failed', errMsg, 'error');
+                    }
+                });
+            }
+        });
     });
 
     // Open Live Customer Queue Details

@@ -1636,10 +1636,13 @@ class QueueMonitorService
             $totalSms = max((int) ($cs->total_sms ?? 0), $numCount);
 
             $smsQuery = Sms::where('campaign_id', $cs->campaign_id);
+            if ($scopedIds !== null) {
+                $smsQuery->whereIn('user_id', $scopedIds);
+            }
             $pendingCount = (clone $smsQuery)->where('status', 'pending')->count();
             $processingCount = (clone $smsQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
             $deliveredCount = (clone $smsQuery)->whereIn('status', ['success', 'delivered'])->count();
-            $failedCount = (clone $smsQuery)->where('status', 'failed')->count();
+            $failedCount = (clone $smsQuery)->whereIn('status', ['failed', 'undelivered'])->count();
 
             if ($cs->status === 'pending' && $pendingCount === 0 && $deliveredCount === 0) {
                 $pendingCount = $totalSms;
@@ -1715,7 +1718,7 @@ class QueueMonitorService
                 $cPending = (clone $cQuery)->where('status', 'pending')->count();
                 $cProcessing = (clone $cQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
                 $cDelivered = (clone $cQuery)->whereIn('status', ['success', 'delivered'])->count();
-                $cFailed = (clone $cQuery)->where('status', 'failed')->count();
+                $cFailed = (clone $cQuery)->whereIn('status', ['failed', 'undelivered'])->count();
 
                 $progress = $cTotal > 0 ? min(100.0, round((($cDelivered + $cFailed) / $cTotal) * 100, 1)) : 100.0;
                 $rate = ($cDelivered + $cFailed) > 0 ? round(($cDelivered / ($cDelivered + $cFailed)) * 100, 1) : 100.0;

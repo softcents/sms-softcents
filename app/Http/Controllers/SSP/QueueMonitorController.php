@@ -38,6 +38,8 @@ class QueueMonitorController extends Controller
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
         $customerFailedSummary = $this->service->getCustomerFailedSmsSummary($user, $filterUserId);
+        $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
+        $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, null, 25, $user) : null;
 
@@ -52,6 +54,8 @@ class QueueMonitorController extends Controller
             'customerSubmittedSummary',
             'customerDeliveredSummary',
             'customerFailedSummary',
+            'campaigns',
+            'campaignAggregates',
             'breadcrumbs',
             'customerQueue'
         ));
@@ -77,6 +81,8 @@ class QueueMonitorController extends Controller
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
         $customerFailedSummary = $this->service->getCustomerFailedSmsSummary($user, $filterUserId);
+        $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
+        $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter, 25, $user) : null;
 
@@ -91,6 +97,8 @@ class QueueMonitorController extends Controller
             'customer_submitted'   => $customerSubmittedSummary,
             'customer_delivered'   => $customerDeliveredSummary,
             'customer_failed'      => $customerFailedSummary,
+            'campaigns'            => $campaigns,
+            'campaign_aggregates'  => $campaignAggregates,
             'breadcrumbs'          => $breadcrumbs,
             'customer_queue'       => $customerQueue,
         ]);
@@ -263,6 +271,53 @@ class QueueMonitorController extends Controller
             'success'       => true,
             'message'       => __(':count failed SMS messages re-queued for transmission.', ['count' => $retriedCount]),
             'retried_count' => $retriedCount,
+        ]);
+    }
+
+    /**
+     * Cancel all pending SMS belonging to a campaign for authorized accounts.
+     */
+    public function cancelCampaignPending(Request $request, int $id): JsonResponse
+    {
+        $user = auth()->user();
+        $allowedUserIds = $this->service->getScopedUserIds($user);
+
+        // Verify the campaign exists and belongs to scoped users
+        $campaignSms = \App\Models\CampaignSms::where('campaign_id', $id)
+            ->orWhere('id', $id)
+            ->first();
+
+        if ($campaignSms && !in_array($campaignSms->user_id, $allowedUserIds ?? [])) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Unauthorized campaign access.'),
+            ], 403);
+        }
+
+        // Cancel all pending SMS in this campaign within scope
+        $query = Sms::where('campaign_id', $id)->where('status', 'pending');
+        if ($allowedUserIds !== null) {
+            $query->whereIn('user_id', $allowedUserIds);
+        }
+
+        $count = $query->update([
+            'status'     => 'cancelled',
+            'notes'      => 'Campaign cancelled by Sub-Reseller at ' . now()->format('Y-m-d H:i:s'),
+            'updated_at' => now(),
+        ]);
+
+        if ($campaignSms && in_array($campaignSms->status, ['pending', 'queued', 'processing'])) {
+            $campaignSms->update([
+                'status'     => 'cancelled',
+                'notes'      => 'Cancelled by Sub-Reseller',
+                'updated_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'success'         => true,
+            'message'         => __(':count pending SMS in campaign have been cancelled.', ['count' => $count]),
+            'cancelled_count' => $count,
         ]);
     }
 }

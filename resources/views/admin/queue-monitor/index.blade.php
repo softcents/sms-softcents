@@ -294,7 +294,25 @@
                 </div>
             </div>
 
-            <!-- 4. Real-Time TPS -->
+            <!-- 4. Submitted SMS -->
+            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Submitted SMS') }}</div>
+                            <div class="kpi-val text-success" id="val-submitted-count">{{ number_format($metrics['today_submitted']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Today: <strong id="val-today-submitted">{{ number_format($metrics['today_submitted']) }}</strong> • Total: <strong id="val-total-submitted">{{ number_format($metrics['submitted_count']) }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Real-Time TPS -->
             <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -307,25 +325,7 @@
                         </div>
                     </div>
                     <div class="kpi-sub">
-                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Today's Delivery & Rate -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
-                <div class="kpi-card">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="kpi-label">{{ __('Today Delivery') }}</div>
-                            <div class="kpi-val text-success"><span id="val-delivery-rate">{{ $metrics['delivery_rate'] }}%</span></div>
-                        </div>
-                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
-                            <i class="fas fa-check-circle"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-sub">
-                        <span>Total: <strong id="val-today-total">{{ number_format($metrics['today_total']) }}</strong></span>
+                        <span>1m: <strong id="val-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong> • Rate: <strong id="val-delivery-rate">{{ $metrics['delivery_rate'] }}%</strong></span>
                     </div>
                 </div>
             </div>
@@ -784,6 +784,9 @@ $(document).ready(function() {
                 $('#val-rmq-ready').text(res.broker.ready_messages.toLocaleString());
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-unack').text(res.broker.unack_messages.toLocaleString());
+                $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-today-submitted').text((res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-total-submitted').text((res.metrics.submitted_count || 0).toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());

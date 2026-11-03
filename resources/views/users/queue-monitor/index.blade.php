@@ -255,7 +255,25 @@
                 </div>
             </div>
 
-            <!-- 4. Real-Time TPS -->
+            <!-- 4. Submitted SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Submitted SMS') }}</div>
+                            <div class="kpi-val text-success" id="val-submitted-count">{{ number_format($metrics['today_submitted']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                            <i class="fas fa-paper-plane"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Today: <strong id="val-today-submitted">{{ number_format($metrics['today_submitted']) }}</strong> • All: <strong id="val-total-submitted">{{ number_format($metrics['submitted_count']) }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Real-Time TPS -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -273,25 +291,7 @@
                 </div>
             </div>
 
-            <!-- 4. Today's Dispatched Volume -->
-            <div class="col-xl col-md-4 col-sm-6 col-12">
-                <div class="kpi-card">
-                    <div class="d-flex align-items-center justify-content-between">
-                        <div>
-                            <div class="kpi-label">{{ __('Today Total Sent') }}</div>
-                            <div class="kpi-val text-dark" id="val-today-total">{{ number_format($metrics['today_total']) }}</div>
-                        </div>
-                        <div class="kpi-icon" style="background: #f1f5f9; color: #334155;">
-                            <i class="fas fa-paper-plane"></i>
-                        </div>
-                    </div>
-                    <div class="kpi-sub">
-                        <span>Delivered: <strong id="val-today-success" class="text-success">{{ number_format($metrics['today_success']) }}</strong></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Delivery Rate -->
+            <!-- 6. Delivery Rate -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -497,6 +497,9 @@ $(document).ready(function() {
                 $('#val-queue-backlog').text(res.metrics.pending_count.toLocaleString());
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-processing-count').text((res.metrics.processing_count || 0).toLocaleString());
+                $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-today-submitted').text((res.metrics.today_submitted || 0).toLocaleString());
+                $('#val-total-submitted').text((res.metrics.submitted_count || 0).toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());

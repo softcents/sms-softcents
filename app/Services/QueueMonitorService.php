@@ -344,13 +344,16 @@ class QueueMonitorService
             $processingCount = max($processingCount, (int) ($broker['unack_messages'] ?? 0));
         }
 
-        // 2. Today's Dispatched Volume & Delivery Rate
-        $todayQuery = Sms::query()->whereDate('created_at', today());
+        // 2. Submitted SMS (Dispatched to Gateway) & Today's Volume
+        $baseSmsQuery = Sms::query();
         if ($scopedIds !== null) {
-            $todayQuery->whereIn('user_id', $scopedIds);
+            $baseSmsQuery->whereIn('user_id', $scopedIds);
         }
+        $submittedCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'submitted', 'sent'])->count();
 
+        $todayQuery = (clone $baseSmsQuery)->whereDate('created_at', today());
         $todayTotal = (clone $todayQuery)->count();
+        $todaySubmitted = (clone $todayQuery)->whereIn('status', ['success', 'submitted', 'sent'])->count();
         $todaySuccess = (clone $todayQuery)->where('status', 'success')->count();
         $todayFailed = (clone $todayQuery)->where('status', 'failed')->count();
         $deliveryRate = $todayTotal > 0 ? round(($todaySuccess / $todayTotal) * 100, 1) : 100.0;
@@ -503,6 +506,8 @@ class QueueMonitorService
         return [
             'pending_count'        => $pendingCount,
             'processing_count'     => $processingCount,
+            'submitted_count'      => $submittedCount,
+            'today_submitted'      => $todaySubmitted,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
             'today_failed'         => $todayFailed,

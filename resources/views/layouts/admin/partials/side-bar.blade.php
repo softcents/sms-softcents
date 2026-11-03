@@ -212,6 +212,18 @@
                 </li>
             @endcan
 
+            @canany(['reports-read', 'dashboard-read'])
+                <li class="{{ Route::is('admin.queue-monitor.*') ? 'active' : '' }}">
+                    <a href="{{ route('admin.queue-monitor.index') }}">
+                        <span class="sidebar-icon">
+                            <i class="fas fa-satellite-dish text-success"></i>
+                        </span>
+                        {{ __('Live Queue Monitor') }}
+                        <span class="badge bg-success text-white ms-auto" style="font-size: 9px; padding: 2px 6px; border-radius: 4px;">LIVE</span>
+                    </a>
+                </li>
+            @endcanany
+
             @can(['reports-read'])
                 <li
                     class="dropdown {{ Route::is('admin.reports.profit-loss', 'admin.reports.advanced', 'admin.reports.quick-sms', 'admin.reports.campaigns-sms', 'admin.reports.subscriptions', 'admin.reports.recharges', 'admin.reports.transactions', 'admin.reports.group-sms') ? 'active' : '' }}">

@@ -112,6 +112,10 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
 
     });
 
+    // Live Queue Monitor
+    Route::get('/queue-monitor', [User\QueueMonitorController::class, 'index'])->name('queue-monitor.index');
+    Route::get('/queue-monitor/data', [User\QueueMonitorController::class, 'liveData'])->name('queue-monitor.data');
+
     Route::get('download-contacts-file', function() {
         $filePath = public_path('assets/contacts.xlsx');
         if (file_exists($filePath)) {

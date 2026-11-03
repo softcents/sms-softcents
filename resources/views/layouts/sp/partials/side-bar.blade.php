@@ -58,6 +58,14 @@
                 </ul>
             </li>
 
+            <li class="{{ Route::is('sp.queue-monitor.*') ? 'active' : '' }}">
+                <a href="{{ route('sp.queue-monitor.index') }}">
+                    <span class="sidebar-icon"><i class="fas fa-satellite-dish text-success"></i></span>
+                    {{ __('Live Queue Monitor') }}
+                    <span class="badge bg-success text-white ms-auto" style="font-size: 9px; padding: 2px 6px; border-radius: 4px;">LIVE</span>
+                </a>
+            </li>
+
             <li class="dropdown {{ Route::is('sp.reports.*') ? 'active' : '' }}">
                 <a href="#">
                     <span class="sidebar-icon"><i class="fas fa-chart-line"></i></span>

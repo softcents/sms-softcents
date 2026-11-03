@@ -129,5 +129,14 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
         Route::get('/{id}', 'mtView')->name('mtView');
         Route::get('view/all/', 'mtReadAll')->name('mtReadAll');
     });
+
+    // Live SMS Queue Monitor
+    Route::group(['as' => 'queue-monitor.', 'prefix' => 'queue-monitor'], function () {
+        Route::get('/', [ADMIN\QueueMonitorController::class, 'index'])->name('index');
+        Route::get('/data', [ADMIN\QueueMonitorController::class, 'liveData'])->name('data');
+        Route::post('/retry-failed/{id?}', [ADMIN\QueueMonitorController::class, 'retryFailed'])->name('retry-failed');
+        Route::post('/flush-failed', [ADMIN\QueueMonitorController::class, 'flushFailed'])->name('flush-failed');
+        Route::post('/purge/{queue}', [ADMIN\QueueMonitorController::class, 'purgeQueue'])->name('purge');
+    });
 });
 

@@ -51,4 +51,8 @@ Route::group(['as' => 'ssp.', 'prefix' => 'ssp', 'middleware' => ['auth', 'ssp']
     Route::get('/reports/profit-loss/export', [SSP\ProfitLossController::class, 'export'])->name('reports.profit-loss.export');
     Route::get('/reports', [SSP\ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/export', [SSP\ReportController::class, 'export'])->name('reports.export');
+
+    // Live Queue Monitor
+    Route::get('/queue-monitor', [SSP\QueueMonitorController::class, 'index'])->name('queue-monitor.index');
+    Route::get('/queue-monitor/data', [SSP\QueueMonitorController::class, 'liveData'])->name('queue-monitor.data');
 });

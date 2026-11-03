@@ -115,6 +115,16 @@
                 </ul>
             </li>
 
+            <li class="{{ Route::is('users.queue-monitor.*') ? 'active' : '' }}">
+                <a href="{{ route('users.queue-monitor.index') }}">
+                    <span class="sidebar-icon">
+                        <i class="fas fa-satellite-dish text-success"></i>
+                    </span>
+                    {{ __('Live Queue Tracker') }}
+                    <span class="badge bg-success text-white ms-auto" style="font-size: 9px; padding: 2px 6px; border-radius: 4px;">LIVE</span>
+                </a>
+            </li>
+
             <li class="dropdown {{ Route::is('users.reports.expenses', 'users.reports.analytics', 'users.reports.quick-sms', 'users.reports.campaigns-sms', 'users.reports.subscriptions', 'users.reports.recharges', 'users.reports.group-sms', 'users.reports.transactions') ? 'active' : '' }}">
                 <a href="#">
                     <span class="sidebar-icon">

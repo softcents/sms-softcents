@@ -1134,6 +1134,150 @@
             </div>
         </div>
 
+        <!-- Customer SMS Queue Details (Visible when drilled down to Customer) -->
+        <div class="panel-box mb-4 {{ empty($customerQueue) ? 'd-none' : '' }}" id="panel-customer-queue">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fas fa-user-tag" style="font-size: 13px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Customer SMS Queue Details') }}
+                            <span class="text-primary" id="cust-queue-name">{{ $customerQueue['customer']['name'] ?? '' }}</span>
+                        </h5>
+                        <div class="text-muted" style="font-size: 11px;" id="cust-queue-hierarchy-path">
+                            Super Admin <i class="fas fa-angle-right mx-1"></i>
+                            {{ $customerQueue['customer']['root_reseller']['name'] ?? 'Reseller' }} <i class="fas fa-angle-right mx-1"></i>
+                            {{ $customerQueue['customer']['parent_subreseller']['name'] ?? 'Sub-Reseller' }} <i class="fas fa-angle-right mx-1"></i>
+                            <strong class="text-dark">{{ $customerQueue['customer']['name'] ?? 'Customer' }}</strong>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-info" style="font-size: 11px;">
+                        <i class="fas fa-wallet me-1"></i> {{ __('Balance') }}: ৳<strong id="cust-queue-balance">{{ number_format($customerQueue['customer']['balance'] ?? 0, 2) }}</strong>
+                    </span>
+                    <!-- Queue Status Filter Tabs -->
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Customer Queue Status Filter">
+                        <button type="button" class="btn btn-outline-primary cust-status-tab-btn active" data-status="all">{{ __('All') }}</button>
+                        <button type="button" class="btn btn-outline-warning cust-status-tab-btn" data-status="pending">{{ __('Pending') }}</button>
+                        <button type="button" class="btn btn-outline-info cust-status-tab-btn" data-status="processing">{{ __('Processing') }}</button>
+                        <button type="button" class="btn btn-outline-success cust-status-tab-btn" data-status="delivered">{{ __('Delivered') }}</button>
+                        <button type="button" class="btn btn-outline-danger cust-status-tab-btn" data-status="failed">{{ __('Failed') }}</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Queue KPI Mini Counters -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-md col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block" style="font-size: 10px;">{{ __('PENDING QUEUE') }}</span>
+                            <span class="fs-5 fw-bold text-warning" id="cust-kpi-pending">{{ number_format($customerQueue['summary']['pending_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block" style="font-size: 10px;">{{ __('PROCESSING') }}</span>
+                            <span class="fs-5 fw-bold text-info" id="cust-kpi-processing">{{ number_format($customerQueue['summary']['processing_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block" style="font-size: 10px;">{{ __('TODAY DELIVERED') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="cust-kpi-delivered">{{ number_format($customerQueue['summary']['today_delivered'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block" style="font-size: 10px;">{{ __('TODAY FAILED') }}</span>
+                            <span class="fs-5 fw-bold text-danger" id="cust-kpi-failed">{{ number_format($customerQueue['summary']['today_failed'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block" style="font-size: 10px;">{{ __('DELIVERY RATE') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="cust-kpi-rate">{{ $customerQueue['summary']['delivery_rate'] ?? 100 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Messages Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-customer-queue">
+                    <thead>
+                        <tr>
+                            <th>{{ __('ID & Time') }}</th>
+                            <th>{{ __('Recipient') }}</th>
+                            <th>{{ __('Sender ID & Route') }}</th>
+                            <th style="min-width: 200px;">{{ __('Message Content') }}</th>
+                            <th class="text-center">{{ __('Parts / Cost') }}</th>
+                            <th>{{ __('Gateway Provider') }}</th>
+                            <th class="text-center">{{ __('Status') }}</th>
+                            <th>{{ __('Response Code') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-customer-queue">
+                        @forelse($customerQueue['messages'] ?? [] as $msg)
+                        <tr data-msg-id="{{ $msg['id'] }}">
+                            <td>
+                                <strong class="text-dark">#{{ $msg['id'] }}</strong>
+                                <small class="text-muted d-block" style="font-size: 10px;">{{ $msg['queued_at'] }}</small>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">{{ $msg['recipient'] }}</span>
+                                <span class="badge badge-soft-primary d-block mt-1" style="font-size: 10px; width: fit-content;">{{ $msg['operator'] }}</span>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-info">{{ $msg['sender'] }}</span>
+                                <small class="text-muted d-block" style="font-size: 10px;">{{ $msg['route_type'] }}</small>
+                            </td>
+                            <td>
+                                <span title="{{ $msg['content'] }}">{{ $msg['content_short'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark">{{ $msg['total_parts'] }} Part</span>
+                                <small class="text-muted d-block" style="font-size: 10px;">৳{{ $msg['charge'] }}</small>
+                            </td>
+                            <td>
+                                <small class="text-muted">{{ $msg['gateway'] }}</small>
+                                <small class="d-block text-secondary" style="font-size: 10px;">Transit: {{ $msg['latency'] }}</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge {{ $msg['status_badge'] }}">{{ $msg['status'] }}</span>
+                            </td>
+                            <td class="text-muted" style="font-size: 11px;">
+                                {{ $msg['response_code'] }}
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @if($msg['can_cancel'])
+                                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-cancel-sms" data-id="{{ $msg['id'] }}" title="{{ __('Cancel pending SMS from queue') }}" style="font-size: 11px;">
+                                    <i class="fas fa-times me-1"></i> Cancel
+                                </button>
+                                @elseif($msg['can_retry'])
+                                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-retry-sms" data-id="{{ $msg['id'] }}" title="{{ __('Re-queue failed SMS') }}" style="font-size: 11px;">
+                                    <i class="fas fa-redo-alt me-1"></i> Retry
+                                </button>
+                                @endif
+                                <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="{{ $msg['id'] }}" data-content="{{ $msg['content'] }}" title="{{ __('View message content') }}" style="font-size: 11px;">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No queued or dispatched SMS for this customer.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Bottom Section: Live Dispatched Stream & Failed Jobs Manager -->
         <div class="row g-4">
             <!-- Live SMS Stream -->
@@ -1428,7 +1572,10 @@ $(document).ready(function() {
         $.ajax({
             url: "{{ route('admin.queue-monitor.data') }}",
             type: "GET",
-            data: { filter_user_id: filterUserId },
+            data: {
+                filter_user_id: filterUserId,
+                status_filter: currentCustQueueStatusFilter
+            },
             dataType: "json",
             timeout: 5000,
             success: function(res) {
@@ -1569,6 +1716,9 @@ $(document).ready(function() {
 
                 // Update Hierarchical Breadcrumbs
                 updateBreadcrumbs(res.breadcrumbs);
+
+                // Update Customer SMS Queue Details
+                renderCustomerQueueDetails(res.customer_queue);
             },
             error: function(err) {
                 console.warn('Queue monitor poll failed:', err);
@@ -1920,6 +2070,99 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-campaigns').html(html);
+    }
+
+    let currentCustQueueStatusFilter = 'all';
+
+    function renderCustomerQueueDetails(cq) {
+        if (!cq) {
+            $('#panel-customer-queue').addClass('d-none');
+            return;
+        }
+
+        $('#panel-customer-queue').removeClass('d-none');
+        const c = cq.customer || {};
+        const s = cq.summary || {};
+
+        $('#cust-queue-name').text(c.name ? c.name + ' (@' + c.username + ')' : '');
+        $('#cust-queue-balance').text(Number(c.balance || 0).toFixed(2));
+
+        const rootName = c.root_reseller ? c.root_reseller.name : (c.parent_subreseller ? c.parent_subreseller.name : 'Reseller');
+        const subName = c.parent_subreseller ? c.parent_subreseller.name : 'Sub-Reseller';
+        $('#cust-queue-hierarchy-path').html(`
+            Super Admin <i class="fas fa-angle-right mx-1"></i>
+            ${rootName} <i class="fas fa-angle-right mx-1"></i>
+            ${subName} <i class="fas fa-angle-right mx-1"></i>
+            <strong class="text-dark">${c.name || 'Customer'}</strong>
+        `);
+
+        $('#cust-kpi-pending').text(Number(s.pending_queue || 0).toLocaleString());
+        $('#cust-kpi-processing').text(Number(s.processing_queue || 0).toLocaleString());
+        $('#cust-kpi-delivered').text(Number(s.today_delivered || 0).toLocaleString());
+        $('#cust-kpi-failed').text(Number(s.today_failed || 0).toLocaleString());
+        $('#cust-kpi-rate').text((s.delivery_rate || 100) + '%');
+
+        const msgs = cq.messages || [];
+        if (!msgs.length) {
+            $('#tbody-customer-queue').html('<tr><td colspan="9" class="text-center py-4 text-muted">No queued or dispatched SMS matching this filter.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        msgs.forEach(function(m) {
+            const cancelBtn = m.can_cancel ? `
+                <button type="button" class="btn btn-sm btn-outline-danger py-0 px-2 btn-cancel-sms" data-id="${m.id}" title="Cancel pending SMS from queue" style="font-size: 11px;">
+                    <i class="fas fa-times me-1"></i> Cancel
+                </button>
+            ` : '';
+            const retryBtn = m.can_retry ? `
+                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2 btn-retry-sms" data-id="${m.id}" title="Re-queue failed SMS" style="font-size: 11px;">
+                    <i class="fas fa-redo-alt me-1"></i> Retry
+                </button>
+            ` : '';
+
+            html += `
+                <tr data-msg-id="${m.id}">
+                    <td>
+                        <strong class="text-dark">#${m.id}</strong>
+                        <small class="text-muted d-block" style="font-size: 10px;">${m.queued_at}</small>
+                    </td>
+                    <td>
+                        <span class="fw-bold text-dark">${m.recipient}</span>
+                        <span class="badge badge-soft-primary d-block mt-1" style="font-size: 10px; width: fit-content;">${m.operator}</span>
+                    </td>
+                    <td>
+                        <span class="badge badge-soft-info">${m.sender}</span>
+                        <small class="text-muted d-block" style="font-size: 10px;">${m.route_type}</small>
+                    </td>
+                    <td>
+                        <span title="${m.content}">${m.content_short}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-dark">${m.total_parts} Part</span>
+                        <small class="text-muted d-block" style="font-size: 10px;">৳${m.charge}</small>
+                    </td>
+                    <td>
+                        <small class="text-muted">${m.gateway}</small>
+                        <small class="d-block text-secondary" style="font-size: 10px;">Transit: ${m.latency}</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge ${m.status_badge}">${m.status}</span>
+                    </td>
+                    <td class="text-muted" style="font-size: 11px;">
+                        ${m.response_code}
+                    </td>
+                    <td class="text-end text-nowrap">
+                        ${cancelBtn}
+                        ${retryBtn}
+                        <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="${m.id}" data-content="${encodeURIComponent(m.content)}" title="View message content" style="font-size: 11px;">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-customer-queue').html(html);
     }
 
     function renderStreamTable(stream) {
@@ -2361,6 +2604,73 @@ $(document).ready(function() {
             $('#select-filter-user').val(activeInspectedUserId).trigger('change');
             $('html, body').animate({ scrollTop: 0 }, 'fast');
         }
+    });
+
+    // Customer Queue Status Tab Filtering
+    $(document).on('click', '.cust-status-tab-btn', function() {
+        $('.cust-status-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentCustQueueStatusFilter = $(this).data('status');
+        fetchLiveData();
+    });
+
+    // Cancel pending SMS from customer queue
+    $(document).on('click', '.btn-cancel-sms', function() {
+        const id = $(this).data('id');
+        if (!confirm('Cancel SMS #' + id + ' from queue?')) return;
+        const btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: "{{ url('admin/queue-monitor/sms/cancel') }}/" + id,
+            type: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            dataType: "json",
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    fetchLiveData();
+                } else {
+                    toastr.error(res.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to cancel SMS.');
+            },
+            complete: function() { btn.prop('disabled', false); }
+        });
+    });
+
+    // Re-queue failed SMS to customer queue
+    $(document).on('click', '.btn-retry-sms', function() {
+        const id = $(this).data('id');
+        const btn = $(this);
+        btn.prop('disabled', true);
+
+        $.ajax({
+            url: "{{ url('admin/queue-monitor/sms/retry') }}/" + id,
+            type: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            dataType: "json",
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    fetchLiveData();
+                } else {
+                    toastr.error(res.message);
+                }
+            },
+            error: function() {
+                toastr.error('Failed to retry SMS.');
+            },
+            complete: function() { btn.prop('disabled', false); }
+        });
+    });
+
+    // View message text
+    $(document).on('click', '.btn-view-sms', function() {
+        const text = decodeURIComponent($(this).data('content'));
+        alert('Message Body:\n\n' + text);
     });
 
     // Dropdown Scope Change Handler with URL State Sync

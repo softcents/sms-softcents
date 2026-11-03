@@ -139,6 +139,9 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
         Route::post('/purge/{queue}', [ADMIN\QueueMonitorController::class, 'purgeQueue'])->name('purge');
         Route::post('/restart-workers', [ADMIN\QueueMonitorController::class, 'restartWorkers'])->name('restart-workers');
         Route::get('/inspect/{id}', [ADMIN\QueueMonitorController::class, 'inspectUser'])->name('inspect-user');
+        Route::get('/customer-queue/{id}', [ADMIN\QueueMonitorController::class, 'customerQueueDetails'])->name('customer-queue');
+        Route::post('/sms/cancel/{id}', [ADMIN\QueueMonitorController::class, 'cancelSms'])->name('sms.cancel');
+        Route::post('/sms/retry/{id}', [ADMIN\QueueMonitorController::class, 'retrySms'])->name('sms.retry');
     });
 });
 

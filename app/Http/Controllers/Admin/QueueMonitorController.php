@@ -36,6 +36,7 @@ class QueueMonitorController extends Controller
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
+        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId) : null;
 
         return view('admin.queue-monitor.index', compact(
             'broker',
@@ -49,7 +50,8 @@ class QueueMonitorController extends Controller
             'providers',
             'routes',
             'campaigns',
-            'breadcrumbs'
+            'breadcrumbs',
+            'customerQueue'
         ));
     }
 
@@ -59,6 +61,7 @@ class QueueMonitorController extends Controller
     public function liveData(Request $request): JsonResponse
     {
         $filterUserId = $request->input('filter_user_id') ? (int) $request->input('filter_user_id') : null;
+        $statusFilter = $request->input('status_filter') ?: null;
         $broker = $this->service->getBrokerOverview();
         $workers = $this->service->getWorkerPoolStatus();
         $queues = $this->service->getQueues();
@@ -69,20 +72,22 @@ class QueueMonitorController extends Controller
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
+        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter) : null;
 
         return response()->json([
-            'success'     => true,
-            'timestamp'   => now()->format('H:i:s'),
-            'broker'      => $broker,
-            'workers'     => $workers,
-            'queues'      => $queues,
-            'metrics'     => $metrics,
-            'failed'      => $failedJobs,
-            'resellers'   => $resellerSummary,
-            'providers'   => $providers,
-            'routes'      => $routes,
-            'campaigns'   => $campaigns,
-            'breadcrumbs' => $breadcrumbs,
+            'success'        => true,
+            'timestamp'      => now()->format('H:i:s'),
+            'broker'         => $broker,
+            'workers'        => $workers,
+            'queues'         => $queues,
+            'metrics'        => $metrics,
+            'failed'         => $failedJobs,
+            'resellers'      => $resellerSummary,
+            'providers'      => $providers,
+            'routes'         => $routes,
+            'campaigns'      => $campaigns,
+            'breadcrumbs'    => $breadcrumbs,
+            'customer_queue' => $customerQueue,
         ]);
     }
 
@@ -176,5 +181,82 @@ class QueueMonitorController extends Controller
                 'message' => __('Failed to broadcast worker restart signal: ') . $e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Get detailed customer SMS queue messages and metrics.
+     */
+    public function customerQueueDetails(Request $request, int $id): JsonResponse
+    {
+        $statusFilter = $request->input('status');
+        $details = $this->service->getCustomerSmsQueueDetails($id, $statusFilter);
+        if (!$details) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Customer account not found.'),
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $details,
+        ]);
+    }
+
+    /**
+     * Cancel a pending SMS message from the queue.
+     */
+    public function cancelSms(Request $request, int $id): JsonResponse
+    {
+        $sms = \App\Models\Sms::find($id);
+        if (!$sms || $sms->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => __('SMS not found or is no longer pending in queue.'),
+            ], 400);
+        }
+
+        $sms->status = 'cancelled';
+        $sms->notes = 'Cancelled from queue by Super Admin';
+        $sms->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => __("SMS #{$id} has been cancelled from the queue."),
+        ]);
+    }
+
+    /**
+     * Re-queue a failed SMS message into the active dispatch pipeline.
+     */
+    public function retrySms(Request $request, int $id): JsonResponse
+    {
+        $sms = \App\Models\Sms::with('smsgateway')->find($id);
+        if (!$sms) {
+            return response()->json([
+                'success' => false,
+                'message' => __('SMS not found.'),
+            ], 404);
+        }
+
+        $sms->status = 'pending';
+        $sms->gateway_response_code = '102 (Re-queued)';
+        $sms->save();
+
+        $gw = $sms->smsgateway;
+        if ($gw) {
+            $config = [
+                'driver'   => $gw->driver,
+                'senderid' => $sms->senderid_id,
+                'apiurl'   => $gw->api_url,
+                'apikey'   => $gw->api_key,
+            ];
+            dispatch(new \App\Jobs\SendSmsJob($sms->number, $sms->contents, $config, $sms->id))->onQueue('sms');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => __("SMS #{$id} has been re-queued to the active dispatch pipeline."),
+        ]);
     }
 }

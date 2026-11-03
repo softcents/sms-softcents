@@ -445,6 +445,125 @@ class QueueMonitorService
     }
 
     /**
+     * Get detailed SMS queue breakdown and real-time message dispatches for a specific Customer.
+     */
+    public function getCustomerSmsQueueDetails(int $userId, ?string $statusFilter = null, int $limit = 25): ?array
+    {
+        $user = User::with('parent')->find($userId);
+        if (!$user) return null;
+
+        // Resolve 4-tier hierarchy ancestry: Super Admin -> Reseller -> Sub-Reseller -> Customer
+        $breadcrumbs = $this->getUserHierarchyBreadcrumbs($userId);
+
+        $baseQuery = Sms::where('user_id', $userId);
+        $pendingCount = (clone $baseQuery)->where('status', 'pending')->count();
+        $processingCount = (clone $baseQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+        $todayTotal = (clone $baseQuery)->whereDate('created_at', today())->count();
+        $todayDelivered = (clone $baseQuery)->whereDate('created_at', today())->whereIn('status', ['success', 'delivered'])->count();
+        $todayFailed = (clone $baseQuery)->whereDate('created_at', today())->where('status', 'failed')->count();
+        $lifetimeTotal = (clone $baseQuery)->count();
+        $deliveryRate = ($todayDelivered + $todayFailed) > 0 ? round(($todayDelivered / ($todayDelivered + $todayFailed)) * 100, 1) : 100.0;
+
+        // Fetch messages with optional status filter
+        $msgQuery = Sms::where('user_id', $userId)->with(['senderid:id,sender,type', 'smsgateway:id,name,driver'])->latest('id');
+        if ($statusFilter && $statusFilter !== 'all') {
+            if ($statusFilter === 'processing') {
+                $msgQuery->whereIn('status', ['processing', 'sending', 'in_progress', 'queued']);
+            } elseif ($statusFilter === 'delivered') {
+                $msgQuery->whereIn('status', ['success', 'delivered']);
+            } else {
+                $msgQuery->where('status', $statusFilter);
+            }
+        }
+        $rawMessages = $msgQuery->limit($limit)->get();
+
+        $messages = [];
+        foreach ($rawMessages as $m) {
+            $statusStr = strtolower($m->status ?? 'pending');
+            $badge = match($statusStr) {
+                'success', 'delivered' => 'badge-soft-success',
+                'processing', 'sending', 'in_progress' => 'badge-soft-info',
+                'failed', 'rejected'   => 'badge-soft-danger',
+                'cancelled'            => 'badge-soft-secondary',
+                default                => 'badge-soft-warning',
+            };
+
+            $secDiff = $m->updated_at && $m->created_at ? max(0, $m->updated_at->diffInRealSeconds($m->created_at)) : 0;
+            $latencyText = $secDiff > 0 ? ($secDiff < 60 ? "{$secDiff}s" : round($secDiff / 60, 1) . "m") : "< 1s";
+
+            $messages[] = [
+                'id'            => $m->id,
+                'recipient'     => $m->number,
+                'operator'      => $m->operator ?: 'Other',
+                'sender'        => $m->senderid->sender ?? 'N/A',
+                'route_type'    => $m->senderid->type ?? 'Non-Masking',
+                'content'       => $m->contents ?? '',
+                'content_short' => mb_substr($m->contents ?? '', 0, 45) . (mb_strlen($m->contents ?? '') > 45 ? '...' : ''),
+                'total_parts'   => (int) ($m->total_sms ?? 1),
+                'charge'        => round((float) ($m->charge ?? 0), 2),
+                'gateway'       => $m->smsgateway->name ?? 'Default Gateway',
+                'status'        => ucfirst($statusStr),
+                'status_raw'    => $statusStr,
+                'status_badge'  => $badge,
+                'response_code' => $m->gateway_response_code ?: ($statusStr === 'success' ? '200 OK' : '102 Queued'),
+                'latency'       => $latencyText,
+                'queued_at'     => $m->created_at ? $m->created_at->format('M d, H:i:s') : 'N/A',
+                'dispatched_at' => $m->updated_at ? $m->updated_at->format('M d, H:i:s') : 'N/A',
+                'can_cancel'    => $statusStr === 'pending',
+                'can_retry'     => in_array($statusStr, ['failed', 'rejected']),
+            ];
+        }
+
+        // Get parent details
+        $subReseller = null;
+        $rootReseller = null;
+        if ($user->parent) {
+            $subReseller = [
+                'id'       => $user->parent->id,
+                'name'     => $user->parent->name,
+                'username' => $user->parent->username ?? $user->parent->name,
+                'role'     => $user->parent->role,
+            ];
+            if ($user->parent->parent_id) {
+                $root = User::find($user->parent->parent_id);
+                if ($root) {
+                    $rootReseller = [
+                        'id'       => $root->id,
+                        'name'     => $root->name,
+                        'username' => $root->username ?? $root->name,
+                        'role'     => $root->role,
+                    ];
+                }
+            }
+        }
+
+        return [
+            'customer' => [
+                'id'                 => $user->id,
+                'name'               => $user->name,
+                'username'           => $user->username ?? $user->name,
+                'email'              => $user->email,
+                'phone'              => $user->phone ?? 'N/A',
+                'balance'            => round((float) ($user->balance ?? 0), 2),
+                'role'               => $user->role,
+                'parent_subreseller' => $subReseller,
+                'root_reseller'      => $rootReseller,
+                'breadcrumbs'        => $breadcrumbs,
+            ],
+            'summary' => [
+                'pending_queue'    => $pendingCount,
+                'processing_queue' => $processingCount,
+                'today_total'      => $todayTotal,
+                'today_delivered'  => $todayDelivered,
+                'today_failed'     => $todayFailed,
+                'delivery_rate'    => $deliveryRate,
+                'lifetime_total'   => $lifetimeTotal,
+            ],
+            'messages' => $messages,
+        ];
+    }
+
+    /**
      * Get real-time provider/gateway-wise SMS queue and dispatch traffic distribution.
      */
     public function getProviderTrafficSummary(?User $user = null, ?int $filterUserId = null): array

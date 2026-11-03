@@ -728,6 +728,84 @@
             </div>
         </div>
 
+        <!-- Route-Wise SMS Traffic & Channel Distribution Matrix -->
+        <div class="panel-box mb-4">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-route text-info"></i>
+                        {{ __('Route-Wise SMS Traffic & Channel Distribution') }}
+                    </h5>
+                    <span class="badge badge-soft-info"><span id="routes-count">{{ count($routes ?? []) }}</span> {{ __('Active Telecom Routes') }}</span>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">
+                    <i class="fas fa-check-double text-info me-1"></i>{{ __('Masking, Non-Masking, Transactional OTP & Bulk Queue Routing') }}
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-routes">
+                    <thead>
+                        <tr>
+                            <th>{{ __('SMS Route & Type') }}</th>
+                            <th>{{ __('Route Classification') }}</th>
+                            <th class="text-center">{{ __('Priority Level') }}</th>
+                            <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
+                            <th class="text-center">{{ __('Today Dispatched') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate') }}</th>
+                            <th class="text-center" style="min-width: 140px;">{{ __('Traffic Share') }}</th>
+                            <th class="text-end">{{ __('Lifetime Volume') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-routes">
+                        @forelse($routes ?? [] as $rt)
+                        <tr data-route-id="{{ $rt['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: {{ $rt['color'] }}20; color: {{ $rt['color'] }}; font-size: 12px;">
+                                        <i class="{{ $rt['icon'] }}"></i>
+                                    </div>
+                                    {{ $rt['name'] }}
+                                </div>
+                                <small class="text-muted ms-4">{{ $rt['type_label'] }}</small>
+                            </td>
+                            <td>
+                                <span class="badge {{ $rt['badge'] }}">
+                                    {{ $rt['status'] }}
+                                </span>
+                            </td>
+                            <td class="text-center fw-semibold">{{ $rt['priority'] }}</td>
+                            <td class="text-center fw-bold {{ $rt['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($rt['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $rt['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($rt['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($rt['today_total']) }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">{{ $rt['delivery_rate'] }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $rt['traffic_share'] }}%</span>
+                                    <small class="text-muted">{{ number_format($rt['lifetime_total']) }}</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ $rt['traffic_share'] }}%; background-color: {{ $rt['color'] }};" aria-valuenow="{{ $rt['traffic_share'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold text-dark">{{ number_format($rt['lifetime_total']) }} SMS</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No SMS routes configured.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Bottom Section: Live Dispatched Stream & Failed Jobs Manager -->
         <div class="row g-4">
             <!-- Live SMS Stream -->
@@ -1045,6 +1123,9 @@ $(document).ready(function() {
                 // Update Providers Table
                 renderProvidersTable(res.providers);
 
+                // Update Routes Table
+                renderRoutesTable(res.routes);
+
                 // Update TPS Line Chart
                 if (tpsChart) {
                     $('#live-tps-badge').text(res.metrics.current_tps + ' TPS');
@@ -1233,6 +1314,59 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-providers').html(html);
+    }
+
+    function renderRoutesTable(routes) {
+        if (!routes) return;
+        $('#routes-count').text(routes.length);
+
+        if (!routes.length) {
+            $('#tbody-routes').html('<tr><td colspan="9" class="text-center py-4 text-muted">No SMS routes configured.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        routes.forEach(function(rt) {
+            const pendingClass = rt.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = rt.processing_queue > 0 ? 'text-info' : 'text-muted';
+
+            html += `
+                <tr data-route-id="${rt.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: ${rt.color}20; color: ${rt.color}; font-size: 12px;">
+                                <i class="${rt.icon}"></i>
+                            </div>
+                            ${rt.name}
+                        </div>
+                        <small class="text-muted ms-4">${rt.type_label}</small>
+                    </td>
+                    <td>
+                        <span class="badge ${rt.badge}">
+                            ${rt.status}
+                        </span>
+                    </td>
+                    <td class="text-center fw-semibold">${rt.priority}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(rt.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(rt.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-dark">${Number(rt.today_total).toLocaleString()}</td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success">${rt.delivery_rate}%</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${rt.traffic_share}%</span>
+                            <small class="text-muted">${Number(rt.lifetime_total).toLocaleString()}</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar" role="progressbar" style="width: ${rt.traffic_share}%; background-color: ${rt.color};" aria-valuenow="${rt.traffic_share}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark">${Number(rt.lifetime_total).toLocaleString()} SMS</td>
+                </tr>
+            `;
+        });
+        $('#tbody-routes').html(html);
     }
 
     function renderStreamTable(stream) {

@@ -305,6 +305,110 @@ class QueueMonitorService
     }
 
     /**
+     * Get real-time route-wise SMS queue and dispatch traffic distribution (Masking, Non-Masking, OTP, Bulk).
+     */
+    public function getRouteTrafficSummary(?User $user = null, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($user);
+        if ($filterUserId) {
+            $scopedIds = [$filterUserId];
+        }
+
+        $baseQuery = Sms::query();
+        if ($scopedIds !== null) {
+            $baseQuery->whereIn('user_id', $scopedIds);
+        }
+
+        $allTotal = (clone $baseQuery)->count();
+        $todayTotal = (clone $baseQuery)->whereDate('created_at', today())->count();
+
+        $routes = [
+            [
+                'id'          => 'non_masking',
+                'name'        => 'Non-Masking Route',
+                'type_label'  => 'Fixed CLI / Numeric Sender ID',
+                'badge'       => 'badge-soft-primary',
+                'icon'        => 'fas fa-phone-square-alt',
+                'color'       => '#0284c7',
+                'priority'    => 'Standard (P2)',
+                'status'      => 'Active / Online',
+                'is_active'   => true,
+            ],
+            [
+                'id'          => 'masking',
+                'name'        => 'Masking Route',
+                'type_label'  => 'BTRC Brand Alphanumeric Sender ID',
+                'badge'       => 'badge-soft-success',
+                'icon'        => 'fas fa-award',
+                'color'       => '#059669',
+                'priority'    => 'Premium (P1)',
+                'status'      => 'Active / Online',
+                'is_active'   => true,
+            ],
+            [
+                'id'          => 'transactional_otp',
+                'name'        => 'Transactional / OTP Fast Route',
+                'type_label'  => 'High-Priority Zero-Delay Dispatch Queue',
+                'badge'       => 'badge-soft-danger',
+                'icon'        => 'fas fa-bolt',
+                'color'       => '#dc2626',
+                'priority'    => 'Fastlane (P0)',
+                'status'      => 'Active / Fastlane',
+                'is_active'   => true,
+            ],
+            [
+                'id'          => 'bulk_campaign',
+                'name'        => 'Bulk Campaign Marketing Route',
+                'type_label'  => 'Throttled Promotional Broadcast Queue',
+                'badge'       => 'badge-soft-warning',
+                'icon'        => 'fas fa-mail-bulk',
+                'color'       => '#d97706',
+                'priority'    => 'Bulk (P3)',
+                'status'      => 'Active / Batch',
+                'is_active'   => true,
+            ],
+        ];
+
+        $summary = [];
+        foreach ($routes as $r) {
+            if ($r['id'] === 'masking') {
+                $q = (clone $baseQuery)->whereHas('senderid', fn($sub) => $sub->where('type', 'ilike', '%masking%')->where('type', 'not ilike', '%non%'));
+            } elseif ($r['id'] === 'non_masking') {
+                $q = (clone $baseQuery)->whereHas('senderid', fn($sub) => $sub->where('type', 'ilike', '%non%'));
+            } elseif ($r['id'] === 'transactional_otp') {
+                $q = (clone $baseQuery)->whereNull('campaign_id');
+            } else {
+                $q = (clone $baseQuery)->whereNotNull('campaign_id');
+            }
+
+            $pending = (clone $q)->where('status', 'pending')->count();
+            $processing = (clone $q)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+            $today = (clone $q)->whereDate('created_at', today())->count();
+            $todaySuccess = (clone $q)->whereDate('created_at', today())->whereIn('status', ['success', 'delivered'])->count();
+            $todayFailed = (clone $q)->whereDate('created_at', today())->where('status', 'failed')->count();
+            $total = (clone $q)->count();
+
+            $rate = $today > 0 ? round(($todaySuccess / $today) * 100, 1) : 100.0;
+            $share = $allTotal > 0 ? round(($total / $allTotal) * 100, 1) : 0.0;
+            $todayShare = $todayTotal > 0 ? round(($today / $todayTotal) * 100, 1) : 0.0;
+
+            $summary[] = array_merge($r, [
+                'pending_queue'    => $pending,
+                'processing_queue' => $processing,
+                'today_total'      => $today,
+                'today_success'    => $todaySuccess,
+                'today_failed'     => $todayFailed,
+                'delivery_rate'    => $rate,
+                'lifetime_total'   => $total,
+                'traffic_share'    => $share,
+                'today_share'      => $todayShare,
+            ]);
+        }
+
+        return $summary;
+    }
+
+    /**
      * Strict backend verification that an actor is authorized to inspect a target account's queue.
      */
     public function validateAccountAccess(?User $actor, ?int $targetUserId): bool

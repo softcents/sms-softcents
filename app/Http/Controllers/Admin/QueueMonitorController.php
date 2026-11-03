@@ -33,6 +33,7 @@ class QueueMonitorController extends Controller
         $downlineUsers = $this->service->getFilterableDownline(auth()->user());
         $resellerSummary = $this->service->getResellerHierarchySummary();
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
+        $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
 
         return view('admin.queue-monitor.index', compact(
             'broker',
@@ -43,7 +44,8 @@ class QueueMonitorController extends Controller
             'downlineUsers',
             'filterUserId',
             'resellerSummary',
-            'providers'
+            'providers',
+            'routes'
         ));
     }
 
@@ -60,6 +62,7 @@ class QueueMonitorController extends Controller
         $failedJobs = $this->service->getFailedJobs(15);
         $resellerSummary = $this->service->getResellerHierarchySummary();
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
+        $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
 
         return response()->json([
             'success'   => true,
@@ -71,6 +74,7 @@ class QueueMonitorController extends Controller
             'failed'    => $failedJobs,
             'resellers' => $resellerSummary,
             'providers' => $providers,
+            'routes'    => $routes,
         ]);
     }
 

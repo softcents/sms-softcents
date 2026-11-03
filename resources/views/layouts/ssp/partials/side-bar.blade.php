@@ -50,7 +50,7 @@
             <li class="{{ Route::is('ssp.queue-monitor.*') ? 'active' : '' }}">
                 <a href="{{ route('ssp.queue-monitor.index') }}">
                     <span class="sidebar-icon"><i class="fas fa-satellite-dish text-success"></i></span>
-                    {{ __('Live Queue Monitor') }}
+                    {{ __('Live SMS Monitoring') }}
                     <span class="badge bg-success text-white ms-auto" style="font-size: 9px; padding: 2px 6px; border-radius: 4px;">LIVE</span>
                 </a>
             </li>

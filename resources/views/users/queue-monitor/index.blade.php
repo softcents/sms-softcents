@@ -1,6 +1,6 @@
 @extends('layouts.users.master')
 
-@section('title', __('Live SMS Dispatch & Queue Tracker'))
+@section('title', __('Live SMS Monitoring'))
 
 @push('css')
 <style>
@@ -171,7 +171,7 @@
                 <div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="pulse-indicator" id="live-indicator"></span>
-                        <h4 class="m-0 fw-bold text-dark">{{ __('Live SMS Dispatch & Queue Tracker') }}</h4>
+                        <h4 class="m-0 fw-bold text-dark">{{ __('Live SMS Monitoring') }}</h4>
                         <span class="badge badge-soft-success ms-1" style="font-size: 11px;">REAL-TIME</span>
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-1" style="font-size: 13px; color: #64748b;">

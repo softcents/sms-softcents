@@ -1,6 +1,6 @@
 @extends('layouts.sp.master')
 
-@section('title', __('Live SMS Queue Monitor (Reseller)'))
+@section('title', __('Live SMS Monitoring (Reseller)'))
 
 @push('css')
 <style>
@@ -171,7 +171,7 @@
                 <div>
                     <div class="d-flex align-items-center gap-2">
                         <span class="pulse-indicator" id="live-indicator"></span>
-                        <h4 class="m-0 fw-bold text-dark">{{ __('Reseller Live SMS Queue Monitor') }}</h4>
+                        <h4 class="m-0 fw-bold text-dark">{{ __('Live SMS Monitoring') }}</h4>
                         <span class="badge badge-soft-primary ms-1" style="font-size: 11px;">RESELLER SCOPE</span>
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-1" style="font-size: 13px; color: #64748b;">

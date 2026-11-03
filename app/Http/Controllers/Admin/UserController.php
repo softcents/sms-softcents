@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Senderid;
+use App\Models\Transaction;
+use App\Models\Recharge;
+use App\Models\Gateway;
 use App\Mail\WelcomeMail;
 use Illuminate\Support\Str;
 use App\Helpers\HasUploader;
@@ -26,7 +29,7 @@ class UserController extends Controller
     {
         $this->middleware('permission:users-create')->only('create', 'store');
         $this->middleware('permission:users-read')->only('index', 'show');
-        $this->middleware('permission:users-update')->only('edit', 'update');
+        $this->middleware('permission:users-update')->only('edit', 'update', 'recharge');
         $this->middleware('permission:users-delete')->only('destroy');
     }
 
@@ -64,7 +67,13 @@ class UserController extends Controller
         $users = $users->paginate(10);
         $users->appends(['users' => $role, 'low_balance' => 'low_balance']);
 
-        return view('admin.users.index', compact('users'));
+        $allRechargeableUsers = User::where('role', '!=', 'superadmin')
+            ->select('id', 'name', 'username', 'role', 'balance', 'phone')
+            ->orderByRaw("CASE role WHEN 'sp' THEN 1 WHEN 'ssp' THEN 2 WHEN 'user' THEN 3 ELSE 4 END")
+            ->orderBy('name')
+            ->get();
+
+        return view('admin.users.index', compact('users', 'allRechargeableUsers'));
     }
 
     public function create()
@@ -322,5 +331,126 @@ class UserController extends Controller
     public function returnToAdmin()
     {
         return ImpersonationService::returnToPrevious();
+    }
+
+    /**
+     * Admin direct balance recharge or deduction for Resellers (SP/SSP) and Customers.
+     */
+    public function recharge(Request $request, ?User $user = null)
+    {
+        if (!$user || !$user->exists) {
+            $request->validate(['user_id' => 'required|exists:users,id']);
+            $user = User::findOrFail($request->user_id);
+        }
+
+        if ($user->role === 'superadmin') {
+            return response()->json([
+                'success' => false,
+                'message' => __('Cannot adjust balance for superadmin.')
+            ], 422);
+        }
+
+        $request->validate([
+            'type' => 'required|in:add,deduct',
+            'amount' => 'required|numeric|min:0.01',
+            'payment_method' => 'nullable|string|max:100',
+            'transaction_id' => 'nullable|string|max:100',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $amount = (float) $request->amount;
+        $type = $request->type; // 'add' or 'deduct'
+        $admin = auth()->user();
+
+        if ($type === 'deduct' && $user->balance < $amount) {
+            return response()->json([
+                'success' => false,
+                'message' => __('User does not have enough balance to deduct.') . ' ' . __('Current balance: ') . currency_format($user->balance)
+            ], 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($type === 'add') {
+                $user->increment('balance', $amount);
+                $actionText = __('recharged by Admin');
+                $trxType = 'credit';
+            } else {
+                $user->decrement('balance', $amount);
+                $actionText = __('deducted by Admin');
+                $trxType = 'debit';
+            }
+
+            $user->refresh();
+
+            $noteSuffix = $request->notes ? ' - ' . $request->notes : '';
+            $paymentMethod = $request->payment_method ?: 'Admin Direct / Cash';
+            $defaultGateway = Gateway::where('is_manual', true)->first() ?? Gateway::first();
+            $gatewayId = $defaultGateway ? $defaultGateway->id : null;
+
+            // 1. Transaction record
+            $transaction = Transaction::create([
+                'user_id' => $user->id,
+                'gateway_id' => $gatewayId,
+                'amount' => $amount,
+                'charge' => 0,
+                'reason' => "Balance {$actionText} ({$admin->name}){$noteSuffix}",
+                'type' => $trxType,
+            ]);
+
+            // 2. Recharge record (for audit trail & reports)
+            $recharge = Recharge::create([
+                'user_id' => $user->id,
+                'gateway_id' => $gatewayId,
+                'amount' => $amount,
+                'status' => 'approved',
+                'notes' => ($type === 'deduct' ? '[DEDUCTION] ' : '') . ($request->notes ?: "Balance {$actionText} ({$admin->name})"),
+                'manual_data' => [
+                    'method' => $paymentMethod,
+                    'trxid' => $request->transaction_id ?: $transaction->invoice_no,
+                    'admin_id' => $admin->id,
+                    'admin_name' => $admin->name,
+                    'type' => $type,
+                ],
+                'reseller_id' => null,
+            ]);
+
+            DB::commit();
+
+            $formattedNewBalance = currency_format($user->balance);
+            $message = $type === 'add'
+                ? __(':amount added successfully to :name. New Balance: :balance', [
+                    'amount' => currency_format($amount),
+                    'name' => $user->name,
+                    'balance' => $formattedNewBalance,
+                ])
+                : __(':amount deducted successfully from :name. New Balance: :balance', [
+                    'amount' => currency_format($amount),
+                    'name' => $user->name,
+                    'balance' => $formattedNewBalance,
+                ]);
+
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $message,
+                    'user_id' => $user->id,
+                    'balance' => $user->balance,
+                    'formatted_balance' => $formattedNewBalance,
+                    'is_low_balance' => $user->low_blnc_alrt >= $user->balance,
+                ]);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => __('Failed to update balance: ') . $e->getMessage()
+                ], 500);
+            }
+            return back()->with('error', __('Failed to update balance: ') . $e->getMessage());
+        }
     }
 }

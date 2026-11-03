@@ -38,7 +38,12 @@ class RechargeController extends Controller
         }
 
         $recharges = $recharges->paginate(10);
-        return view('admin.recharges.index', compact('recharges'));
+        $allRechargeableUsers = User::where('role', '!=', 'superadmin')
+            ->select('id', 'name', 'username', 'role', 'balance', 'phone')
+            ->orderByRaw("CASE role WHEN 'sp' THEN 1 WHEN 'ssp' THEN 2 WHEN 'user' THEN 3 ELSE 4 END")
+            ->orderBy('name')
+            ->get();
+        return view('admin.recharges.index', compact('recharges', 'allRechargeableUsers'));
     }
 
 

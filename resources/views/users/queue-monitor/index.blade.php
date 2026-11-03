@@ -366,6 +366,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 10. Current TPS (Transactions Per Second) -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Current TPS') }}</div>
+                            <div class="kpi-val text-info"><span id="val-kpi-tps">{{ $metrics['current_tps'] }}</span> <small style="font-size: 13px; font-weight: 600;">TPS</small></div>
+                        </div>
+                        <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
+                            <i class="fas fa-tachometer-alt"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>1m: <strong id="val-kpi-1m">{{ number_format($metrics['last_1_min_volume']) }}</strong> • 5m: <strong id="val-kpi-5m">{{ number_format($metrics['last_5_min_volume']) }}</strong></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Middle Section: Operator Distribution & Quick Actions -->
@@ -576,6 +594,9 @@ $(document).ready(function() {
                 $('#val-sub-today-expired').text((res.metrics.today_expired || 0).toLocaleString());
                 $('#val-total-expired').text((res.metrics.expired_count || 0).toLocaleString());
                 $('#val-retry-queue').text((res.metrics.retry_queue_count || 0).toLocaleString());
+                $('#val-kpi-tps').text(res.metrics.current_tps);
+                $('#val-kpi-1m').text(res.metrics.last_1_min_volume.toLocaleString());
+                $('#val-kpi-5m').text(res.metrics.last_5_min_volume.toLocaleString());
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
 
                 // Operator Chart

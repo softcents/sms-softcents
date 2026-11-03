@@ -494,7 +494,7 @@ class QueueMonitorService
             $isDirect = ($cust->parent_id === $viewer->id);
             if ($isDirect) {
                 $aggregates['direct_customers']++;
-                $parentLabel = 'Direct Customer (Reseller)';
+                $parentLabel = $viewer->role === 'ssp' ? 'Own Customer' : 'Direct Customer (Reseller)';
             } else {
                 $aggregates['ssp_customers']++;
                 $pName = $parents[$cust->parent_id] ?? 'Sub-Reseller';

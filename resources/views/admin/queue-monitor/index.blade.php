@@ -475,6 +475,127 @@
             </div>
         </div>
 
+        <!-- Global Throughput (TPS) & Processing Speed Engine -->
+        <div class="panel-box mb-4">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-tachometer-alt text-info"></i>
+                        {{ __('Global Throughput (TPS) & Processing Speed Engine') }}
+                    </h5>
+                    <span class="badge badge-soft-info" id="live-tps-engine-badge">
+                        <i class="fas fa-bolt text-warning me-1"></i><span id="val-engine-tps">{{ $metrics['current_tps'] }}</span> TPS (Current)
+                    </span>
+                    <span class="badge badge-soft-warning">
+                        <i class="fas fa-fire me-1"></i>{{ __('Peak Today') }}: <strong id="val-engine-peak">{{ $metrics['peak_tps'] ?? 0 }}</strong> TPS
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-success">
+                        <i class="fas fa-microchip me-1"></i> {{ __('Capacity') }}: <strong id="val-engine-capacity">{{ $metrics['concurrency_capacity'] ?? 200 }}</strong> TPS (<span id="val-engine-load-text">{{ $metrics['engine_load_percent'] ?? 0 }}%</span> {{ __('Load') }})
+                    </span>
+                    <span class="text-muted" style="font-size: 12px;">
+                        <i class="fas fa-clock text-primary me-1"></i>{{ __('Real-Time Engine Telemetry') }}
+                    </span>
+                </div>
+            </div>
+
+            <div class="p-4">
+                <!-- 4 Real-time Speed & Latency Metrics Tiles -->
+                <div class="row g-3 mb-4">
+                    <!-- Current TPS -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <div class="text-muted d-flex align-items-center justify-content-between" style="font-size: 12px;">
+                                <span>{{ __('Instantaneous Speed') }}</span>
+                                <span class="badge badge-soft-info">{{ __('1m window') }}</span>
+                            </div>
+                            <div class="d-flex align-items-baseline gap-2 mt-2">
+                                <span class="fs-3 fw-bold text-info" id="val-speed-current">{{ $metrics['current_tps'] }}</span>
+                                <span class="fw-semibold text-muted">TPS</span>
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 11px;">
+                                <i class="fas fa-exchange-alt me-1 text-info"></i>{{ __('Dispatch Velocity') }}: <strong id="val-speed-velocity" class="text-dark">{{ round($metrics['current_tps'] * 60) }}</strong> SMS/min
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5m & 1h Moving Averages -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <div class="text-muted d-flex align-items-center justify-content-between" style="font-size: 12px;">
+                                <span>{{ __('Moving Averages') }}</span>
+                                <span class="badge badge-soft-primary">{{ __('Smoothing') }}</span>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mt-2">
+                                <div>
+                                    <small class="text-muted d-block" style="font-size: 10px;">5-MIN AVG</small>
+                                    <span class="fs-4 fw-bold text-dark" id="val-speed-5m">{{ $metrics['tps_5m'] ?? 0 }}</span> <small class="text-muted">TPS</small>
+                                </div>
+                                <div class="border-start ps-3">
+                                    <small class="text-muted d-block" style="font-size: 10px;">1-HOUR AVG</small>
+                                    <span class="fs-4 fw-bold text-dark" id="val-speed-1h">{{ $metrics['tps_1h'] ?? 0 }}</span> <small class="text-muted">TPS</small>
+                                </div>
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 11px;">
+                                <i class="fas fa-history me-1 text-primary"></i>1h Volume: <strong id="val-speed-1h-vol" class="text-dark">{{ number_format($metrics['last_1_hour_volume'] ?? 0) }}</strong> SMS
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- End-to-End Processing Latency -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <div class="text-muted d-flex align-items-center justify-content-between" style="font-size: 12px;">
+                                <span>{{ __('Processing Latency') }}</span>
+                                <span class="badge badge-soft-success">{{ __('End-to-End') }}</span>
+                            </div>
+                            <div class="d-flex align-items-baseline gap-2 mt-2">
+                                <span class="fs-3 fw-bold text-success" id="val-speed-latency">{{ $metrics['avg_latency_formatted'] ?? '< 500 ms' }}</span>
+                            </div>
+                            <div class="text-muted mt-1" style="font-size: 11px;">
+                                <i class="fas fa-stopwatch me-1 text-success"></i>{{ __('Queue Intake → Worker → Gateway Handoff') }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Concurrency & Engine Load -->
+                    <div class="col-lg-3 col-md-6 col-12">
+                        <div class="p-3 rounded-3 border bg-light h-100">
+                            <div class="text-muted d-flex align-items-center justify-content-between" style="font-size: 12px;">
+                                <span>{{ __('Concurrency & Engine Load') }}</span>
+                                <span class="badge badge-soft-secondary" id="val-speed-load-badge">{{ $metrics['engine_load_percent'] ?? 0 }}% {{ __('Load') }}</span>
+                            </div>
+                            <div class="d-flex align-items-baseline gap-2 mt-2">
+                                <span class="fs-3 fw-bold text-dark" id="val-speed-capacity">{{ $metrics['concurrency_capacity'] ?? 200 }}</span>
+                                <span class="fw-semibold text-muted">TPS Max</span>
+                            </div>
+                            <div class="progress mt-2" style="height: 6px;">
+                                <div class="progress-bar bg-info" id="bar-speed-load" role="progressbar" style="width: {{ $metrics['engine_load_percent'] ?? 0 }}%;" aria-valuenow="{{ $metrics['engine_load_percent'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- High-Resolution Live Waveform Timeline Graph -->
+                <div class="p-3 border rounded-3 bg-white">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-bold text-dark" style="font-size: 13px;">
+                            <i class="fas fa-wave-square text-info me-1"></i>
+                            {{ __('Real-Time Throughput Waveform (Last 20 Poll Cycles)') }}
+                        </div>
+                        <div class="text-muted" style="font-size: 11px;">
+                            <span class="badge badge-soft-info me-1">● Dispatched TPS</span>
+                            <span id="live-chart-cycle-time" class="font-monospace">Interval: 2s</span>
+                        </div>
+                    </div>
+                    <div style="position: relative; width: 100%; height: 160px;">
+                        <canvas id="tpsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Middle Section: Active Queues & Operator Breakdown -->
         <div class="row g-4 mb-4">
             <!-- Active Queues Table -->
@@ -539,37 +660,25 @@
                 </div>
             </div>
 
-            <!-- Operator Breakdown & Live TPS Timeline -->
+            <!-- Operator Distribution (24h) -->
             <div class="col-lg-4 col-12">
                 <div class="panel-box h-100">
                     <div class="panel-header">
                         <h5 class="panel-title">
-                            <i class="fas fa-chart-line text-info"></i>
-                            {{ __('Live Throughput (TPS)') }}
-                        </h5>
-                        <span class="badge badge-soft-info" id="live-tps-badge">{{ $metrics['current_tps'] }} TPS</span>
-                    </div>
-                    <div class="p-3">
-                        <div style="position: relative; width: 100%; height: 110px;">
-                            <canvas id="tpsChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="panel-header border-top" style="background: #f8fafc;">
-                        <h5 class="panel-title" style="font-size: 13px;">
                             <i class="fas fa-chart-pie text-success"></i>
                             {{ __('Operator Distribution (24h)') }}
                         </h5>
+                        <span class="badge badge-soft-success"><i class="fas fa-broadcast-tower me-1"></i> {{ __('Telecom MNOs') }}</span>
                     </div>
-                    <div class="p-3 d-flex flex-column align-items-center justify-content-center">
-                        <div style="position: relative; width: 100%; max-width: 170px; height: 130px;">
+                    <div class="p-4 d-flex flex-column align-items-center justify-content-center">
+                        <div style="position: relative; width: 100%; max-width: 220px; height: 180px;">
                             <canvas id="operatorChart"></canvas>
                         </div>
-                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-2 w-100" style="font-size: 11px;" id="operator-legend">
-                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #0ea5e9;"></span> GP: <strong id="leg-gp">{{ $metrics['operators']['GP'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #f97316;"></span> BL: <strong id="leg-bl">{{ $metrics['operators']['BL'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #e11d48;"></span> Robi: <strong id="leg-robi">{{ $metrics['operators']['Robi'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #16a34a;"></span> TT: <strong id="leg-tt">{{ $metrics['operators']['Teletalk'] }}</strong></span>
+                        <div class="d-flex flex-wrap justify-content-center gap-3 mt-4 w-100" style="font-size: 12px;" id="operator-legend">
+                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #0ea5e9;"></span> GP: <strong id="leg-gp">{{ $metrics['operators']['GP'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #f97316;"></span> BL: <strong id="leg-bl">{{ $metrics['operators']['BL'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #e11d48;"></span> Robi: <strong id="leg-robi">{{ $metrics['operators']['Robi'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #16a34a;"></span> TT: <strong id="leg-tt">{{ $metrics['operators']['Teletalk'] }}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -1189,8 +1298,10 @@ $(document).ready(function() {
     // TPS Line Chart
     const tpsCtx = document.getElementById('tpsChart');
     let tpsChart = null;
-    let tpsLabels = ['-14s', '-12s', '-10s', '-8s', '-6s', '-4s', '-2s', 'Now'];
-    let tpsData = [0, 0, 0, 0, 0, 0, 0, {{ (float)($metrics['current_tps'] ?? 0) }}];
+    const maxTpsPoints = 20;
+    let tpsLabels = Array.from({length: maxTpsPoints}, (_, i) => -((maxTpsPoints - 1 - i) * 2) + 's');
+    let tpsData = Array(maxTpsPoints).fill(0);
+    tpsData[maxTpsPoints - 1] = {{ (float)($metrics['current_tps'] ?? 0) }};
 
     if (tpsCtx) {
         tpsChart = new Chart(tpsCtx, {
@@ -1198,26 +1309,44 @@ $(document).ready(function() {
             data: {
                 labels: tpsLabels,
                 datasets: [{
-                    label: 'TPS',
+                    label: 'Dispatched TPS',
                     data: tpsData,
                     borderColor: '#0284c7',
                     backgroundColor: 'rgba(2, 132, 199, 0.12)',
                     fill: true,
                     tension: 0.35,
-                    borderWidth: 2,
+                    borderWidth: 2.5,
                     pointRadius: 2,
-                    pointHoverRadius: 4
+                    pointHoverRadius: 5,
+                    pointBackgroundColor: '#0284c7'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(ctx) {
+                                return ctx.raw + ' TPS (Dispatched)';
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    x: { display: false },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 10 }, color: '#94a3b8' }
+                    },
                     y: {
                         beginAtZero: true,
-                        ticks: { font: { size: 9 }, maxTicksLimit: 4 }
+                        grid: { color: 'rgba(226, 232, 240, 0.7)' },
+                        ticks: {
+                            font: { size: 10 },
+                            color: '#64748b',
+                            callback: function(v) { return v + ' TPS'; }
+                        }
                     }
                 }
             }
@@ -1318,9 +1447,28 @@ $(document).ready(function() {
                 // Update Campaigns Table
                 renderCampaignsTable(res.campaigns);
 
+                // Update Global TPS & Processing Speed Engine
+                $('#val-engine-tps').text(res.metrics.current_tps);
+                if (res.metrics.peak_tps !== undefined) {
+                    $('#val-engine-peak').text(res.metrics.peak_tps);
+                }
+                if (res.metrics.concurrency_capacity !== undefined) {
+                    $('#val-engine-capacity').text(res.metrics.concurrency_capacity);
+                }
+                if (res.metrics.engine_load_percent !== undefined) {
+                    $('#val-engine-load-text').text(res.metrics.engine_load_percent + '%');
+                    $('#val-speed-load-badge').text(res.metrics.engine_load_percent + '% Load');
+                    $('#bar-speed-load').css('width', res.metrics.engine_load_percent + '%').attr('aria-valuenow', res.metrics.engine_load_percent);
+                }
+                $('#val-speed-current').text(res.metrics.current_tps);
+                $('#val-speed-velocity').text(Math.round(res.metrics.current_tps * 60));
+                if (res.metrics.tps_5m !== undefined) $('#val-speed-5m').text(res.metrics.tps_5m);
+                if (res.metrics.tps_1h !== undefined) $('#val-speed-1h').text(res.metrics.tps_1h);
+                if (res.metrics.last_1_hour_volume !== undefined) $('#val-speed-1h-vol').text(Number(res.metrics.last_1_hour_volume).toLocaleString());
+                if (res.metrics.avg_latency_formatted !== undefined) $('#val-speed-latency').text(res.metrics.avg_latency_formatted);
+
                 // Update TPS Line Chart
                 if (tpsChart) {
-                    $('#live-tps-badge').text(res.metrics.current_tps + ' TPS');
                     tpsLabels.shift();
                     tpsLabels.push(res.timestamp);
                     tpsData.shift();

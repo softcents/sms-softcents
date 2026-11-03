@@ -5,6 +5,7 @@
 @endsection
 
 @push('css')
+<link rel="stylesheet" href="{{ asset('assets/css/select2.min.css') }}">
 <style>
     /* Reset custom.css 100vh card issue for this page */
     .erp-senderips-section .card,
@@ -18,6 +19,105 @@
         margin-top: 20px;
         margin-bottom: 40px;
         font-family: "Manrope", sans-serif;
+    }
+
+    /* Select2 ERP Custom Styling */
+    .erp-senderips-section .select2-container {
+        width: 100% !important;
+    }
+
+    .erp-senderips-section .select2-container .select2-selection--single {
+        height: 31px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        background: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        padding-left: 8px !important;
+        padding-right: 24px !important;
+        box-shadow: none !important;
+    }
+
+    .erp-senderips-section .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 29px !important;
+        color: #334155 !important;
+        font-size: 13px !important;
+        padding-left: 0 !important;
+    }
+
+    .erp-senderips-section .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 29px !important;
+        right: 8px !important;
+    }
+
+    .erp-senderips-section .select2-container--default.select2-container--open .select2-selection--single,
+    .erp-senderips-section .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #3b82f6 !important;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.15) !important;
+    }
+
+    /* Modal Select2 Styling */
+    #addIpModal .select2-container .select2-selection--single {
+        height: 38px !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        background: #ffffff !important;
+        display: flex !important;
+        align-items: center !important;
+        padding-left: 10px !important;
+        padding-right: 28px !important;
+    }
+
+    #addIpModal .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 36px !important;
+        color: #1e293b !important;
+        font-size: 13.5px !important;
+        padding-left: 0 !important;
+    }
+
+    #addIpModal .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 36px !important;
+        right: 10px !important;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 8px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        z-index: 100000 !important;
+        font-size: 13px !important;
+        overflow: hidden !important;
+    }
+
+    .select2-search--dropdown {
+        padding: 8px 10px !important;
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+    }
+
+    .select2-search--dropdown .select2-search__field {
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 6px !important;
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+        outline: none !important;
+    }
+
+    .select2-results__option {
+        padding: 8px 12px !important;
+        font-size: 13px !important;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #3b82f6 !important;
+        color: #ffffff !important;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #eff6ff !important;
+        color: #1d4ed8 !important;
+        font-weight: 600;
     }
 
     /* Information Banner */
@@ -183,11 +283,11 @@
                             </div>
 
                             <div class="col-12 col-sm-6 col-lg-3">
-                                <select name="user_id" class="form-select form-select-sm select2">
+                                <select name="user_id" class="form-select form-select-sm select2-filter" style="width: 100%;">
                                     <option value="">{{ __('All Customers / Users') }}</option>
                                     @foreach($users as $u)
                                         <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
-                                            {{ $u->name }} (@{{ $u->username ?? $u->id }}) - {{ $u->phone ?? $u->email }}
+                                            {{ $u->name }} ({{ '@' . ($u->username ?: ('user' . $u->id)) }}) - {{ $u->phone ?? $u->email }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -247,7 +347,7 @@
                                     <td>
                                         @if($ip->user)
                                             <div class="fw-bold text-dark">{{ $ip->user->name }}</div>
-                                            <div class="text-primary font-monospace small">@<span>{{ $ip->user->username ?? 'N/A' }}</span></div>
+                                            <div class="text-primary font-monospace small"><i class="fas fa-at text-muted me-0"></i><span>{{ $ip->user->username ?: ('user' . $ip->user->id) }}</span></div>
                                             <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ $ip->user->phone ?? '—' }} | <i class="fas fa-envelope me-1"></i>{{ $ip->user->email }}</small>
                                         @else
                                             <span class="text-muted">{{ __('User Deleted') }}</span>
@@ -326,10 +426,12 @@
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label class="form-label fw-bold small text-uppercase">{{ __('Select Customer / User') }} <span class="text-danger">*</span></label>
-                            <select name="user_id" class="form-select select2" required style="width: 100%;">
+                            <select name="user_id" class="form-select select2-modal" required style="width: 100%;">
                                 <option value="">{{ __('-- Select User --') }}</option>
                                 @foreach($users as $u)
-                                    <option value="{{ $u->id }}">{{ $u->name }} (@{{ $u->username ?? $u->id }}) - {{ $u->phone ?? $u->email }}</option>
+                                    <option value="{{ $u->id }}" {{ old('user_id') == $u->id ? 'selected' : '' }}>
+                                        {{ $u->name }} ({{ '@' . ($u->username ?: ('user' . $u->id)) }}) - {{ $u->phone ?? $u->email }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -355,4 +457,29 @@
             </div>
         </div>
     </div>
+
+    @push('js')
+    <script src="{{ asset('assets/js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            if ($.fn.select2) {
+                $('.select2-filter').select2({
+                    placeholder: "{{ __('All Customers / Users') }}",
+                    allowClear: true,
+                    width: '100%'
+                });
+
+                $('.select2-modal').select2({
+                    placeholder: "{{ __('-- Select User --') }}",
+                    dropdownParent: $('#addIpModal'),
+                    width: '100%'
+                });
+
+                $('#addIpModal').on('shown.bs.modal', function () {
+                    $('.select2-modal').select2('open');
+                });
+            }
+        });
+    </script>
+    @endpush
 @endsection

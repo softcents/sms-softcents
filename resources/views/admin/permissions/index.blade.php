@@ -28,7 +28,7 @@
                                             <select name="user" id="user" class="form-control" required>
                                                 <option>-{{ __('Select User') }}-</option>
                                                 @foreach($users as $user)
-                                                    <option value="{{ $user->id }}">{{ ucfirst($user->name) }} (@{{ $user->username }})</option>
+                                                    <option value="{{ $user->id }}">{{ ucfirst($user->name) }} ({{ '@' . ($user->username ?: ('user' . $user->id)) }})</option>
                                                 @endforeach
                                             </select>
                                         </div>

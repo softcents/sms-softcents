@@ -42,7 +42,7 @@
                                             <span>{{ __("Total :count users", ['count' => $role->users_count]) }}</span>
                                             <ul class="list-unstyled d-flex align-items-center avatar-group mb-0">
                                                 @foreach($role->users->take(5) as $user)
-                                                    <li class="avatar avatar-sm pull-up" title="{{ ucfirst($user->name) }} (@{{ $user->username }})">
+                                                    <li class="avatar avatar-sm pull-up" title="{{ ucfirst($user->name) }} ({{ '@' . ($user->username ?: ('user' . $user->id)) }})">
                                                         <img class="rounded-circle" src="{{ asset($user->image) }}" alt="{{ ucfirst($user->name) }}">
                                                     </li>
                                                 @endforeach

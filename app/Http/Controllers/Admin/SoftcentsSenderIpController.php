@@ -24,14 +24,16 @@ class SoftcentsSenderIpController extends Controller
 
         if ($request->filled('search')) {
             $search = trim($request->search);
-            $query->where(function ($q) use ($search) {
+            $cleanSearch = ltrim($search, '@');
+            $query->where(function ($q) use ($search, $cleanSearch) {
                 $q->where('ip_address', 'like', "%{$search}%")
                   ->orWhere('note', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($uq) use ($search) {
+                  ->orWhereHas('user', function ($uq) use ($search, $cleanSearch) {
                       $uq->where('name', 'like', "%{$search}%")
                          ->orWhere('email', 'like', "%{$search}%")
                          ->orWhere('phone', 'like', "%{$search}%")
-                         ->orWhere('username', 'like', "%{$search}%");
+                         ->orWhere('username', 'like', "%{$search}%")
+                         ->orWhere('username', 'like', "%{$cleanSearch}%");
                   });
             });
         }

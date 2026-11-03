@@ -806,6 +806,94 @@
             </div>
         </div>
 
+        <!-- Campaign-Wise SMS Traffic & Queue Progress Matrix -->
+        <div class="panel-box mb-4">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-bullhorn text-danger"></i>
+                        {{ __('Campaign-Wise SMS Traffic & Queue Progress') }}
+                    </h5>
+                    <span class="badge badge-soft-danger"><span id="campaigns-count">{{ count($campaigns ?? []) }}</span> {{ __('Active / Recent Campaigns') }}</span>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">
+                    <i class="fas fa-tasks text-danger me-1"></i>{{ __('Real-time bulk campaign dispatch status, recipient completion, and queue backlog') }}
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-campaigns">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Campaign & ID') }}</th>
+                            <th>{{ __('Initiator / User') }}</th>
+                            <th class="text-center">{{ __('Sender ID') }}</th>
+                            <th class="text-center">{{ __('Recipients') }}</th>
+                            <th class="text-center">{{ __('Pending') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
+                            <th class="text-center">{{ __('Delivered') }}</th>
+                            <th class="text-center">{{ __('Failed') }}</th>
+                            <th class="text-center" style="min-width: 140px;">{{ __('Progress') }}</th>
+                            <th class="text-end">{{ __('Status / Time') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-campaigns">
+                        @forelse($campaigns ?? [] as $camp)
+                        <tr data-campaign-id="{{ $camp['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                        <i class="fas fa-bullhorn"></i>
+                                    </div>
+                                    <span>{{ $camp['name'] }}</span>
+                                </div>
+                                <small class="text-muted ms-4">ID: #{{ $camp['id'] }} @if(!empty($camp['charges'])) • ৳{{ $camp['charges'] }} @endif</small>
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">{{ $camp['creator_name'] }}</div>
+                                <small class="badge badge-soft-info" style="font-size: 10px;">{{ ucfirst($camp['creator_role']) }}</small>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-primary px-2 py-1">{{ $camp['sender'] }}</span>
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($camp['total_recipients']) }}</td>
+                            <td class="text-center fw-bold {{ $camp['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($camp['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($camp['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['delivered_count'] > 0 ? 'text-success' : 'text-muted' }}">
+                                {{ number_format($camp['delivered_count']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $camp['failed_count'] > 0 ? 'text-danger' : 'text-muted' }}">
+                                {{ number_format($camp['failed_count']) }}
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $camp['progress_percent'] }}%</span>
+                                    <small class="text-muted">{{ $camp['delivery_rate'] }}% rate</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ $camp['progress_percent'] >= 100 ? 'bg-success' : 'bg-primary' }}" role="progressbar" style="width: {{ $camp['progress_percent'] }}%;" aria-valuenow="{{ $camp['progress_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end">
+                                <span class="badge {{ $camp['status_badge'] }}">
+                                    {{ $camp['status'] }}
+                                </span>
+                                <small class="text-muted d-block mt-1" style="font-size: 11px;">{{ $camp['created_at'] }}</small>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">{{ __('No active bulk campaigns in queue. System ready for scheduled campaign broadcasts.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Bottom Section: Live Dispatched Stream & Failed Jobs Manager -->
         <div class="row g-4">
             <!-- Live SMS Stream -->
@@ -1126,6 +1214,9 @@ $(document).ready(function() {
                 // Update Routes Table
                 renderRoutesTable(res.routes);
 
+                // Update Campaigns Table
+                renderCampaignsTable(res.campaigns);
+
                 // Update TPS Line Chart
                 if (tpsChart) {
                     $('#live-tps-badge').text(res.metrics.current_tps + ' TPS');
@@ -1367,6 +1458,68 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-routes').html(html);
+    }
+
+    function renderCampaignsTable(campaigns) {
+        if (!campaigns) return;
+        $('#campaigns-count').text(campaigns.length);
+
+        if (!campaigns.length) {
+            $('#tbody-campaigns').html('<tr><td colspan="10" class="text-center py-4 text-muted">No active bulk campaigns in queue. System ready for scheduled campaign broadcasts.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        campaigns.forEach(function(camp) {
+            const pendingClass = camp.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = camp.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const delivClass = camp.delivered_count > 0 ? 'text-success' : 'text-muted';
+            const failClass = camp.failed_count > 0 ? 'text-danger' : 'text-muted';
+            const progressBg = camp.progress_percent >= 100 ? 'bg-success' : 'bg-primary';
+            const chargeText = camp.charges ? ` • ৳${camp.charges}` : '';
+
+            html += `
+                <tr data-campaign-id="${camp.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
+                                <i class="fas fa-bullhorn"></i>
+                            </div>
+                            <span>${camp.name}</span>
+                        </div>
+                        <small class="text-muted ms-4">ID: #${camp.id}${chargeText}</small>
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark">${camp.creator_name}</div>
+                        <small class="badge badge-soft-info" style="font-size: 10px;">${camp.creator_role ? camp.creator_role.charAt(0).toUpperCase() + camp.creator_role.slice(1) : 'User'}</small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-primary px-2 py-1">${camp.sender}</span>
+                    </td>
+                    <td class="text-center fw-bold text-dark">${Number(camp.total_recipients).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(camp.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(camp.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${delivClass}">${Number(camp.delivered_count).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${failClass}">${Number(camp.failed_count).toLocaleString()}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${camp.progress_percent}%</span>
+                            <small class="text-muted">${camp.delivery_rate}% rate</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar ${progressBg}" role="progressbar" style="width: ${camp.progress_percent}%;" aria-valuenow="${camp.progress_percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <span class="badge ${camp.status_badge}">
+                            ${camp.status}
+                        </span>
+                        <small class="text-muted d-block mt-1" style="font-size: 11px;">${camp.created_at}</small>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-campaigns').html(html);
     }
 
     function renderStreamTable(stream) {

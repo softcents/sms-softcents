@@ -34,6 +34,7 @@ class QueueMonitorController extends Controller
         $resellerSummary = $this->service->getResellerHierarchySummary();
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
+        $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
 
         return view('admin.queue-monitor.index', compact(
             'broker',
@@ -45,7 +46,8 @@ class QueueMonitorController extends Controller
             'filterUserId',
             'resellerSummary',
             'providers',
-            'routes'
+            'routes',
+            'campaigns'
         ));
     }
 
@@ -63,6 +65,7 @@ class QueueMonitorController extends Controller
         $resellerSummary = $this->service->getResellerHierarchySummary();
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
+        $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
 
         return response()->json([
             'success'   => true,
@@ -75,6 +78,7 @@ class QueueMonitorController extends Controller
             'resellers' => $resellerSummary,
             'providers' => $providers,
             'routes'    => $routes,
+            'campaigns' => $campaigns,
         ]);
     }
 

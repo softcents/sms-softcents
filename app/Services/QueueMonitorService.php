@@ -409,6 +409,120 @@ class QueueMonitorService
     }
 
     /**
+     * Get real-time campaign-wise SMS queue and dispatch traffic progress.
+     */
+    public function getCampaignTrafficSummary(?User $user = null, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($user);
+        if ($filterUserId) {
+            $scopedIds = [$filterUserId];
+        }
+
+        $summary = [];
+
+        // 1. Query CampaignSms records
+        $csQuery = \App\Models\CampaignSms::with(['campaign', 'user', 'senderid'])->latest('id');
+        if ($scopedIds !== null) {
+            $csQuery->whereIn('user_id', $scopedIds);
+        }
+        $campaignSmsList = $csQuery->take(15)->get();
+
+        foreach ($campaignSmsList as $cs) {
+            $numCount = substr_count($cs->numbers ?? '', ',') + (!empty($cs->numbers) ? 1 : 0);
+            $totalSms = max((int) ($cs->total_sms ?? 0), $numCount);
+
+            $smsQuery = Sms::where('campaign_id', $cs->campaign_id);
+            $pendingCount = (clone $smsQuery)->where('status', 'pending')->count();
+            $processingCount = (clone $smsQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+            $deliveredCount = (clone $smsQuery)->whereIn('status', ['success', 'delivered'])->count();
+            $failedCount = (clone $smsQuery)->where('status', 'failed')->count();
+
+            if ($cs->status === 'pending' && $pendingCount === 0 && $deliveredCount === 0) {
+                $pendingCount = $totalSms;
+            } elseif ($cs->status === 'success' && $deliveredCount === 0) {
+                $deliveredCount = $totalSms;
+            }
+
+            $progress = $totalSms > 0 ? min(100.0, round((($deliveredCount + $failedCount) / $totalSms) * 100, 1)) : 100.0;
+            $rate = ($deliveredCount + $failedCount) > 0 ? round(($deliveredCount / ($deliveredCount + $failedCount)) * 100, 1) : 100.0;
+
+            $statusBadge = match(strtolower($cs->status ?? 'pending')) {
+                'success', 'completed' => 'badge-soft-success',
+                'processing', 'running' => 'badge-soft-info',
+                'failed' => 'badge-soft-danger',
+                default => 'badge-soft-warning'
+            };
+
+            $summary[] = [
+                'id'               => $cs->id,
+                'campaign_id'      => $cs->campaign_id,
+                'name'             => $cs->campaign->name ?? ($cs->campaing_name ?: "Campaign #{$cs->id}"),
+                'creator_name'     => $cs->user ? $cs->user->name : 'Platform',
+                'creator_username' => $cs->user ? ($cs->user->username ?? $cs->user->name) : 'platform',
+                'creator_role'     => $cs->user->role ?? 'user',
+                'sender'           => $cs->senderid->sender ?? 'System',
+                'total_recipients' => $totalSms,
+                'pending_queue'    => $pendingCount,
+                'processing_queue' => $processingCount,
+                'delivered_count'  => $deliveredCount,
+                'failed_count'     => $failedCount,
+                'progress_percent' => $progress,
+                'delivery_rate'    => $rate,
+                'status'           => ucfirst($cs->status ?? 'Queued'),
+                'status_badge'     => $statusBadge,
+                'charges'          => round((float) ($cs->charges ?? 0), 2),
+                'created_at'       => $cs->created_at ? $cs->created_at->format('M d, H:i') : now()->format('M d, H:i'),
+            ];
+        }
+
+        // 2. Also check any campaigns directly in Sms table
+        if (empty($summary)) {
+            $smsCampaignIds = Sms::whereNotNull('campaign_id')->distinct()->pluck('campaign_id')->take(10)->toArray();
+            if (!empty($smsCampaignIds)) {
+                $campaignModels = \App\Models\Campaign::whereIn('id', $smsCampaignIds)->get()->keyBy('id');
+                foreach ($smsCampaignIds as $cId) {
+                    $cQuery = Sms::where('campaign_id', $cId);
+                    if ($scopedIds !== null) {
+                        $cQuery->whereIn('user_id', $scopedIds);
+                    }
+                    $cTotal = (clone $cQuery)->count();
+                    $cPending = (clone $cQuery)->where('status', 'pending')->count();
+                    $cProcessing = (clone $cQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+                    $cDelivered = (clone $cQuery)->whereIn('status', ['success', 'delivered'])->count();
+                    $cFailed = (clone $cQuery)->where('status', 'failed')->count();
+
+                    $progress = $cTotal > 0 ? min(100.0, round((($cDelivered + $cFailed) / $cTotal) * 100, 1)) : 100.0;
+                    $rate = ($cDelivered + $cFailed) > 0 ? round(($cDelivered / ($cDelivered + $cFailed)) * 100, 1) : 100.0;
+                    $firstSms = (clone $cQuery)->with('user', 'senderid')->first();
+
+                    $summary[] = [
+                        'id'               => $cId,
+                        'campaign_id'      => $cId,
+                        'name'             => $campaignModels[$cId]->name ?? "Bulk Campaign #{$cId}",
+                        'creator_name'     => $firstSms->user->name ?? 'Platform User',
+                        'creator_username' => $firstSms->user->username ?? 'user',
+                        'creator_role'     => $firstSms->user->role ?? 'user',
+                        'sender'           => $firstSms->senderid->sender ?? 'N/A',
+                        'total_recipients' => $cTotal,
+                        'pending_queue'    => $cPending,
+                        'processing_queue' => $cProcessing,
+                        'delivered_count'  => $cDelivered,
+                        'failed_count'     => $cFailed,
+                        'progress_percent' => $progress,
+                        'delivery_rate'    => $rate,
+                        'status'           => $cPending > 0 ? 'Queued' : 'Completed',
+                        'status_badge'     => $cPending > 0 ? 'badge-soft-warning' : 'badge-soft-success',
+                        'charges'          => 0.0,
+                        'created_at'       => $firstSms && $firstSms->created_at ? $firstSms->created_at->format('M d, H:i') : now()->format('M d, H:i'),
+                    ];
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    /**
      * Strict backend verification that an actor is authorized to inspect a target account's queue.
      */
     public function validateAccountAccess(?User $actor, ?int $targetUserId): bool

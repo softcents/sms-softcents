@@ -438,6 +438,9 @@
                     <button type="button" class="btn btn-sm btn-outline-primary" id="btn-toggle-matrix-subm" data-filter="all" style="font-size: 11px;">
                         <i class="fas fa-paper-plane me-1"></i> {{ __('Submitted Today') }}
                     </button>
+                    <button type="button" class="btn btn-sm btn-outline-success" id="btn-toggle-matrix-deliv" data-filter="all" style="font-size: 11px;">
+                        <i class="fas fa-check-double me-1"></i> {{ __('Delivered Today') }}
+                    </button>
                     <div class="input-group input-group-sm" style="max-width: 250px;">
                         <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
                         <input type="text" class="form-control form-control-sm border-start-0" id="input-search-customers" placeholder="{{ __('Search customer...') }}" style="font-size: 12px;">
@@ -1178,6 +1181,211 @@
             </div>
         </div>
 
+        <!-- Customer-Wise Delivered SMS (DLR Success & Completion) Section -->
+        <div class="panel-box mb-4" id="panel-customer-delivered">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #dcfce7; color: #16a34a;">
+                        <i class="fas fa-check-double"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Customer-Wise Delivered SMS (DLR Success & Completion)') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Confirmed handset delivery (DLR), success completion rate %, operator delivery split, and today vs lifetime volume per customer') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-success ms-1">
+                        <span id="deliv-today-badge">{{ number_format($customerDeliveredSummary['aggregates']['today_delivered'] ?? 0) }}</span> {{ __('Today Delivered') }}
+                    </span>
+                    <span class="badge badge-soft-primary">
+                        <span id="deliv-total-badge">{{ number_format($customerDeliveredSummary['aggregates']['total_delivered'] ?? 0) }}</span> {{ __('Lifetime Delivered') }}
+                    </span>
+                    <span class="badge badge-soft-info">
+                        <span id="deliv-rate-badge">{{ $customerDeliveredSummary['aggregates']['delivery_rate'] ?? 100 }}%</span> {{ __('Overall Delivery Rate') }}
+                    </span>
+                </div>
+                <div class="d-flex align-items-center flex-wrap gap-2">
+                    <!-- Operator Filter Tabs -->
+                    <div class="btn-group btn-group-sm" role="group" id="btn-group-deliv-ops">
+                        <button type="button" class="btn btn-outline-secondary active btn-deliv-op-filter" data-op="all">{{ __('All Ops') }}</button>
+                        <button type="button" class="btn btn-outline-secondary btn-deliv-op-filter" data-op="GP">GP</button>
+                        <button type="button" class="btn btn-outline-secondary btn-deliv-op-filter" data-op="BL">BL</button>
+                        <button type="button" class="btn btn-outline-secondary btn-deliv-op-filter" data-op="Robi">Robi</button>
+                        <button type="button" class="btn btn-outline-secondary btn-deliv-op-filter" data-op="Teletalk">TT</button>
+                    </div>
+                    <div class="input-group input-group-sm" style="max-width: 220px;">
+                        <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-muted"></i></span>
+                        <input type="text" class="form-control form-control-sm border-start-0" id="input-search-delivered" placeholder="{{ __('Search delivered client...') }}" style="font-size: 12px;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Delivered Queue -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TODAY DELIVERED') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="kpi-deliv-today">{{ number_format($customerDeliveredSummary['aggregates']['today_delivered'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Confirmed DLR') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('LIFETIME DELIVERED') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="kpi-deliv-total">{{ number_format($customerDeliveredSummary['aggregates']['total_delivered'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('All-Time Success') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE CLIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="kpi-deliv-clients">{{ $customerDeliveredSummary['aggregates']['active_clients_today'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span id="kpi-deliv-of-total">of {{ $customerDeliveredSummary['aggregates']['total_customers'] ?? 0 }} Clients</span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERY RATIO') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="kpi-deliv-rate">{{ $customerDeliveredSummary['aggregates']['delivery_rate'] ?? 100 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Success Percentage') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">GP DELIVERED</span>
+                            <span class="fs-5 fw-bold text-primary" id="kpi-deliv-gp">{{ number_format($customerDeliveredSummary['aggregates']['operator_delivered']['GP'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Grameenphone</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">BL DELIVERED</span>
+                            <span class="fs-5 fw-bold" style="color: #f97316;" id="kpi-deliv-bl">{{ number_format($customerDeliveredSummary['aggregates']['operator_delivered']['BL'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Banglalink</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">ROBI DELIVERED</span>
+                            <span class="fs-5 fw-bold text-danger" id="kpi-deliv-robi">{{ number_format($customerDeliveredSummary['aggregates']['operator_delivered']['Robi'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Robi / Airtel</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-3 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">TT DELIVERED</span>
+                            <span class="fs-5 fw-bold text-success" id="kpi-deliv-tt">{{ number_format($customerDeliveredSummary['aggregates']['operator_delivered']['Teletalk'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">Teletalk</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Customer Delivered Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-customer-delivered">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Customer / Client') }}</th>
+                            <th class="text-center">{{ __('Today Delivered') }}</th>
+                            <th class="text-center">{{ __('Lifetime Delivered') }}</th>
+                            <th class="text-center">{{ __('Operator Routing') }}</th>
+                            <th class="text-center">{{ __('Source (Camp / API)') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate %') }}</th>
+                            <th class="text-center">{{ __('Delivery Health') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Actions') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-customer-delivered">
+                        @forelse($customerDeliveredSummary['list'] as $cd)
+                        <tr data-cust-id="{{ $cd['id'] }}" data-today-delivered="{{ $cd['today_delivered'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    <i class="fas fa-user {{ $cd['today_delivered'] > 0 ? 'text-success' : 'text-muted' }} me-1"></i>
+                                    {{ $cd['name'] }}
+                                </div>
+                                <small class="text-muted">
+                                    {{ '@' . $cd['username'] }}
+                                    @if(!empty($cd['phone']) && $cd['phone'] !== 'N/A')
+                                        • {{ $cd['phone'] }}
+                                    @endif
+                                </small>
+                            </td>
+                            <td class="text-center">
+                                @if($cd['today_delivered'] > 0)
+                                    <span class="badge bg-success text-white fs-6 px-2 py-1 fw-bold">
+                                        <i class="fas fa-check-double me-1"></i>{{ number_format($cd['today_delivered']) }}
+                                    </span>
+                                @else
+                                    <span class="text-muted fw-bold">0</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold text-dark">{{ number_format($cd['lifetime_delivered']) }}</span>
+                                    <small class="text-muted">{{ $cd['traffic_share'] }}%</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $cd['traffic_share'] }}%;" aria-valuenow="{{ $cd['traffic_share'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                                    <span class="badge {{ ($cd['operator_breakdown']['GP'] ?? 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted' }}" title="Grameenphone">GP: {{ $cd['operator_breakdown']['GP'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cd['operator_breakdown']['BL'] ?? 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted' }}" title="Banglalink">BL: {{ $cd['operator_breakdown']['BL'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cd['operator_breakdown']['Robi'] ?? 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted' }}" title="Robi/Airtel">Robi: {{ $cd['operator_breakdown']['Robi'] ?? 0 }}</span>
+                                    <span class="badge {{ ($cd['operator_breakdown']['Teletalk'] ?? 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted' }}" title="Teletalk">TT: {{ $cd['operator_breakdown']['Teletalk'] ?? 0 }}</span>
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-info" style="font-size: 10px;" title="{{ __('Campaign Messages') }}">
+                                    <i class="fas fa-bullhorn me-1"></i>{{ $cd['campaign_delivered'] ?? 0 }}
+                                </span>
+                                <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="{{ __('Direct / API Single Messages') }}">
+                                    <i class="fas fa-bolt me-1"></i>{{ $cd['direct_delivered'] ?? 0 }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success py-1 px-2 fw-bold" style="font-size: 11px;">
+                                    <i class="fas fa-check-double me-1"></i>{{ $cd['delivery_rate'] }}%
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                @if($cd['health'] === 'low_ratio')
+                                    <span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-exclamation-triangle me-1"></i>{{ __('Low DLR Ratio') }}</span>
+                                @elseif($cd['health'] === 'satisfactory')
+                                    <span class="badge bg-info text-white py-1 px-2"><i class="fas fa-check me-1"></i>{{ __('Satisfactory') }}</span>
+                                @else
+                                    <span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-double me-1"></i>{{ __('Optimal Flow') }}</span>
+                                @endif
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($cd['balance'], 2) }}</td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-success py-1 px-2 btn-view-customer-delivered" data-id="{{ $cd['id'] }}" title="{{ __('Open live delivered messages for this customer') }}" style="font-size: 11px; font-weight: 600;">
+                                    <i class="fas fa-check-double me-1"></i> {{ __('View Delivered') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $cd['id'] }}" title="{{ __('Inspect Customer Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">
+                                <i class="fas fa-check-circle text-muted fs-3 d-block mb-2"></i>
+                                {{ __('No customer delivered SMS found.') }}
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Dedicated Customer SMS Queue Details & Direct Message Actions -->
         <div class="panel-box mb-4 {{ empty($customerQueue) ? 'd-none' : '' }}" id="panel-customer-queue">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1499,6 +1707,10 @@ $(document).ready(function() {
     let currentSubmOpFilter = 'all';
     let currentSubmSearchTerm = '';
     let matrixSubmOnly = false;
+    let currentCustomerDeliveredData = @json($customerDeliveredSummary ?? []);
+    let currentDelivOpFilter = 'all';
+    let currentDelivSearchTerm = '';
+    let matrixDelivOnly = false;
 
     // 1. Operator Chart
     const opCtx = document.getElementById('operatorChart');
@@ -1618,6 +1830,9 @@ $(document).ready(function() {
                 // Render Customer-Wise Submitted SMS Queue
                 renderCustomerSubmittedTable(res.customer_submitted);
 
+                // Render Customer-Wise Delivered SMS Queue
+                renderCustomerDeliveredTable(res.customer_delivered);
+
                 // Update Hierarchical Breadcrumbs
                 updateBreadcrumbs(res.breadcrumbs, !!res.customer_queue);
 
@@ -1662,6 +1877,11 @@ $(document).ready(function() {
         if (matrixSubmOnly) {
             filtered = filtered.filter(function(c) {
                 return (c.today_total || 0) > 0;
+            });
+        }
+        if (matrixDelivOnly) {
+            filtered = filtered.filter(function(c) {
+                return (c.today_delivered || 0) > 0;
             });
         }
         if (currentSearchTerm.trim() !== '') {
@@ -1713,6 +1933,12 @@ $(document).ready(function() {
                 </a>
             ` : `<span class="text-muted fw-bold">0</span>`;
 
+            const delivDisplay = cust.today_delivered > 0 ? `
+                <a href="javascript:void(0);" class="btn-view-customer-delivered text-success text-decoration-underline fw-bold" data-id="${cust.id}" title="Click to view delivered messages">
+                    <i class="fas fa-check-double me-1"></i>${Number(cust.today_delivered).toLocaleString()}
+                </a>
+            ` : `<span class="text-muted fw-bold">0</span>`;
+
             html += `
                 <tr data-cust-id="${cust.id}">
                     <td>
@@ -1725,7 +1951,7 @@ $(document).ready(function() {
                     <td class="text-center">${pendingDisplay}</td>
                     <td class="text-center">${procDisplay}</td>
                     <td class="text-center">${submDisplay}</td>
-                    <td class="text-center fw-bold text-success">${Number(cust.today_delivered).toLocaleString()}</td>
+                    <td class="text-center">${delivDisplay}</td>
                     <td class="text-center fw-bold ${failClass}">${Number(cust.today_failed).toLocaleString()}</td>
                     <td class="text-center">
                         <span class="badge badge-soft-success">${cust.delivery_rate}%</span>
@@ -2152,6 +2378,136 @@ $(document).ready(function() {
         $('#tbody-customer-submitted').html(html);
     }
 
+    // 3e. Render Customer-Wise Delivered SMS Table
+    function renderCustomerDeliveredTable(data) {
+        if (!data) return;
+        currentCustomerDeliveredData = data;
+        const list = data.list || [];
+        const agg = data.aggregates || {};
+
+        let filtered = list.slice();
+
+        // Filter by Operator tab if selected
+        if (currentDelivOpFilter !== 'all') {
+            filtered = filtered.filter(function(cd) {
+                const ops = cd.operator_breakdown || {};
+                return (ops[currentDelivOpFilter] || 0) > 0;
+            });
+        }
+
+        // Filter by Search Input
+        if (currentDelivSearchTerm.trim() !== '') {
+            const term = currentDelivSearchTerm.toLowerCase();
+            filtered = filtered.filter(function(cd) {
+                const name = (cd.name || '').toLowerCase();
+                const username = (cd.username || '').toLowerCase();
+                const phone = (cd.phone || '').toLowerCase();
+                return name.includes(term) || username.includes(term) || phone.includes(term);
+            });
+        }
+
+        // Update Header Badges & Aggregates
+        $('#deliv-today-badge').text(Number(agg.today_delivered || 0).toLocaleString());
+        $('#deliv-total-badge').text(Number(agg.total_delivered || 0).toLocaleString());
+        $('#deliv-rate-badge').text((agg.delivery_rate || 100) + '%');
+        $('#kpi-deliv-today').text(Number(agg.today_delivered || 0).toLocaleString());
+        $('#kpi-deliv-total').text(Number(agg.total_delivered || 0).toLocaleString());
+        $('#kpi-deliv-clients').text(agg.active_clients_today || 0);
+        $('#kpi-deliv-of-total').text('of ' + (agg.total_customers || 0) + ' Clients');
+        $('#kpi-deliv-rate').text((agg.delivery_rate || 100) + '%');
+
+        const ops = agg.operator_delivered || {};
+        $('#kpi-deliv-gp').text(Number(ops.GP || 0).toLocaleString());
+        $('#kpi-deliv-bl').text(Number(ops.BL || 0).toLocaleString());
+        $('#kpi-deliv-robi').text(Number(ops.Robi || 0).toLocaleString());
+        $('#kpi-deliv-tt').text(Number(ops.Teletalk || 0).toLocaleString());
+
+        if (!filtered.length) {
+            $('#tbody-customer-delivered').html(`
+                <tr>
+                    <td colspan="9" class="text-center py-4 text-muted">
+                        <i class="fas fa-check-circle text-muted fs-3 d-block mb-2"></i>
+                        No customer delivered SMS found matching your criteria.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(cd) {
+            const phoneStr = (cd.phone && cd.phone !== 'N/A') ? ` • ${cd.phone}` : '';
+            const cOps = cd.operator_breakdown || {};
+
+            let healthBadge = '';
+            if (cd.health === 'low_ratio') {
+                healthBadge = `<span class="badge bg-warning text-dark py-1 px-2"><i class="fas fa-exclamation-triangle me-1"></i>Low DLR Ratio</span>`;
+            } else if (cd.health === 'satisfactory') {
+                healthBadge = `<span class="badge bg-info text-white py-1 px-2"><i class="fas fa-check me-1"></i>Satisfactory</span>`;
+            } else {
+                healthBadge = `<span class="badge badge-soft-success py-1 px-2"><i class="fas fa-check-double me-1"></i>Optimal Flow</span>`;
+            }
+
+            const todayHtml = cd.today_delivered > 0
+                ? `<span class="badge bg-success text-white fs-6 px-2 py-1 fw-bold"><i class="fas fa-check-double me-1"></i>${Number(cd.today_delivered).toLocaleString()}</span>`
+                : `<span class="text-muted fw-bold">0</span>`;
+
+            html += `
+                <tr data-cust-id="${cd.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <i class="fas fa-user ${cd.today_delivered > 0 ? 'text-success' : 'text-muted'} me-1"></i>
+                            ${cd.name}
+                        </div>
+                        <small class="text-muted">@${cd.username}${phoneStr}</small>
+                    </td>
+                    <td class="text-center">${todayHtml}</td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold text-dark">${Number(cd.lifetime_delivered).toLocaleString()}</span>
+                            <small class="text-muted">${cd.traffic_share}%</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: ${cd.traffic_share}%;" aria-valuenow="${cd.traffic_share}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-center gap-1" style="font-size: 10px;">
+                            <span class="badge ${(cOps.GP || 0) > 0 ? 'badge-soft-primary' : 'badge-soft-secondary text-muted'}" title="Grameenphone">GP: ${cOps.GP || 0}</span>
+                            <span class="badge ${(cOps.BL || 0) > 0 ? 'badge-soft-warning' : 'badge-soft-secondary text-muted'}" title="Banglalink">BL: ${cOps.BL || 0}</span>
+                            <span class="badge ${(cOps.Robi || 0) > 0 ? 'badge-soft-danger' : 'badge-soft-secondary text-muted'}" title="Robi/Airtel">Robi: ${cOps.Robi || 0}</span>
+                            <span class="badge ${(cOps.Teletalk || 0) > 0 ? 'badge-soft-success' : 'badge-soft-secondary text-muted'}" title="Teletalk">TT: ${cOps.Teletalk || 0}</span>
+                        </div>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-info" style="font-size: 10px;" title="Campaign Messages">
+                            <i class="fas fa-bullhorn me-1"></i>${cd.campaign_delivered || 0}
+                        </span>
+                        <span class="badge badge-soft-secondary ms-1" style="font-size: 10px;" title="Direct / API Single Messages">
+                            <i class="fas fa-bolt me-1"></i>${cd.direct_delivered || 0}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success py-1 px-2 fw-bold" style="font-size: 11px;">
+                            <i class="fas fa-check-double me-1"></i>${cd.delivery_rate}%
+                        </span>
+                    </td>
+                    <td class="text-center">${healthBadge}</td>
+                    <td class="text-end fw-bold text-dark">৳${Number(cd.balance).toFixed(2)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-success py-1 px-2 btn-view-customer-delivered" data-id="${cd.id}" title="Open live delivered messages for this customer" style="font-size: 11px; font-weight: 600;">
+                            <i class="fas fa-check-double me-1"></i> View Delivered
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${cd.id}" title="Inspect Customer Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-customer-delivered').html(html);
+    }
+
     // 4. Render Dedicated Customer SMS Queue Details
     function renderCustomerQueueDetails(cq) {
         if (!cq) {
@@ -2344,8 +2700,10 @@ $(document).ready(function() {
         if (matrixPendingOnly) {
             matrixProcOnly = false;
             matrixSubmOnly = false;
+            matrixDelivOnly = false;
             $('#btn-toggle-matrix-proc').removeClass('btn-info text-white active').addClass('btn-outline-info').html('<i class="fas fa-cog me-1"></i> Processing Only');
             $('#btn-toggle-matrix-subm').removeClass('btn-primary text-white active').addClass('btn-outline-primary').html('<i class="fas fa-paper-plane me-1"></i> Submitted Today');
+            $('#btn-toggle-matrix-deliv').removeClass('btn-success text-white active').addClass('btn-outline-success').html('<i class="fas fa-check-double me-1"></i> Delivered Today');
             $(this).removeClass('btn-outline-warning').addClass('btn-warning text-dark active');
             $(this).html('<i class="fas fa-check me-1"></i> Showing Pending Only');
         } else {
@@ -2361,8 +2719,10 @@ $(document).ready(function() {
         if (matrixProcOnly) {
             matrixPendingOnly = false;
             matrixSubmOnly = false;
+            matrixDelivOnly = false;
             $('#btn-toggle-matrix-pending').removeClass('btn-warning text-dark active').addClass('btn-outline-warning').html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
             $('#btn-toggle-matrix-subm').removeClass('btn-primary text-white active').addClass('btn-outline-primary').html('<i class="fas fa-paper-plane me-1"></i> Submitted Today');
+            $('#btn-toggle-matrix-deliv').removeClass('btn-success text-white active').addClass('btn-outline-success').html('<i class="fas fa-check-double me-1"></i> Delivered Today');
             $(this).removeClass('btn-outline-info').addClass('btn-info text-white active');
             $(this).html('<i class="fas fa-check me-1"></i> Showing Processing Only');
         } else {
@@ -2378,8 +2738,10 @@ $(document).ready(function() {
         if (matrixSubmOnly) {
             matrixPendingOnly = false;
             matrixProcOnly = false;
+            matrixDelivOnly = false;
             $('#btn-toggle-matrix-pending').removeClass('btn-warning text-dark active').addClass('btn-outline-warning').html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
             $('#btn-toggle-matrix-proc').removeClass('btn-info text-white active').addClass('btn-outline-info').html('<i class="fas fa-cog me-1"></i> Processing Only');
+            $('#btn-toggle-matrix-deliv').removeClass('btn-success text-white active').addClass('btn-outline-success').html('<i class="fas fa-check-double me-1"></i> Delivered Today');
             $(this).removeClass('btn-outline-primary').addClass('btn-primary text-white active');
             $(this).html('<i class="fas fa-check me-1"></i> Showing Submitted Today');
         } else {
@@ -2387,6 +2749,56 @@ $(document).ready(function() {
             $(this).html('<i class="fas fa-paper-plane me-1"></i> Submitted Today');
         }
         renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Matrix Toggle Delivered Today Filter
+    $('#btn-toggle-matrix-deliv').on('click', function() {
+        matrixDelivOnly = !matrixDelivOnly;
+        if (matrixDelivOnly) {
+            matrixPendingOnly = false;
+            matrixProcOnly = false;
+            matrixSubmOnly = false;
+            $('#btn-toggle-matrix-pending').removeClass('btn-warning text-dark active').addClass('btn-outline-warning').html('<i class="fas fa-hourglass-half me-1"></i> Pending Queue Only');
+            $('#btn-toggle-matrix-proc').removeClass('btn-info text-white active').addClass('btn-outline-info').html('<i class="fas fa-cog me-1"></i> Processing Only');
+            $('#btn-toggle-matrix-subm').removeClass('btn-primary text-white active').addClass('btn-outline-primary').html('<i class="fas fa-paper-plane me-1"></i> Submitted Today');
+            $(this).removeClass('btn-outline-success').addClass('btn-success text-white active');
+            $(this).html('<i class="fas fa-check me-1"></i> Showing Delivered Today');
+        } else {
+            $(this).removeClass('btn-success text-white active').addClass('btn-outline-success');
+            $(this).html('<i class="fas fa-check-double me-1"></i> Delivered Today');
+        }
+        renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Customer Delivered Search Filter
+    $('#input-search-delivered').on('input', function() {
+        currentDelivSearchTerm = $(this).val();
+        renderCustomerDeliveredTable(currentCustomerDeliveredData);
+    });
+
+    // Customer Delivered Operator Tabs
+    $('.btn-deliv-op-filter').on('click', function() {
+        $('.btn-deliv-op-filter').removeClass('active');
+        $(this).addClass('active');
+        currentDelivOpFilter = $(this).data('op');
+        renderCustomerDeliveredTable(currentCustomerDeliveredData);
+    });
+
+    // View Delivered Queue for specific customer
+    $(document).on('click', '.btn-view-customer-delivered', function() {
+        const custId = $(this).data('id');
+        $('#select-filter-user').val(custId);
+        currentCustQueueStatusFilter = 'delivered';
+        $('.cust-status-tab-btn').removeClass('active');
+        $('.cust-status-tab-btn[data-status="delivered"]').addClass('active');
+        fetchLiveData();
+        setTimeout(function() {
+            if ($('#panel-customer-queue').length) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-queue').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
     });
 
     // Customer Submitted Search Filter

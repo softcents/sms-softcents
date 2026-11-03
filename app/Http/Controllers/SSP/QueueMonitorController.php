@@ -36,6 +36,7 @@ class QueueMonitorController extends Controller
         $customerPendingSummary = $this->service->getCustomerPendingSmsSummary($user, $filterUserId);
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
+        $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, null, 25, $user) : null;
 
@@ -48,6 +49,7 @@ class QueueMonitorController extends Controller
             'customerPendingSummary',
             'customerProcessingSummary',
             'customerSubmittedSummary',
+            'customerDeliveredSummary',
             'breadcrumbs',
             'customerQueue'
         ));
@@ -71,6 +73,7 @@ class QueueMonitorController extends Controller
         $customerPendingSummary = $this->service->getCustomerPendingSmsSummary($user, $filterUserId);
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
+        $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter, 25, $user) : null;
 
@@ -83,6 +86,7 @@ class QueueMonitorController extends Controller
             'customer_pending'     => $customerPendingSummary,
             'customer_processing'  => $customerProcessingSummary,
             'customer_submitted'   => $customerSubmittedSummary,
+            'customer_delivered'   => $customerDeliveredSummary,
             'breadcrumbs'          => $breadcrumbs,
             'customer_queue'       => $customerQueue,
         ]);

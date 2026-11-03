@@ -242,7 +242,21 @@
             </div>
         </div>
 
-        <!-- 7 KPI Cards Row -->
+        <!-- Global SMS Queue Statistics Heading -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 px-1">
+            <div class="d-flex align-items-center gap-2">
+                <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 28px; height: 28px; background: #e0e7ff; color: #4338ca;">
+                    <i class="fas fa-globe-americas" style="font-size: 14px;"></i>
+                </div>
+                <h5 class="m-0 fw-bold text-dark" id="label-kpi-heading">{{ __('Global SMS Queue Statistics') }}</h5>
+                <span class="badge badge-soft-primary" id="badge-traffic-scope">{{ __('ALL PLATFORM TRAFFIC') }}</span>
+            </div>
+            <div class="text-muted" style="font-size: 12px;" id="sub-kpi-heading">
+                <i class="fas fa-info-circle me-1"></i>{{ __('Cross-tenant aggregated live queue performance across all gateways & workers') }}
+            </div>
+        </div>
+
+        <!-- 12 KPI Cards Row -->
         <div class="row g-3 mb-4">
             <!-- 1. Total Queued SMS (RabbitMQ Ready) -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
@@ -1264,6 +1278,17 @@ $(document).ready(function() {
     });
 
     $('#select-filter-user').on('change', function() {
+        const selectedVal = $(this).val();
+        const selectedText = $(this).find('option:selected').text().trim();
+        if (selectedVal) {
+            $('#label-kpi-heading').text("{{ __('Scoped SMS Queue Statistics') }}");
+            $('#badge-traffic-scope').removeClass('badge-soft-primary').addClass('badge-soft-warning').text(selectedText);
+            $('#sub-kpi-heading').html('<i class="fas fa-filter me-1"></i>Filtered live traffic view for ' + selectedText);
+        } else {
+            $('#label-kpi-heading').text("{{ __('Global SMS Queue Statistics') }}");
+            $('#badge-traffic-scope').removeClass('badge-soft-warning').addClass('badge-soft-primary').text("{{ __('ALL PLATFORM TRAFFIC') }}");
+            $('#sub-kpi-heading').html('<i class="fas fa-info-circle me-1"></i>Cross-tenant aggregated live queue performance across all gateways & workers');
+        }
         fetchLiveData();
     });
 

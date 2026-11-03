@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Sms;
 use App\SmsGateways\PanelSms;
 use App\SmsGateways\WhiteInfoBDSms;
+use App\SmsGateways\AnbernetSms;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -108,6 +109,51 @@ class SendSmsJob implements ShouldQueue
                 }
             } catch (\Throwable $e) {
                 Log::warning('SendSmsJob: Failed to update CDR with gateway response', [
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        } elseif ($driver === 'anbernet') {
+            $sms = new AnbernetSms();
+            $response = $sms->send(
+                $this->number,
+                $this->message,
+                $this->gatewayConfig['senderid'] ?? '',
+                $this->gatewayConfig['apiurl'] ?? ($this->gatewayConfig['api_url'] ?? 'https://rapi.anbernet.com:9978'),
+                $this->gatewayConfig
+            );
+
+            try {
+                $smsRecord = $this->smsId ? Sms::find($this->smsId) : null;
+                if (!$smsRecord) {
+                    $smsRecord = Sms::where('number', $this->number)
+                        ->where('contents', $this->message)
+                        ->latest()
+                        ->first();
+                }
+
+                if ($smsRecord && is_array($response)) {
+                    $updates = [];
+
+                    if (!empty($response['message_id'])) {
+                        $updates['gateway_txnid'] = (string) $response['message_id'];
+                        $updates['mno_txnid'] = (string) $response['message_id'];
+                    }
+
+                    if (isset($response['data']['infozillion_response']['status_code'])) {
+                        $code = $response['data']['infozillion_response']['status_code'];
+                        $desc = $response['data']['infozillion_response']['description'] ?? 'Anbernet';
+                        $updates['gateway_response_code'] = "{$code} ({$desc})";
+                        $updates['infozillion_response'] = "{$code}: {$desc}";
+                    } elseif (isset($response['message'])) {
+                        $updates['infozillion_response'] = (string) $response['message'];
+                    }
+
+                    if (!empty($updates)) {
+                        $smsRecord->update($updates);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('SendSmsJob: Failed to update CDR with Anbernet response', [
                     'error' => $e->getMessage(),
                 ]);
             }

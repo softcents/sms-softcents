@@ -40,6 +40,15 @@ class GatewayTypeSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now()
             ),
+            array(
+                'name' => 'Anbernet SMS',
+                'inputs' => '{"names":["api_url","account","password","token","api_key","senderid","transtype"],"labels":["API URL (e.g. https://rapi.anbernet.com:9978)","Account / Username","Password (or use API Key)","Token (or use API Key)","API Key (Optional if Token is set)","Default Sender ID (Optional)","Transaction Type (T=Transactional, P=Promotional)"]}',
+                'namespace' => 'App\\SmsGateways\\AnbernetSms',
+                'driver' => 'anbernet',
+                'status' => 1,
+                'created_at' => now(),
+                'updated_at' => now()
+            ),
         );
 
         GatewayType::insert($gateway_types);

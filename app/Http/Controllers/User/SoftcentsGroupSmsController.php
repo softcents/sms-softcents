@@ -69,9 +69,9 @@ class SoftcentsGroupSmsController extends Controller
                             'message' => __("Api gateway is not available, Please contact with admin."),
                         ], 406);
                     }
-                    if (in_array(trim($gateway_details->driver), ['panelsms', 'whiteinfobd'])) {
+                    if (in_array(trim($gateway_details->driver), ['panelsms', 'whiteinfobd', 'anbernet'])) {
                         // Queue each SMS instead of direct sending
-                        $params = $gateway_details->params;
+                        $params = is_array($gateway_details->params) ? $gateway_details->params : (json_decode($gateway_details->params, true) ?: []);
                         $api_url = $params['api_url'] ?? $params['apiurl'] ?? '';
                         $api_key = $params['api_key'] ?? $params['key'] ?? '';
                         $client_id = $params['clientid'] ?? '';
@@ -80,13 +80,13 @@ class SoftcentsGroupSmsController extends Controller
                             dispatch(new \App\Jobs\SendSmsJob(
                                 $number,
                                 $request->contents,
-                                [
+                                array_merge($params, [
                                     'driver'   => trim($gateway_details->driver),
                                     'senderid' => $sender_id_info->sender,
                                     'apiurl'   => $api_url,
                                     'apikey'   => $api_key,
                                     'clientid' => $client_id,
-                                ]
+                                ])
                             ))->onQueue('sms');
                         }
                         session()->put('gateway_id', $gateway_details->id);

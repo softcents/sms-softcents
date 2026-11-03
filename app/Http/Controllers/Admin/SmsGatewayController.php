@@ -57,7 +57,7 @@ class SmsGatewayController extends Controller
         $request->validate([
             'status' => 'required|integer',
             'params' => 'required|array',
-            'params.*' => 'required|string',
+            'params.*' => 'nullable|string',
             'priority' => 'nullable|integer',
             'name' => 'required|string|unique:smsgateways,name',
             'type_id' => 'required|exists:gateway_types,id',
@@ -102,7 +102,7 @@ class SmsGatewayController extends Controller
         $request->validate([
             'status' => 'required|integer',
             'params' => 'required|array',
-            'params.*' => 'required|string',
+            'params.*' => 'nullable|string',
             'priority' => 'nullable|integer',
             'type_id' => 'required|exists:gateway_types,id',
             'name' => 'required|string|unique:smsgateways,name,'.$id,
@@ -202,6 +202,10 @@ class SmsGatewayController extends Controller
 
         if ($driver === 'syssms' || str_contains($namespace, 'SysSms')) {
             return \App\SmsGateways\SysSms::check_balance($gateway);
+        }
+
+        if ($driver === 'anbernet' || str_contains($namespace, 'Anbernet')) {
+            return \App\SmsGateways\AnbernetSms::check_balance($gateway);
         }
 
         if (class_exists($namespace) && method_exists($namespace, 'check_balance')) {

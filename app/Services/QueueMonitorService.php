@@ -185,7 +185,16 @@ class QueueMonitorService
         $resellers = User::whereIn('role', ['sp', 'ssp'])->orderBy('role')->orderBy('name')->get();
         $summary = [];
 
+        $parents = User::whereIn('role', ['sp', 'admin'])->pluck('name', 'id')->toArray();
+        $parentUsernames = User::whereIn('role', ['sp', 'admin'])->pluck('username', 'id')->toArray();
+
         foreach ($resellers as $r) {
+            $parentName = null;
+            if ($r->role === 'ssp' && $r->parent_id && isset($parents[$r->parent_id])) {
+                $pUser = $parentUsernames[$r->parent_id] ?? $parents[$r->parent_id];
+                $parentName = $parents[$r->parent_id] . ' (@' . $pUser . ')';
+            }
+
             if ($r->role === 'sp') {
                 $sspIds = User::where('parent_id', $r->id)->where('role', 'ssp')->pluck('id')->toArray();
                 $downline = User::where(function ($q) use ($r, $sspIds) {
@@ -213,6 +222,8 @@ class QueueMonitorService
                 'username'         => $r->username ?? $r->name,
                 'role'             => $r->role,
                 'role_label'       => $r->role === 'sp' ? 'Reseller (SP)' : 'Sub-Reseller (SSP)',
+                'parent_id'        => $r->parent_id,
+                'parent_name'      => $parentName,
                 'customers'        => count($downline),
                 'pending_queue'    => $pending,
                 'processing_queue' => $processing,

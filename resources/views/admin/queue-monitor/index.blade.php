@@ -576,14 +576,21 @@
             </div>
         </div>
 
-        <!-- Reseller-Wise SMS Queue & Hierarchy Matrix -->
+        <!-- Reseller & Sub-Reseller-Wise SMS Queue Matrix -->
         <div class="panel-box mb-4">
-            <div class="panel-header">
-                <h5 class="panel-title">
-                    <i class="fas fa-sitemap text-primary"></i>
-                    {{ __('Reseller-Wise SMS Queue & Hierarchy Matrix') }}
-                </h5>
-                <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Partners Monitored') }}</span>
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-sitemap text-primary"></i>
+                        {{ __('Reseller & Sub-Reseller SMS Queue Matrix') }}
+                    </h5>
+                    <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Partners Monitored') }}</span>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Partner Hierarchy Filter">
+                    <button type="button" class="btn btn-outline-primary partner-tab-btn active" data-role="all">{{ __('All Partners') }}</button>
+                    <button type="button" class="btn btn-outline-primary partner-tab-btn" data-role="sp">{{ __('Resellers (SP)') }}</button>
+                    <button type="button" class="btn btn-outline-primary partner-tab-btn" data-role="ssp">{{ __('Sub-Resellers (SSP)') }}</button>
+                </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-modern align-middle" id="table-resellers">
@@ -602,10 +609,13 @@
                     </thead>
                     <tbody id="tbody-resellers">
                         @forelse($resellerSummary ?? [] as $res)
-                        <tr data-reseller-id="{{ $res['id'] }}">
+                        <tr data-reseller-id="{{ $res['id'] }}" data-role="{{ $res['role'] }}">
                             <td>
                                 <div class="fw-bold text-dark">{{ $res['name'] }}</div>
                                 <small class="text-muted">{{ '@' . $res['username'] }}</small>
+                                @if(!empty($res['parent_name']))
+                                <div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Reseller: <strong>{{ $res['parent_name'] }}</strong></div>
+                                @endif
                             </td>
                             <td>
                                 <span class="badge {{ $res['role'] === 'sp' ? 'badge-soft-primary' : 'badge-soft-info' }}">
@@ -1031,26 +1041,39 @@ $(document).ready(function() {
         $('#tbody-queues').html(html);
     }
 
-    function renderResellersTable(resellers) {
-        if (!resellers) return;
-        $('#resellers-count').text(resellers.length);
+    let cachedResellers = @json($resellerSummary ?? []);
+    let currentPartnerRoleFilter = 'all';
 
-        if (!resellers.length) {
-            $('#tbody-resellers').html('<tr><td colspan="9" class="text-center py-4 text-muted">No resellers or sub-resellers registered yet.</td></tr>');
+    function renderResellersTable(resellers) {
+        if (resellers) cachedResellers = resellers;
+        const list = cachedResellers || [];
+
+        let filtered = list;
+        if (currentPartnerRoleFilter !== 'all') {
+            filtered = list.filter(r => r.role === currentPartnerRoleFilter);
+        }
+
+        $('#resellers-count').text(filtered.length);
+
+        if (!filtered.length) {
+            const roleLabel = currentPartnerRoleFilter === 'ssp' ? 'sub-resellers' : (currentPartnerRoleFilter === 'sp' ? 'resellers' : 'partners');
+            $('#tbody-resellers').html(`<tr><td colspan="9" class="text-center py-4 text-muted">No ${roleLabel} registered yet.</td></tr>`);
             return;
         }
 
         let html = '';
-        resellers.forEach(function(r) {
+        filtered.forEach(function(r) {
             const roleBadge = r.role === 'sp' ? 'badge-soft-primary' : 'badge-soft-info';
             const pendingClass = r.pending_queue > 0 ? 'text-warning' : 'text-muted';
             const procClass = (r.processing_queue || 0) > 0 ? 'text-info' : 'text-muted';
+            const parentInfo = r.parent_name ? `<div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Reseller: <strong>${r.parent_name}</strong></div>` : '';
 
             html += `
-                <tr data-reseller-id="${r.id}">
+                <tr data-reseller-id="${r.id}" data-role="${r.role}">
                     <td>
                         <div class="fw-bold text-dark">${r.name}</div>
                         <small class="text-muted">@${r.username}</small>
+                        ${parentInfo}
                     </td>
                     <td><span class="badge ${roleBadge}">${r.role_label}</span></td>
                     <td class="text-center fw-bold">${r.customers}</td>
@@ -1069,6 +1092,13 @@ $(document).ready(function() {
         });
         $('#tbody-resellers').html(html);
     }
+
+    $(document).on('click', '.partner-tab-btn', function() {
+        $('.partner-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentPartnerRoleFilter = $(this).data('role');
+        renderResellersTable();
+    });
 
     function renderStreamTable(stream) {
         if (!stream || !stream.length) return;

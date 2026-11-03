@@ -1089,6 +1089,145 @@ class QueueMonitorService
     }
 
     /**
+     * Get customer-wise failed SMS statistics specifically for Sub-reseller (or Reseller).
+     */
+    public function getCustomerFailedSmsSummary(User $viewer, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($viewer);
+        if (!$scopedIds) {
+            return [
+                'list'       => [],
+                'aggregates' => [
+                    'today_failed'           => 0,
+                    'total_failed'           => 0,
+                    'today_delivered'        => 0,
+                    'clients_with_failures'  => 0,
+                    'total_customers'        => 0,
+                    'failure_rate'           => 0.0,
+                    'operator_failed'        => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+                ],
+            ];
+        }
+
+        $query = User::where('role', 'user')->whereIn('id', $scopedIds);
+
+        if ($filterUserId) {
+            $targetUser = User::find($filterUserId);
+            if ($targetUser && $targetUser->role === 'user') {
+                $query->where('id', $targetUser->id);
+            }
+        }
+
+        $customers = $query->orderBy('name')->get();
+
+        $allNetworkFailed = Sms::whereIn('user_id', $scopedIds)
+            ->whereIn('status', ['failed', 'undelivered'])
+            ->count();
+
+        $list = [];
+        $aggregates = [
+            'today_failed'          => 0,
+            'total_failed'          => 0,
+            'today_delivered'       => 0,
+            'clients_with_failures' => 0,
+            'total_customers'       => $customers->count(),
+            'failure_rate'          => 0.0,
+            'operator_failed'       => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+        ];
+
+        foreach ($customers as $cust) {
+            $baseFailed = Sms::where('user_id', $cust->id)
+                ->whereIn('status', ['failed', 'undelivered']);
+            
+            $todayFailed = (clone $baseFailed)->whereDate('created_at', today())->count();
+            $lifetimeFailed = (clone $baseFailed)->count();
+
+            $todayDelivered = Sms::where('user_id', $cust->id)
+                ->whereDate('created_at', today())
+                ->whereIn('status', ['success', 'delivered'])
+                ->count();
+
+            $aggregates['today_failed'] += $todayFailed;
+            $aggregates['total_failed'] += $lifetimeFailed;
+            $aggregates['today_delivered'] += $todayDelivered;
+
+            if ($todayFailed > 0) {
+                $aggregates['clients_with_failures']++;
+            }
+
+            $ops = (clone $baseFailed)
+                ->groupBy('operator')
+                ->selectRaw('operator, count(*) as count')
+                ->pluck('count', 'operator')
+                ->toArray();
+
+            $opBreakdown = ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0];
+            foreach (['GP', 'BL', 'Robi', 'Teletalk'] as $opKey) {
+                $opVal = (int) ($ops[$opKey] ?? 0);
+                $opBreakdown[$opKey] = $opVal;
+                $aggregates['operator_failed'][$opKey] = ($aggregates['operator_failed'][$opKey] ?? 0) + $opVal;
+            }
+
+            $campaignFailed = (clone $baseFailed)->whereNotNull('campaign_id')->count();
+            $directFailed = max(0, $lifetimeFailed - $campaignFailed);
+
+            $primaryError = (clone $baseFailed)
+                ->whereNotNull('gateway_response_code')
+                ->value('gateway_response_code');
+            if (!$primaryError) {
+                $primaryError = (clone $baseFailed)
+                    ->whereNotNull('notes')
+                    ->value('notes') ?? 'Gateway Reject / Timeout';
+            }
+
+            $processedToday = $todayDelivered + $todayFailed;
+            $failRate = $processedToday > 0 ? round(($todayFailed / $processedToday) * 100, 1) : 0.0;
+            $share = $allNetworkFailed > 0 ? round(($lifetimeFailed / $allNetworkFailed) * 100, 1) : 0.0;
+
+            $severity = 'normal';
+            if ($failRate > 15 && $processedToday > 5) {
+                $severity = 'critical';
+            } elseif ($failRate > 5 && $processedToday > 5) {
+                $severity = 'moderate';
+            }
+
+            $list[] = [
+                'id'                  => $cust->id,
+                'name'                => $cust->name,
+                'username'            => $cust->username ?? $cust->name,
+                'email'               => $cust->email,
+                'phone'               => $cust->phone ?? 'N/A',
+                'balance'             => round((float) ($cust->balance ?? 0), 2),
+                'today_failed'        => $todayFailed,
+                'lifetime_failed'     => $lifetimeFailed,
+                'today_delivered'     => $todayDelivered,
+                'failure_rate'        => $failRate,
+                'traffic_share'       => $share,
+                'operator_breakdown'  => $opBreakdown,
+                'campaign_failed'     => $campaignFailed,
+                'direct_failed'       => $directFailed,
+                'primary_error'       => $primaryError,
+                'severity'            => $severity,
+            ];
+        }
+
+        $allProcessedToday = $aggregates['today_delivered'] + $aggregates['today_failed'];
+        $aggregates['failure_rate'] = $allProcessedToday > 0 ? round(($aggregates['today_failed'] / $allProcessedToday) * 100, 1) : 0.0;
+
+        usort($list, function ($a, $b) {
+            if ($a['today_failed'] === $b['today_failed']) {
+                return $b['lifetime_failed'] <=> $a['lifetime_failed'];
+            }
+            return $b['today_failed'] <=> $a['today_failed'];
+        });
+
+        return [
+            'list'       => $list,
+            'aggregates' => $aggregates,
+        ];
+    }
+
+    /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
     public function getUserHierarchyBreadcrumbs(int $userId, ?User $actor = null): array

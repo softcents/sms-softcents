@@ -37,6 +37,7 @@ class QueueMonitorController extends Controller
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
+        $customerFailedSummary = $this->service->getCustomerFailedSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, null, 25, $user) : null;
 
@@ -50,6 +51,7 @@ class QueueMonitorController extends Controller
             'customerProcessingSummary',
             'customerSubmittedSummary',
             'customerDeliveredSummary',
+            'customerFailedSummary',
             'breadcrumbs',
             'customerQueue'
         ));
@@ -74,6 +76,7 @@ class QueueMonitorController extends Controller
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
         $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $customerDeliveredSummary = $this->service->getCustomerDeliveredSmsSummary($user, $filterUserId);
+        $customerFailedSummary = $this->service->getCustomerFailedSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter, 25, $user) : null;
 
@@ -87,6 +90,7 @@ class QueueMonitorController extends Controller
             'customer_processing'  => $customerProcessingSummary,
             'customer_submitted'   => $customerSubmittedSummary,
             'customer_delivered'   => $customerDeliveredSummary,
+            'customer_failed'      => $customerFailedSummary,
             'breadcrumbs'          => $breadcrumbs,
             'customer_queue'       => $customerQueue,
         ]);
@@ -231,6 +235,34 @@ class QueueMonitorController extends Controller
             'success'         => true,
             'message'         => __(':count pending SMS messages cancelled successfully.', ['count' => $cancelledCount]),
             'cancelled_count' => $cancelledCount,
+        ]);
+    }
+
+    /**
+     * Retry all failed SMS messages for a specific customer in Sub-Reseller downline.
+     */
+    public function retryCustomerFailedSms(Request $request, int $id): JsonResponse
+    {
+        $user = auth()->user();
+        if (!$this->service->validateAccountAccess($user, $id)) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Unauthorized customer account access.'),
+            ], 403);
+        }
+
+        $retriedCount = Sms::where('user_id', $id)
+            ->whereIn('status', ['failed', 'rejected', 'undelivered'])
+            ->update([
+                'status'     => 'pending',
+                'updated_at' => now(),
+                'notes'      => 'Bulk re-queued from queue monitor by Sub-Reseller at ' . now()->toDateTimeString(),
+            ]);
+
+        return response()->json([
+            'success'       => true,
+            'message'       => __(':count failed SMS messages re-queued for transmission.', ['count' => $retriedCount]),
+            'retried_count' => $retriedCount,
         ]);
     }
 }

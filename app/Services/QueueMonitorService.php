@@ -369,6 +369,34 @@ class QueueMonitorService
         })->count();
         $deliveryRate = $todayTotal > 0 ? round(($todayDelivered / $todayTotal) * 100, 1) : 100.0;
 
+        // 3. Retry Queue
+        $retryQueueCount = 0;
+        if ($scopedIds === null) {
+            $retryQueueCount = DB::table('failed_jobs')->count();
+            foreach ($this->getQueues() as $q) {
+                if (str_contains(strtolower($q['name']), 'retry') || str_contains(strtolower($q['name']), 'delay')) {
+                    $retryQueueCount += (int) ($q['messages'] ?? 0);
+                }
+            }
+        } else {
+            $retryQueueCount = (clone $baseSmsQuery)->where(function($q) {
+                $q->where('status', 'retry')
+                  ->orWhere('notes', 'ilike', '%retry%');
+            })->count();
+
+            $failedRows = DB::table('failed_jobs')->get(['payload']);
+            foreach ($failedRows as $fRow) {
+                $p = json_decode($fRow->payload ?? '{}', true);
+                $cmd = $p['data']['command'] ?? '';
+                foreach ($scopedIds as $sId) {
+                    if (str_contains($cmd, 's:7:"user_id";i:' . $sId) || str_contains($cmd, 's:7:"user_id";s:' . strlen((string)$sId) . ':"' . $sId . '"')) {
+                        $retryQueueCount++;
+                        break;
+                    }
+                }
+            }
+        }
+
         // 3. Real-time Throughput (TPS in last 60s, last 5m, last 1h)
         $tpsQuery = Sms::query()->where('created_at', '>=', now()->subMinute());
         if ($scopedIds !== null) {
@@ -525,6 +553,7 @@ class QueueMonitorService
             'today_failed'         => $todayFailed,
             'rejected_count'       => $rejectedCount,
             'today_rejected'       => $todayRejected,
+            'retry_queue_count'    => $retryQueueCount,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
             'delivery_rate'        => $deliveryRate,

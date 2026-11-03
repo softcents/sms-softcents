@@ -369,6 +369,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 8. Retry Queue -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Retry Queue') }}</div>
+                            <div class="kpi-val" id="val-retry-queue" style="color: #ea580c;">{{ number_format($metrics['retry_queue_count'] ?? 0) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ffedd5; color: #ea580c;">
+                            <i class="fas fa-redo-alt"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>{{ __('Awaiting Re-dispatch') }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Middle Section: Active Queues & Operator Breakdown -->
@@ -823,6 +841,7 @@ $(document).ready(function() {
                 $('#val-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
                 $('#val-sub-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
                 $('#val-total-rejected').text((res.metrics.rejected_count || 0).toLocaleString());
+                $('#val-retry-queue').text((res.metrics.retry_queue_count || 0).toLocaleString());
 
                 // Update Queues Table
                 renderQueuesTable(res.queues);

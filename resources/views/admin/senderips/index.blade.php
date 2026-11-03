@@ -4,88 +4,225 @@
     {{ __('IP Whitelist Management') }}
 @endsection
 
+@push('css')
+<style>
+    /* Reset custom.css 100vh card issue for this page */
+    .erp-senderips-section .card,
+    .erp-senderips-section .cards,
+    .erp-senderips-section .couter-box {
+        min-height: auto !important;
+        height: auto;
+    }
+
+    .erp-senderips-section {
+        margin-top: 20px;
+        margin-bottom: 40px;
+        font-family: "Manrope", sans-serif;
+    }
+
+    /* Information Banner */
+    .erp-senderips-section .info-banner-card {
+        background: #ecfdf5;
+        border-radius: 12px;
+        padding: 16px 20px;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        border-left: 4px solid #10b981 !important;
+        margin-bottom: 20px;
+        box-shadow: 0px 2px 14px rgba(195, 208, 228, 0.15);
+    }
+
+    .erp-senderips-section .info-icon-pill {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: #d1fae5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: #10b981;
+        flex-shrink: 0;
+    }
+
+    /* Main Section Card */
+    .erp-senderips-section .main-card {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0px 4px 20px rgba(195, 208, 228, 0.25);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        margin-bottom: 24px;
+        overflow: hidden;
+    }
+
+    .erp-senderips-section .card-header-custom {
+        padding: 18px 20px;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .erp-senderips-section .card-header-custom h4 {
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+        font-size: 18px;
+    }
+
+    /* Filter Form Bar */
+    .erp-senderips-section .filter-bar-wrap {
+        padding: 16px 20px;
+        background: #f8fafc;
+        border-bottom: 1px solid #f1f5f9;
+    }
+
+    /* Responsive Table */
+    .erp-senderips-section .responsive-table {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        width: 100%;
+        margin-top: 0;
+        min-height: auto;
+    }
+
+    .erp-senderips-section .table {
+        margin-bottom: 0;
+    }
+
+    .erp-senderips-section .table th {
+        font-size: 11.5px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #475569;
+        background: #f8fafc;
+        border-bottom: 1px solid #e2e8f0;
+        white-space: nowrap;
+        padding: 12px 14px;
+        vertical-align: middle;
+    }
+
+    .erp-senderips-section .table td {
+        font-size: 13px;
+        padding: 12px 14px;
+        color: #334155;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+    }
+
+    @media (max-width: 767.98px) {
+        .erp-senderips-section {
+            margin-top: 10px;
+            margin-bottom: 25px;
+        }
+
+        .erp-senderips-section .info-banner-card {
+            padding: 14px;
+        }
+
+        .erp-senderips-section .card-header-custom {
+            padding: 14px 16px;
+        }
+
+        .erp-senderips-section .filter-bar-wrap {
+            padding: 14px 16px;
+        }
+    }
+</style>
+@endpush
+
 @section('main_content')
-    <div class="erp-table-section">
+    <div class="erp-table-section erp-senderips-section">
         <div class="container-fluid">
-            <!-- Information Banner -->
-            <div class="card shadow-sm mb-4 border-0" style="border-left: 4px solid #10b981 !important; background: #ecfdf5;">
-                <div class="card-body p-3">
-                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle p-2 d-flex align-items-center justify-content-center" style="background: #d1fae5; width: 44px; height: 44px;">
-                                <i class="fas fa-network-wired text-success" style="font-size: 20px;"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1 fw-bold text-dark">{{ __('API IP Whitelist Policy') }}</h6>
-                                <p class="mb-0 text-muted small">
-                                    {{ __('Manage whitelisted server IPs for customers & resellers. If a customer has configured active whitelisted IPs, API requests are restricted strictly to those IPs. If no IPs are configured, unrestricted access is allowed.') }}
-                                </p>
-                            </div>
+
+            <!-- 1. Information Policy Banner -->
+            <div class="info-banner-card">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="info-icon-pill">
+                            <i class="fas fa-network-wired"></i>
                         </div>
                         <div>
-                            @can('senderips-update')
-                            <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm text-light" data-bs-toggle="modal" data-bs-target="#addIpModal">
-                                <i class="fas fa-plus me-1"></i> {{ __('Whitelist IP For User') }}
-                            </button>
-                            @endcan
+                            <h6 class="mb-1 fw-bold text-dark">{{ __('API IP Whitelist Policy') }}</h6>
+                            <p class="mb-0 text-muted small">
+                                {{ __('Manage whitelisted server IPs for customers & resellers. If active IPs are configured for a user, API requests are restricted strictly to those IPs. If no IPs are configured, unrestricted access is allowed.') }}
+                            </p>
                         </div>
+                    </div>
+                    <div>
+                        @can('senderips-update')
+                        <button type="button" class="btn btn-primary btn-sm px-3 shadow-sm text-light" style="border-radius: 8px; font-weight: 600;" data-bs-toggle="modal" data-bs-target="#addIpModal">
+                            <i class="fas fa-plus me-1"></i> {{ __('Whitelist IP For User') }}
+                        </button>
+                        @endcan
                     </div>
                 </div>
             </div>
 
-            <div class="card shadow-sm">
-                <div class="card-bodys p-16">
-                    <div class="table-header d-flex justify-content-between align-items-center">
-                        <h4>{{ __('All Whitelisted IPs') }} ({{ $senderips->total() }})</h4>
+            <!-- 2. Main Whitelist Table Section -->
+            <div class="main-card">
+                <div class="card-header-custom">
+                    <div class="d-flex align-items-center gap-2">
+                        <h4><i class="fas fa-shield-alt text-primary me-2"></i>{{ __('All Whitelisted IPs') }}</h4>
+                        <span class="badge bg-light text-dark border">{{ $senderips->total() }}</span>
                     </div>
-
-                    <div class="table-top-form">
-                        <form action="{{ route('admin.senderips.index') }}" method="GET">
-                            <div class="row g-2 align-items-center">
-                                <div class="col-md-4">
-                                    <div class="table-search">
-                                        <input class="form-control" type="text" name="search" placeholder="{{ __('Search IP, customer, note...') }}" value="{{ request('search') }}">
-                                    </div>
-                                </div>
-                                <div class="col-md-3">
-                                    <select name="user_id" class="form-select select2">
-                                        <option value="">{{ __('All Customers / Users') }}</option>
-                                        @foreach($users as $u)
-                                            <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
-                                                {{ $u->name }} (@{{ $u->username }}) - {{ $u->phone ?? $u->email }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <select name="status" class="form-select">
-                                        <option value="">{{ __('All Statuses') }}</option>
-                                        <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('Active') }}</option>
-                                        <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3 d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary btn-sm px-3 text-light">
-                                        <i class="fas fa-filter me-1"></i> {{ __('Filter') }}
-                                    </button>
-                                    <a href="{{ route('admin.senderips.index') }}" class="btn btn-light btn-sm px-3 border">
-                                        <i class="fas fa-redo me-1"></i> {{ __('Reset') }}
-                                    </a>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    <span class="badge bg-light text-secondary border d-md-none">
+                        <i class="fas fa-arrows-alt-h me-1"></i>{{ __('Scroll table') }}
+                    </span>
                 </div>
 
+                <!-- Responsive Filter Form -->
+                <div class="filter-bar-wrap">
+                    <form action="{{ route('admin.senderips.index') }}" method="GET">
+                        <div class="row g-2 align-items-center">
+                            <div class="col-12 col-sm-6 col-lg-4">
+                                <input class="form-control form-control-sm" type="text" name="search" placeholder="{{ __('Search IP, customer name, username, note...') }}" value="{{ request('search') }}">
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-lg-3">
+                                <select name="user_id" class="form-select form-select-sm select2">
+                                    <option value="">{{ __('All Customers / Users') }}</option>
+                                    @foreach($users as $u)
+                                        <option value="{{ $u->id }}" {{ request('user_id') == $u->id ? 'selected' : '' }}>
+                                            {{ $u->name }} (@{{ $u->username ?? $u->id }}) - {{ $u->phone ?? $u->email }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-lg-2">
+                                <select name="status" class="form-select form-select-sm">
+                                    <option value="">{{ __('All Statuses') }}</option>
+                                    <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('Active') }}</option>
+                                    <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('Inactive') }}</option>
+                                </select>
+                            </div>
+
+                            <div class="col-12 col-sm-6 col-lg-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm px-3 text-light flex-grow-1" style="border-radius: 6px; font-weight: 600;">
+                                    <i class="fas fa-filter me-1"></i> {{ __('Filter') }}
+                                </button>
+                                <a href="{{ route('admin.senderips.index') }}" class="btn btn-outline-secondary btn-sm px-3" style="border-radius: 6px;">
+                                    <i class="fas fa-redo me-1"></i> {{ __('Reset') }}
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Data Table -->
                 <div class="responsive-table">
-                    <table class="table" id="datatable">
+                    <table class="table table-hover table-striped text-nowrap align-middle" id="datatable" style="min-width: 950px;">
                         <thead>
                             <tr>
                                 @can('senderips-update')
-                                <th class="w-60">
-                                    <div class="d-flex align-items-center gap-3">
+                                <th class="w-60" style="width: 40px;">
+                                    <div class="d-flex align-items-center gap-2">
                                         <input type="checkbox" class="selectAllCheckbox">
-                                        <i class="fal fa-trash-alt delete-selected" data-url="{{ route('admin.senderips.delete-all') }}"></i>
+                                        <i class="fal fa-trash-alt delete-selected" data-url="{{ route('admin.senderips.delete-all') }}" title="{{ __('Delete Selected') }}"></i>
                                     </div>
                                 </th>
                                 @endcan
@@ -110,7 +247,7 @@
                                     <td>
                                         @if($ip->user)
                                             <div class="fw-bold text-dark">{{ $ip->user->name }}</div>
-                                            <div class="text-primary font-monospace small">@<span>{{ $ip->user->username }}</span></div>
+                                            <div class="text-primary font-monospace small">@<span>{{ $ip->user->username ?? 'N/A' }}</span></div>
                                             <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ $ip->user->phone ?? '—' }} | <i class="fas fa-envelope me-1"></i>{{ $ip->user->email }}</small>
                                         @else
                                             <span class="text-muted">{{ __('User Deleted') }}</span>
@@ -118,7 +255,7 @@
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark border px-2 py-1 font-monospace" style="font-size: 13px;">
-                                            <i class="fas fa-network-wired text-muted me-1"></i> {{ $ip->ip_address }}
+                                            <i class="fas fa-network-wired text-primary me-1"></i> {{ $ip->ip_address }}
                                         </span>
                                     </td>
                                     <td>
@@ -144,7 +281,7 @@
                                         <form action="{{ route('admin.senderips.destroy', $ip->id) }}" method="POST" onsubmit="return confirm('{{ __('Are you sure you want to delete this IP rule?') }}');" class="d-inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" title="{{ __('Delete') }}">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger p-1 px-2" style="border-radius: 6px;" title="{{ __('Delete') }}">
                                                 <i class="fal fa-trash-alt"></i>
                                             </button>
                                         </form>
@@ -153,9 +290,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        <i class="fas fa-network-wired fa-2x mb-2 text-secondary d-block"></i>
-                                        {{ __('No whitelisted IPs found matching the criteria.') }}
+                                    <td colspan="8" class="text-center text-muted py-5">
+                                        <i class="fas fa-network-wired fa-3x mb-3 text-secondary opacity-50 d-block"></i>
+                                        <p class="mb-0 fw-bold">{{ __('No whitelisted IPs found matching the criteria.') }}</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -164,7 +301,7 @@
                 </div>
 
                 @if($senderips->hasPages())
-                    <nav class="p-3">
+                    <nav class="p-3 border-top">
                         <ul class="pagination mb-0">
                             <li class="page-item">{{ $senderips->links('pagination::bootstrap-5') }}</li>
                         </ul>
@@ -177,42 +314,42 @@
     <!-- Add IP Modal -->
     <div class="modal fade" id="addIpModal" tabindex="-1" aria-labelledby="addIpModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            <div class="modal-content" style="border-radius: 12px; overflow: hidden; border: 0; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
                 <form action="{{ route('admin.senderips.store') }}" method="POST">
                     @csrf
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="addIpModalLabel">
+                    <div class="modal-header bg-light py-3 border-bottom">
+                        <h5 class="modal-title fw-bold" id="addIpModalLabel">
                             <i class="fas fa-shield-alt text-primary me-2"></i>{{ __('Whitelist IP For Customer') }}
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body p-4">
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">{{ __('Select Customer / User') }} <span class="text-danger">*</span></label>
+                            <label class="form-label fw-bold small text-uppercase">{{ __('Select Customer / User') }} <span class="text-danger">*</span></label>
                             <select name="user_id" class="form-select select2" required style="width: 100%;">
                                 <option value="">{{ __('-- Select User --') }}</option>
                                 @foreach($users as $u)
-                                    <option value="{{ $u->id }}">{{ $u->name }} (@{{ $u->username }}) - {{ $u->phone ?? $u->email }}</option>
+                                    <option value="{{ $u->id }}">{{ $u->name }} (@{{ $u->username ?? $u->id }}) - {{ $u->phone ?? $u->email }}</option>
                                 @endforeach
                             </select>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">{{ __('IP Address / Subnet (CIDR)') }} <span class="text-danger">*</span></label>
-                            <input type="text" name="ip_address" class="form-control" placeholder="e.g. 103.181.28.15 or 103.181.28.0/24" required>
-                            <div class="form-text">
+                            <label class="form-label fw-bold small text-uppercase">{{ __('IP Address / Subnet (CIDR)') }} <span class="text-danger">*</span></label>
+                            <input type="text" name="ip_address" class="form-control font-monospace" placeholder="e.g. 103.181.28.15 or 103.181.28.0/24" required>
+                            <div class="form-text small text-muted">
                                 {{ __('Supports IPv4 (e.g. 103.181.28.15), IPv6, or CIDR block (e.g. 103.181.28.0/24).') }}
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label fw-semibold">{{ __('Note / Purpose (Optional)') }}</label>
+                            <label class="form-label fw-bold small text-uppercase">{{ __('Note / Purpose (Optional)') }}</label>
                             <input type="text" name="note" class="form-control" placeholder="e.g. Client Webhook Server, App Backend">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
-                        <button type="submit" class="btn btn-primary text-light">{{ __('Save Whitelist') }}</button>
+                    <div class="modal-footer bg-light py-2">
+                        <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-3 text-light fw-bold">{{ __('Save Whitelist') }}</button>
                     </div>
                 </form>
             </div>

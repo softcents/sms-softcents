@@ -4,6 +4,12 @@
     {{ __('IP Whitelist') }}
 @endsection
 
+@push('css')
+<style>
+    .erp-table-section .card, .erp-table-section .cards { min-height: auto !important; height: auto; }
+</style>
+@endpush
+
 @section('main_content')
     <div class="erp-table-section">
         <div class="container-fluid">
@@ -60,8 +66,8 @@
                     </div>
                 </div>
 
-                <div class="responsive-table">
-                    <table class="table" id="datatable">
+                <div class="responsive-table" style="overflow-x: auto; -webkit-overflow-scrolling: touch; width: 100%; min-height: auto; margin-top: 0;">
+                    <table class="table table-hover table-striped text-nowrap align-middle" id="datatable" style="min-width: 750px;">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">{{ __('SL') }}</th>

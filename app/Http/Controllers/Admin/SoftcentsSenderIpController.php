@@ -45,7 +45,7 @@ class SoftcentsSenderIpController extends Controller
         }
 
         $senderips = $query->latest()->paginate(20)->withQueryString();
-        $users = User::where('status', 'active')->orderBy('name')->select('id', 'name', 'phone', 'email')->get();
+        $users = User::where('status', 'active')->orderBy('name')->select('id', 'name', 'username', 'phone', 'email')->get();
 
         return view('admin.senderips.index', compact('senderips', 'users'));
     }

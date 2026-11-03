@@ -21,9 +21,7 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
-        $countries = base_path('lang/countrylist.json');
-        $countries = json_decode(file_get_contents($countries), true);
-        return view('auth.register', compact('countries'));
+        return view('auth.register');
     }
 
     /**
@@ -48,7 +46,7 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
-            'country' => $request->country,
+            'country' => 'Bangladesh',
             'client_secret' => $request->role == 'user' ? Str::uuid() : null,
         ]);
 

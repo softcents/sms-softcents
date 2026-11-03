@@ -18,8 +18,7 @@ class WebController extends Controller
         $plans = Plan::whereStatus(1)->latest()->get();
         $testimonials = Testimonial::latest()->get();
         $faqs = Faq::latest()->get();
-        $countries = base_path('lang/countrylist.json');
-        $countries = json_decode(file_get_contents($countries), true);
+        $countries = [['name' => 'Bangladesh', 'code' => 'BD']];
 
         return view('web.index',compact('page_data', 'plans', 'testimonials', 'faqs', 'services', 'countries'));
     }

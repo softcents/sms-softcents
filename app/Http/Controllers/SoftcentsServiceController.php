@@ -17,8 +17,7 @@ class SoftcentsServiceController extends Controller
         $page_data = get_option('manage-pages');
         $service = Service::findOrFail($id);
         $plans = Plan::whereStatus(1)->latest()->get();
-        $countries = base_path('lang/countrylist.json');
-        $countries = json_decode(file_get_contents($countries), true);
+        $countries = [['name' => 'Bangladesh', 'code' => 'BD']];
 
         return view('web.services.show', compact('service', 'plans', 'page_data', 'countries'));
     }

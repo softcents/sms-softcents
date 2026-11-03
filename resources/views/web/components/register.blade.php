@@ -34,21 +34,11 @@
                                     class="form-control" />
                             </div>
                             <div class="mt-3 col-lg-6">
-                                <label class="custom-top-label">{{ __('Country') }}</label>
-                                <div class="gpt-up-down-arrow position-relative">
-                                    <select class="form-control form-selected" name="country" >
-                                        <option value=""> {{ __('Select a country') }}</option>
-                                        @foreach ($countries as $country)
-                                            <option value="{{ $country['name'] }}">{{ $country['name'] }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mt-3 col-lg-6">
                                 <label class="custom-top-label">{{ __('Confirm Password') }}</label>
                                 <input type="password" name="password_confirmation" placeholder="Enter your password"
                                     class="form-control" />
                             </div>
+                            <input type="hidden" name="country" value="Bangladesh" />
                         </div>
 
                         <div class="offcanvas-footer mt-3 d-flex justify-content-center">

@@ -54,16 +54,8 @@
                             </span>
                             <input type="password" name="password_confirmation" class="form-control password" placeholder="{{ __('Confirm Password') }}">
                         </div>
-                        <div class="input-group">
-                            <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                            <select type="text" name="country" class="form-control">
-                                <option value=""> {{ __('Select a country') }}</option>
-                                @foreach ($countries as $country)
-                                <option value="{{ $country['name'] }}">{{ $country['name'] }}
-                                </option>
-                                @endforeach
-                            </select>
-                        </div>
+
+                        <input type="hidden" name="country" value="Bangladesh">
 
                         <button type="submit" class="btn login-btn submit-btn">{{ __('Register') }}</button>
                         <a href="{{ route('login') }}" class="mt-1 d-block">{{ __("Already have an account?") }}</a>

@@ -565,8 +565,8 @@ class QueueMonitorService
                 'role'       => $curr->role,
                 'role_label' => match($curr->role) {
                     'admin', 'superadmin' => 'Super Admin',
-                    'sp'                  => 'Reseller (SP)',
-                    'ssp'                 => 'Sub-Reseller (SSP)',
+                    'sp'                  => 'Reseller',
+                    'ssp'                 => 'Sub-reseller',
                     default               => 'Customer',
                 }
             ];

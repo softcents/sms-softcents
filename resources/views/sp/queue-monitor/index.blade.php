@@ -236,38 +236,51 @@
             </div>
         </div>
 
-        <!-- Hierarchical Drill-Down Breadcrumb Trail -->
-        <div class="panel-box mb-4 py-2 px-3 {{ empty($breadcrumbs) ? 'd-none' : '' }}" id="drilldown-nav-container" style="background: #f8fafc; border-left: 4px solid #4f46e5;">
+        <!-- Hierarchical Drill-Down Navigation: Reseller -> Sub-reseller -> Customer -> SMS Queue Details -->
+        <div class="panel-box mb-4 py-2 px-3" id="drilldown-nav-container" style="background: #f8fafc; border-left: 4px solid #4f46e5;">
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                        <i class="fas fa-sitemap text-primary me-1"></i> {{ __('Hierarchy Drill-Down Navigation') }}:
+                        <i class="fas fa-sitemap text-primary me-1"></i> {{ __('Hierarchy Drill-Down') }}:
                     </span>
                     <div class="d-flex flex-wrap align-items-center gap-1" id="drilldown-breadcrumbs-list">
-                        <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
-                            <i class="fas fa-globe text-primary"></i> {{ __('All Network') }}
+                        <!-- Root Level: Reseller -->
+                        <button type="button" class="btn btn-sm {{ empty($breadcrumbs) ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
+                            <i class="fas fa-user-tie {{ empty($breadcrumbs) ? 'text-white' : 'text-primary' }}"></i>
+                            <span>{{ __('Reseller') }}: {{ auth()->user()->name }}</span>
+                            <span class="badge {{ empty($breadcrumbs) ? 'bg-light text-dark' : 'badge-soft-primary' }}" style="font-size: 10px;">{{ empty($breadcrumbs) ? __('All Network') : __('Root') }}</span>
                         </button>
                         @foreach($breadcrumbs ?? [] as $idx => $bc)
-                            <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
-                            <button type="button" class="btn btn-sm {{ $loop->last && empty($customerQueue) ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="{{ $bc['id'] }}" style="font-size: 12px; font-weight: 600;">
-                                <i class="{{ $bc['role'] === 'sp' ? 'fas fa-user-tie' : ($bc['role'] === 'ssp' ? 'fas fa-users' : 'fas fa-user') }}"></i>
-                                <span>{{ $bc['name'] }}</span>
-                                <span class="badge {{ $loop->last && empty($customerQueue) ? 'bg-light text-dark' : 'badge-soft-info' }}" style="font-size: 10px;">{{ $bc['role_label'] }}</span>
-                            </button>
+                            @if($bc['id'] != auth()->id())
+                                <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                                <button type="button" class="btn btn-sm {{ $loop->last && empty($customerQueue) ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="{{ $bc['id'] }}" style="font-size: 12px; font-weight: 600;">
+                                    <i class="{{ $bc['role'] === 'ssp' ? 'fas fa-users text-info' : 'fas fa-user text-success' }}"></i>
+                                    <span>{{ $bc['name'] }}</span>
+                                    <span class="badge {{ $loop->last && empty($customerQueue) ? 'bg-light text-dark' : 'badge-soft-info' }}" style="font-size: 10px;">{{ $bc['role_label'] }}</span>
+                                </button>
+                            @endif
                         @endforeach
                         @if(!empty($customerQueue))
                             <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
-                            <span class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600;">
+                            <a href="#panel-customer-queue" class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600; text-decoration: none;">
                                 <i class="fas fa-layer-group"></i>
                                 <span>{{ __('SMS Queue Details') }}</span>
-                            </span>
+                            </a>
                         @endif
                     </div>
                 </div>
-                <div>
-                    <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2" id="btn-reset-drilldown" style="font-size: 11px;">
-                        <i class="fas fa-times me-1"></i> {{ __('Reset to All Network') }}
-                    </button>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted d-none d-md-inline-block" style="font-size: 11px;">
+                        <span class="badge badge-soft-secondary">{{ __('Reseller') }}</span> <i class="fas fa-arrow-right text-muted mx-1" style="font-size: 9px;"></i>
+                        <span class="badge badge-soft-info">{{ __('Sub-reseller') }}</span> <i class="fas fa-arrow-right text-muted mx-1" style="font-size: 9px;"></i>
+                        <span class="badge badge-soft-success">{{ __('Customer') }}</span> <i class="fas fa-arrow-right text-muted mx-1" style="font-size: 9px;"></i>
+                        <span class="badge badge-soft-primary">{{ __('SMS Queue Details') }}</span>
+                    </span>
+                    <div id="btn-reset-drilldown-wrapper" class="{{ empty($filterUserId) ? 'd-none' : '' }}">
+                        <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2" id="btn-reset-drilldown" style="font-size: 11px;">
+                            <i class="fas fa-times me-1"></i> {{ __('Reset') }}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -762,6 +775,9 @@
                             </td>
                             <td class="text-end fw-bold text-dark">৳{{ number_format($ssp['balance'], 2) }}</td>
                             <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-ssp-view-customers" data-id="{{ $ssp['id'] }}" data-name="{{ $ssp['name'] }}" title="{{ __('View Customers of this Sub-Reseller') }}" style="font-size: 11px;">
+                                    <i class="fas fa-users me-1"></i> {{ __('Customers') }} ({{ $ssp['customers_count'] }})
+                                </button>
                                 <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="{{ $ssp['id'] }}" title="{{ __('Drill-down entire dashboard') }}" style="font-size: 11px;">
                                     <i class="fas fa-crosshairs me-1"></i> {{ __('Drill-Down') }}
                                 </button>
@@ -1351,14 +1367,18 @@
                             <span id="cust-queue-title-prefix">{{ ($customerQueue['customer']['id'] ?? 0) == auth()->id() ? __('Own SMS Queue Details (Direct Dispatches)') : __('Customer SMS Queue Details') }}</span>:
                             <span class="text-primary" id="cust-queue-name">{{ $customerQueue['customer']['name'] ?? '' }}</span>
                         </h5>
-                        <div class="text-muted" style="font-size: 11px;" id="cust-queue-hierarchy-path">
+                        <div class="text-muted d-flex align-items-center flex-wrap gap-1" style="font-size: 11px;" id="cust-queue-hierarchy-path">
                             @if(($customerQueue['customer']['id'] ?? 0) == auth()->id())
                                 <span class="badge bg-success me-1"><i class="fas fa-user-check me-1"></i>{{ __('OWN DIRECT TRAFFIC') }}</span>
-                                Reseller: <strong class="text-dark">{{ auth()->user()->name }}</strong> (Self Account)
+                                <span class="fw-bold text-dark">{{ __('Reseller') }}:</span> {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1 text-muted"></i>
+                                <span class="badge bg-primary text-white"><i class="fas fa-layer-group me-1"></i>{{ __('SMS Queue Details') }}</span>
                             @else
-                                Reseller: {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1"></i>
-                                {{ $customerQueue['customer']['parent_subreseller']['name'] ?? 'Direct' }} <i class="fas fa-angle-right mx-1"></i>
-                                <strong class="text-dark">{{ $customerQueue['customer']['name'] ?? 'Customer' }}</strong>
+                                <span class="fw-bold text-dark">{{ __('Reseller') }}:</span> {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1 text-muted"></i>
+                                @if(!empty($customerQueue['customer']['parent_subreseller']) && $customerQueue['customer']['parent_subreseller']['id'] != auth()->id())
+                                    <span class="fw-bold text-dark">{{ __('Sub-reseller') }}:</span> {{ $customerQueue['customer']['parent_subreseller']['name'] }} <i class="fas fa-angle-right mx-1 text-muted"></i>
+                                @endif
+                                <span class="fw-bold text-dark">{{ __('Customer') }}:</span> <strong class="text-dark">{{ $customerQueue['customer']['name'] ?? 'Customer' }}</strong> <i class="fas fa-angle-right mx-1 text-muted"></i>
+                                <span class="badge bg-primary text-white"><i class="fas fa-layer-group me-1"></i>{{ __('SMS Queue Details') }}</span>
                             @endif
                         </div>
                     </div>
@@ -2076,6 +2096,9 @@ $(document).ready(function() {
                     </td>
                     <td class="text-end fw-bold text-dark">৳${Number(ssp.balance).toFixed(2)}</td>
                     <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-ssp-view-customers" data-id="${ssp.id}" data-name="${ssp.name}" title="View Customers of this Sub-Reseller" style="font-size: 11px;">
+                            <i class="fas fa-users me-1"></i> Customers (${ssp.customers_count})
+                        </button>
                         <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="${ssp.id}" title="Drill-down entire dashboard" style="font-size: 11px;">
                             <i class="fas fa-crosshairs me-1"></i> Drill-Down
                         </button>
@@ -2434,15 +2457,18 @@ $(document).ready(function() {
             $('#cust-queue-title-prefix').text("{{ __('Own SMS Queue Details (Direct Dispatches)') }}");
             $('#cust-queue-hierarchy-path').html(`
                 <span class="badge bg-success me-1"><i class="fas fa-user-check me-1"></i>{{ __('OWN DIRECT TRAFFIC') }}</span>
-                Reseller: <strong class="text-dark">{{ auth()->user()->name }}</strong> (Self Account)
+                <span class="fw-bold text-dark">{{ __('Reseller') }}:</span> {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1 text-muted"></i>
+                <span class="badge bg-primary text-white"><i class="fas fa-layer-group me-1"></i>{{ __('SMS Queue Details') }}</span>
             `);
         } else {
             $('#cust-queue-title-prefix').text("{{ __('Customer SMS Queue Details') }}");
-            const subName = c.parent_subreseller ? c.parent_subreseller.name : 'Direct';
+            const sub = c.parent_subreseller;
+            const subText = (sub && sub.id != {{ auth()->id() }}) ? `<span class="fw-bold text-dark">{{ __('Sub-reseller') }}:</span> ${sub.name} <i class="fas fa-angle-right mx-1 text-muted"></i>` : '';
             $('#cust-queue-hierarchy-path').html(`
-                Reseller: <strong>{{ auth()->user()->name }}</strong> <i class="fas fa-angle-right mx-1"></i>
-                ${subName} <i class="fas fa-angle-right mx-1"></i>
-                <strong class="text-dark">${c.name || 'Customer'}</strong>
+                <span class="fw-bold text-dark">{{ __('Reseller') }}:</span> {{ auth()->user()->name }} <i class="fas fa-angle-right mx-1 text-muted"></i>
+                ${subText}
+                <span class="fw-bold text-dark">{{ __('Customer') }}:</span> <strong class="text-dark">${c.name || 'Customer'}</strong> <i class="fas fa-angle-right mx-1 text-muted"></i>
+                <span class="badge bg-primary text-white"><i class="fas fa-layer-group me-1"></i>{{ __('SMS Queue Details') }}</span>
             `);
         }
 
@@ -2572,48 +2598,59 @@ $(document).ready(function() {
         $('#top-senders-list').html(html);
     }
 
-    // 10. Breadcrumbs Engine
+    // 10. Breadcrumbs Engine: Reseller -> Sub-reseller -> Customer -> SMS Queue Details
     function updateBreadcrumbs(breadcrumbs, hasCustomerQueue) {
-        if (!breadcrumbs || !breadcrumbs.length) {
-            $('#drilldown-nav-container').addClass('d-none');
-            return;
-        }
+        const rootActive = !breadcrumbs || !breadcrumbs.length;
+        const rootBtnClass = rootActive ? 'btn-primary shadow-sm' : 'btn-light border';
+        const rootIconColor = rootActive ? 'text-white' : 'text-primary';
+        const rootBadgeClass = rootActive ? 'bg-light text-dark' : 'badge-soft-primary';
+        const rootBadgeText = rootActive ? "{{ __('All Network') }}" : "{{ __('Root') }}";
 
-        $('#drilldown-nav-container').removeClass('d-none');
         let html = `
-            <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
-                <i class="fas fa-globe text-primary"></i> {{ __('All Network') }}
+            <button type="button" class="btn btn-sm ${rootBtnClass} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
+                <i class="fas fa-user-tie ${rootIconColor}"></i>
+                <span>{{ __('Reseller') }}: {{ auth()->user()->name }}</span>
+                <span class="badge ${rootBadgeClass}" style="font-size: 10px;">${rootBadgeText}</span>
             </button>
         `;
 
-        breadcrumbs.forEach(function(bc, idx) {
-            const isLast = idx === (breadcrumbs.length - 1);
-            const isLeafActive = isLast && !hasCustomerQueue;
-            const btnClass = isLeafActive ? 'btn-primary shadow-sm' : 'btn-light border';
-            const badgeClass = isLeafActive ? 'bg-light text-dark' : 'badge-soft-info';
-            const icon = bc.role === 'sp' ? 'fas fa-user-tie' : (bc.role === 'ssp' ? 'fas fa-users' : 'fas fa-user');
+        if (breadcrumbs && breadcrumbs.length) {
+            breadcrumbs.forEach(function(bc, idx) {
+                if (bc.id == {{ auth()->id() }}) return; // skip self since root button represents reseller
+                const isLast = idx === (breadcrumbs.length - 1);
+                const isLeafActive = isLast && !hasCustomerQueue;
+                const btnClass = isLeafActive ? 'btn-primary shadow-sm' : 'btn-light border';
+                const badgeClass = isLeafActive ? 'bg-light text-dark' : 'badge-soft-info';
+                const icon = bc.role === 'ssp' ? 'fas fa-users text-info' : 'fas fa-user text-success';
 
-            html += `
-                <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
-                <button type="button" class="btn btn-sm ${btnClass} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="${bc.id}" style="font-size: 12px; font-weight: 600;">
-                    <i class="${icon}"></i>
-                    <span>${bc.name}</span>
-                    <span class="badge ${badgeClass}" style="font-size: 10px;">${bc.role_label}</span>
-                </button>
-            `;
-        });
+                html += `
+                    <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                    <button type="button" class="btn btn-sm ${btnClass} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="${bc.id}" style="font-size: 12px; font-weight: 600;">
+                        <i class="${icon}"></i>
+                        <span>${bc.name}</span>
+                        <span class="badge ${badgeClass}" style="font-size: 10px;">${bc.role_label}</span>
+                    </button>
+                `;
+            });
+        }
 
         if (hasCustomerQueue) {
             html += `
                 <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
-                <span class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600;">
+                <a href="#panel-customer-queue" class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600; text-decoration: none;">
                     <i class="fas fa-layer-group"></i>
                     <span>{{ __('SMS Queue Details') }}</span>
-                </span>
+                </a>
             `;
         }
 
         $('#drilldown-breadcrumbs-list').html(html);
+
+        if (!rootActive) {
+            $('#btn-reset-drilldown-wrapper').removeClass('d-none');
+        } else {
+            $('#btn-reset-drilldown-wrapper').addClass('d-none');
+        }
     }
 
     // Click Breadcrumb Trail Link
@@ -2854,6 +2891,19 @@ $(document).ready(function() {
         $('#view-sms-content').text(content);
         const modal = new bootstrap.Modal(document.getElementById('modal-view-sms'));
         modal.show();
+    });
+
+    // Navigate from Sub-Reseller to their Customers in Customer Matrix
+    $(document).on('click', '.btn-ssp-view-customers', function() {
+        const sspId = $(this).data('id');
+        $('#select-filter-user').val(sspId).trigger('change');
+        setTimeout(function() {
+            if ($('#panel-customer-matrix').length) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-matrix').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
     });
 
     // Polling interval timer

@@ -224,6 +224,27 @@ class QueueMonitorService
     }
 
     /**
+     * Strict backend verification that an actor is authorized to inspect a target account's queue.
+     */
+    public function validateAccountAccess(?User $actor, ?int $targetUserId): bool
+    {
+        if (!$targetUserId) {
+            return true;
+        }
+
+        if (!$actor) {
+            return false;
+        }
+
+        if (in_array($actor->role, ['admin', 'superadmin'])) {
+            return true;
+        }
+
+        $allowedIds = $this->getScopedUserIds($actor);
+        return $allowedIds !== null && in_array($targetUserId, $allowedIds, true);
+    }
+
+    /**
      * Get Scoped User IDs according to multi-tenant hierarchy.
      */
     public function getScopedUserIds(?User $user): ?array
@@ -301,13 +322,12 @@ class QueueMonitorService
     {
         $scopedIds = $this->getScopedUserIds($user);
 
-        // Apply drill-down filter if provided and permitted
+        // Apply drill-down filter if provided and strictly validate backend authorization
         if ($filterUserId) {
-            if ($scopedIds === null) {
-                $scopedIds = [$filterUserId];
-            } elseif (in_array($filterUserId, $scopedIds)) {
-                $scopedIds = [$filterUserId];
+            if (!$this->validateAccountAccess($user, $filterUserId)) {
+                abort(403, 'Unauthorized access: You do not have permission to monitor this account queue.');
             }
+            $scopedIds = [$filterUserId];
         }
 
         // 1. Pending Queue in DB

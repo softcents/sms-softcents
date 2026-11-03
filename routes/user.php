@@ -121,6 +121,14 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
     Route::post('/queue-monitor/retry-failed', [User\QueueMonitorController::class, 'retryAllFailedSms'])->name('queue-monitor.retry-failed');
     Route::post('/queue-monitor/cancel-campaign/{id}', [User\QueueMonitorController::class, 'cancelCampaignPending'])->name('queue-monitor.cancel-campaign');
 
+    // SMS Inbox (Two-Way Messaging)
+    Route::group(['as' => 'inbox.', 'prefix' => 'inbox'], function () {
+        Route::get('/', [\App\Http\Controllers\User\InboxController::class, 'index'])->name('index');
+        Route::post('/{id}/read', [\App\Http\Controllers\User\InboxController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-read', [\App\Http\Controllers\User\InboxController::class, 'markAllRead'])->name('mark-all-read');
+        Route::delete('/{id}', [\App\Http\Controllers\User\InboxController::class, 'destroy'])->name('destroy');
+    });
+
     Route::get('download-contacts-file', function() {
         $filePath = public_path('assets/contacts.xlsx');
         if (file_exists($filePath)) {

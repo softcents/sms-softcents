@@ -145,5 +145,14 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
         Route::post('/sms/cancel/{id}', [ADMIN\QueueMonitorController::class, 'cancelSms'])->name('sms.cancel');
         Route::post('/sms/retry/{id}', [ADMIN\QueueMonitorController::class, 'retrySms'])->name('sms.retry');
     });
+
+    // SMS Inbox (Two-Way Messaging)
+    Route::group(['as' => 'inbox.', 'prefix' => 'inbox'], function () {
+        Route::get('/', [\App\Http\Controllers\Admin\InboxController::class, 'index'])->name('index');
+        Route::post('/{id}/read', [\App\Http\Controllers\Admin\InboxController::class, 'markAsRead'])->name('read');
+        Route::post('/mark-all-read', [\App\Http\Controllers\Admin\InboxController::class, 'markAllRead'])->name('mark-all-read');
+        Route::delete('/{id}', [\App\Http\Controllers\Admin\InboxController::class, 'destroy'])->name('destroy');
+        Route::post('/sync-anbernet', [\App\Http\Controllers\Admin\InboxController::class, 'syncAnbernet'])->name('sync-anbernet');
+    });
 });
 

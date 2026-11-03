@@ -42,6 +42,23 @@
                 </a>
             </li>
 
+            <li class="{{ Request::routeIs('users.inbox.*') ? 'active' : ''}}">
+                <a href="{{ route('users.inbox.index') }}" class="active d-flex align-items-center">
+                    <span class="sidebar-icon">
+                        <i class="fas fa-inbox"></i>
+                    </span>
+                    {{ __('SMS Inbox') }}
+                    @php
+                        $userUnreadCount = \App\Models\InboxMessage::where(function ($q) {
+                            $q->where('user_id', auth()->id());
+                        })->where('is_read', false)->count();
+                    @endphp
+                    @if($userUnreadCount > 0)
+                        <span class="badge bg-danger rounded-pill ms-auto" style="font-size: 10px; padding: 2px 6px;">{{ $userUnreadCount }}</span>
+                    @endif
+                </a>
+            </li>
+
             <li class="{{ Request::routeIs('users.senderids.index') ? 'active' : ''}}">
                 <a href="{{ route('users.senderids.index') }}" class="active">
                     <span class="sidebar-icon">

@@ -224,6 +224,21 @@
                 </li>
             @endcanany
 
+            <li class="{{ Route::is('admin.inbox.*') ? 'active' : '' }}">
+                <a href="{{ route('admin.inbox.index') }}">
+                    <span class="sidebar-icon">
+                        <i class="fas fa-inbox text-primary"></i>
+                    </span>
+                    {{ __('SMS Inbox') }}
+                    @php
+                        $sidebarUnreadCount = \App\Models\InboxMessage::where('is_read', false)->count();
+                    @endphp
+                    @if($sidebarUnreadCount > 0)
+                        <span class="badge bg-danger text-white ms-auto" style="font-size: 10px; padding: 2px 6px; border-radius: 10px;">{{ $sidebarUnreadCount }}</span>
+                    @endif
+                </a>
+            </li>
+
             @can(['reports-read'])
                 <li
                     class="dropdown {{ Route::is('admin.reports.profit-loss', 'admin.reports.advanced', 'admin.reports.quick-sms', 'admin.reports.campaigns-sms', 'admin.reports.subscriptions', 'admin.reports.recharges', 'admin.reports.transactions', 'admin.reports.group-sms') ? 'active' : '' }}">

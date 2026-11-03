@@ -43,9 +43,9 @@ class AnbernetSms
             'senderid'   => $senderId,
             'receivers'  => [$normalizedNumber],
             'msgdata'    => $message,
-            'flashon'    => 0,
+            'flashon'    => false,
             'transtype'  => $transtype,
-            'campaignId' => null,
+            'campaignId' => '',
         ];
 
         if (!empty($password)) {
@@ -68,6 +68,11 @@ class AnbernetSms
             $status = $response->status();
             $body = $response->json();
 
+            // FastAPI / wapi returns tuple: [ { "status": "success", ... }, 200 ]
+            if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+                $body = $body[0];
+            }
+
             if (!$response->successful()) {
                 Log::error('AnbernetSms::send HTTP error', [
                     'status'   => $status,
@@ -81,6 +86,16 @@ class AnbernetSms
                     'code'     => $status,
                     'message'  => $body['message'] ?? $body['detail'] ?? $response->body(),
                     'raw'      => $body,
+                ];
+            }
+
+            // Inspect for API-level auth error returned with HTTP 200
+            if (!empty($body['message']) && stripos($body['message'], 'wrong credentials') !== false) {
+                return [
+                    'status'  => 'failed',
+                    'code'    => '1001',
+                    'message' => $body['message'],
+                    'raw'     => $body,
                 ];
             }
 
@@ -178,9 +193,9 @@ class AnbernetSms
             'senderid'   => $callerId,
             'receivers'  => $validatedNumbers,
             'msgdata'    => $contents,
-            'flashon'    => 0,
+            'flashon'    => false,
             'transtype'  => $transtype,
-            'campaignId' => null,
+            'campaignId' => '',
         ];
 
         if (!empty($password)) {
@@ -211,9 +226,21 @@ class AnbernetSms
 
             $body = $response->json();
 
+            // FastAPI / wapi returns tuple: [ { "status": "success", ... }, 200 ]
+            if (is_array($body) && isset($body[0]) && is_array($body[0])) {
+                $body = $body[0];
+            }
+
+            // Reject if wrong credentials returned inside body
+            if (!empty($body['message']) && stripos($body['message'], 'wrong credentials') !== false) {
+                Log::error('AnbernetSms::send_message Auth Error', ['response' => $body]);
+                return false;
+            }
+
             $isSuccess = ($body['status'] ?? '') === 'success'
                 || (isset($body['success_count']) && (int) $body['success_count'] > 0)
-                || !empty($body['messageid']);
+                || !empty($body['messageid'])
+                || !empty($body['messageids'][0]['messageid']);
 
             if ($isSuccess) {
                 return true;
@@ -263,6 +290,18 @@ class AnbernetSms
                 'balance'   => null,
                 'formatted' => 'Config Error',
                 'message'   => 'Provide either API Key OR Password + Token.',
+            ];
+        }
+
+        // Anbernet's /api/v1/balance strictly requires portal password & token.
+        // If the user is using API Key auth, mark as Active (API Key).
+        if (!empty($apiKey) && (empty($password) || empty($token))) {
+            return [
+                'success'   => true,
+                'balance'   => null,
+                'currency'  => 'BDT',
+                'formatted' => 'Active (API Key)',
+                'message'   => 'Connected via API Key. (Numeric balance check requires Portal Password & Token)',
             ];
         }
 

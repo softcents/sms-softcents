@@ -19,4 +19,6 @@ Route::prefix('v1')->group(function () {
     Route::get('/gateways/{id}/balance', [SmsGatewayController::class, 'checkBalance']);
     Route::match(['get', 'post'], '/send-sms', [\App\Http\Controllers\User\SoftcentsSmsApiController::class, 'index'])->name('api.v1.send-sms');
     Route::match(['get', 'post'], '/check-balance', [\App\Http\Controllers\User\BalanceCheckController::class, 'index'])->name('api.v1.check-balance');
+    Route::match(['get', 'post'], '/incoming-sms', [\App\Http\Controllers\Api\IncomingSmsController::class, 'handle'])->name('api.v1.incoming-sms');
+    Route::match(['get', 'post'], '/inbox/webhook', [\App\Http\Controllers\Api\IncomingSmsController::class, 'handle'])->name('api.v1.inbox.webhook');
 });

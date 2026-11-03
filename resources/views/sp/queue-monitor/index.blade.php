@@ -1160,26 +1160,88 @@
             </div>
         </div>
 
-        <!-- Campaign-Wise SMS Traffic & Queue Progress Matrix -->
-        <div class="panel-box mb-4">
+        <!-- Campaign-Wise SMS Statistics & Queue Progress Matrix -->
+        <div class="panel-box mb-4" id="panel-campaigns">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
-                    <h5 class="panel-title mb-0">
-                        <i class="fas fa-bullhorn text-danger"></i>
-                        {{ __('Campaign-Wise SMS Traffic & Queue Progress') }}
-                    </h5>
-                    <span class="badge badge-soft-danger"><span id="campaigns-count">{{ count($campaigns ?? []) }}</span> {{ __('Active / Recent Campaigns') }}</span>
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: rgba(220, 53, 69, 0.12); color: #dc3545;">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Campaign-Wise SMS Statistics & Queue Progress') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Bulk campaign dispatch status, recipient completion, and queue backlog in your network') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-danger ms-1"><span id="campaigns-count">{{ count($campaigns ?? []) }}</span> {{ __('Campaigns Monitored') }}</span>
                 </div>
-                <div class="text-muted" style="font-size: 12px;">
-                    <i class="fas fa-tasks text-danger me-1"></i>{{ __('Bulk campaign dispatch status, recipient completion, and queue backlog in your network') }}
+                <div class="btn-group btn-group-sm" role="group" aria-label="Campaign Type Filter">
+                    <button type="button" class="btn btn-outline-danger camp-type-tab-btn active" data-type="all">{{ __('All Campaigns') }}</button>
+                    <button type="button" class="btn btn-outline-danger camp-type-tab-btn" data-type="own">{{ __('Own Campaigns') }}</button>
+                    <button type="button" class="btn btn-outline-danger camp-type-tab-btn" data-type="ssp">{{ __('Sub-Resellers') }}</button>
+                    <button type="button" class="btn btn-outline-danger camp-type-tab-btn" data-type="customer">{{ __('Customers') }}</button>
                 </div>
             </div>
+
+            <!-- Aggregated Mini Counters for Campaigns -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE CAMPAIGNS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-total">{{ $campaignAggregates['total_campaigns'] ?? 0 }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">
+                                <span class="text-success fw-bold">{{ __('Own') }}: <span id="camp-agg-own">{{ $campaignAggregates['own_campaigns'] ?? 0 }}</span></span> • 
+                                <span class="text-primary fw-bold">{{ __('Downline') }}: <span id="camp-agg-downline">{{ $campaignAggregates['downline_campaigns'] ?? 0 }}</span></span>
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TOTAL RECIPIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="camp-agg-recipients">{{ number_format($campaignAggregates['total_recipients'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Target Mobile Contacts') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING IN QUEUE') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="camp-agg-pending">{{ number_format($campaignAggregates['pending_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Awaiting Worker RAM') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold {{ ($campaignAggregates['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="camp-agg-processing">{{ number_format($campaignAggregates['processing_queue'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Active Dispatches') }}</small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERED SMS') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="camp-agg-delivered">{{ number_format($campaignAggregates['delivered_count'] ?? 0) }}</span>
+                            <small class="text-muted d-block" style="font-size: 10px;"><span class="text-danger fw-bold">{{ __('Failed') }}: <span id="camp-agg-failed">{{ number_format($campaignAggregates['failed_count'] ?? 0) }}</span></span></small>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('AVG PROGRESS') }}</span>
+                            <span class="fs-5 fw-bold text-primary" id="camp-agg-progress">{{ $campaignAggregates['avg_progress'] ?? 0 }}%</span>
+                            <small class="text-muted d-block" style="font-size: 10px;">{{ __('Completion Velocity') }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-modern align-middle" id="table-campaigns">
                     <thead>
                         <tr>
                             <th>{{ __('Campaign & ID') }}</th>
-                            <th>{{ __('Initiator / User') }}</th>
+                            <th>{{ __('Initiator / Account') }}</th>
                             <th class="text-center">{{ __('Sender ID') }}</th>
                             <th class="text-center">{{ __('Recipients') }}</th>
                             <th class="text-center">{{ __('Pending') }}</th>
@@ -1188,11 +1250,12 @@
                             <th class="text-center">{{ __('Failed') }}</th>
                             <th class="text-center" style="min-width: 140px;">{{ __('Progress') }}</th>
                             <th class="text-end">{{ __('Status / Time') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
                         </tr>
                     </thead>
                     <tbody id="tbody-campaigns">
                         @forelse($campaigns ?? [] as $camp)
-                        <tr data-campaign-id="{{ $camp['id'] }}">
+                        <tr data-campaign-id="{{ $camp['id'] }}" data-creator-type="{{ $camp['creator_type'] ?? 'customer' }}">
                             <td>
                                 <div class="fw-bold text-dark d-flex align-items-center gap-2">
                                     <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
@@ -1203,8 +1266,19 @@
                                 <small class="text-muted ms-4">ID: #{{ $camp['id'] }} @if(!empty($camp['charges'])) • ৳{{ $camp['charges'] }} @endif</small>
                             </td>
                             <td>
-                                <div class="fw-bold text-dark">{{ $camp['creator_name'] }}</div>
-                                <small class="badge badge-soft-info" style="font-size: 10px;">{{ ucfirst($camp['creator_role']) }}</small>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    {{ $camp['creator_name'] }}
+                                    @if(($camp['creator_type'] ?? '') === 'own')
+                                        <span class="badge bg-success" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>{{ __('YOU (Direct)') }}</span>
+                                    @elseif(($camp['creator_type'] ?? '') === 'ssp')
+                                        <span class="badge badge-soft-primary" style="font-size: 10px;">{{ __('Sub-Reseller') }}</span>
+                                    @else
+                                        <span class="badge badge-soft-info" style="font-size: 10px;">{{ __('Customer') }}</span>
+                                    @endif
+                                </div>
+                                @if(!empty($camp['parent_name']) && ($camp['creator_type'] ?? '') !== 'own')
+                                    <small class="text-muted d-block" style="font-size: 10px;"><i class="fas fa-turn-up fa-rotate-90 text-primary me-1"></i>via {{ $camp['parent_name'] }}</small>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <span class="badge badge-soft-primary px-2 py-1">{{ $camp['sender'] }}</span>
@@ -1237,10 +1311,20 @@
                                 </span>
                                 <small class="text-muted d-block mt-1" style="font-size: 11px;">{{ $camp['created_at'] }}</small>
                             </td>
+                            <td class="text-end text-nowrap">
+                                @if(!empty($camp['creator_id']))
+                                <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-open-customer-queue" data-id="{{ $camp['creator_id'] }}" title="{{ __('Inspect Queue Messages') }}" style="font-size: 11px;">
+                                    <i class="fas fa-layer-group me-1"></i> {{ __('View Queue') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="{{ $camp['creator_id'] }}" title="{{ __('Drill-down entire dashboard') }}" style="font-size: 11px;">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                                @endif
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="text-center py-4 text-muted">{{ __('No active bulk campaigns in queue. System ready for scheduled campaign broadcasts.') }}</td>
+                            <td colspan="11" class="text-center py-4 text-muted">{{ __('No active bulk campaigns in queue. System ready for scheduled campaign broadcasts.') }}</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -1824,7 +1908,7 @@ $(document).ready(function() {
                 renderRoutesTable(res.routes);
 
                 // Campaigns Table
-                renderCampaignsTable(res.campaigns);
+                renderCampaignsTable(res.campaigns, res.campaign_aggregates);
 
                 // Breadcrumb trail
                 updateBreadcrumbs(res.breadcrumbs);
@@ -2199,18 +2283,48 @@ $(document).ready(function() {
         $('#tbody-routes').html(html);
     }
 
-    // 7. Render Campaigns Table
-    function renderCampaignsTable(campaigns) {
-        if (!campaigns) return;
-        $('#campaigns-count').text(campaigns.length);
+    // 7. Render Campaigns Table & Aggregates
+    let currentCampaignsData = @json($campaigns ?? []);
+    let currentCampaignAggregates = @json($campaignAggregates ?? []);
+    let currentCampaignTypeFilter = 'all';
 
-        if (!campaigns.length) {
-            $('#tbody-campaigns').html('<tr><td colspan="10" class="text-center py-4 text-muted">No active bulk campaigns in queue. System ready for scheduled campaign broadcasts.</td></tr>');
+    function renderCampaignsTable(campaigns, aggregates) {
+        if (campaigns) currentCampaignsData = campaigns;
+        if (aggregates) currentCampaignAggregates = aggregates;
+
+        const allCamps = currentCampaignsData || [];
+        const agg = currentCampaignAggregates || {};
+
+        let filtered = allCamps.slice();
+        if (currentCampaignTypeFilter === 'own') {
+            filtered = filtered.filter(c => c.creator_type === 'own');
+        } else if (currentCampaignTypeFilter === 'ssp') {
+            filtered = filtered.filter(c => c.creator_type === 'ssp');
+        } else if (currentCampaignTypeFilter === 'customer') {
+            filtered = filtered.filter(c => c.creator_type === 'customer');
+        }
+
+        // Update count badges
+        $('#campaigns-count').text(filtered.length);
+
+        // Update aggregate mini KPI counters
+        $('#camp-agg-total').text(agg.total_campaigns || 0);
+        $('#camp-agg-own').text(agg.own_campaigns || 0);
+        $('#camp-agg-downline').text(agg.downline_campaigns || 0);
+        $('#camp-agg-recipients').text(Number(agg.total_recipients || 0).toLocaleString());
+        $('#camp-agg-pending').text(Number(agg.pending_queue || 0).toLocaleString());
+        $('#camp-agg-processing').text(Number(agg.processing_queue || 0).toLocaleString());
+        $('#camp-agg-delivered').text(Number(agg.delivered_count || 0).toLocaleString());
+        $('#camp-agg-failed').text(Number(agg.failed_count || 0).toLocaleString());
+        $('#camp-agg-progress').text((agg.avg_progress || 0) + '%');
+
+        if (!filtered.length) {
+            $('#tbody-campaigns').html('<tr><td colspan="11" class="text-center py-4 text-muted">{{ __("No campaigns match this filter. System ready for bulk broadcasts.") }}</td></tr>');
             return;
         }
 
         let html = '';
-        campaigns.forEach(function(camp) {
+        filtered.forEach(function(camp) {
             const pendingClass = camp.pending_queue > 0 ? 'text-warning' : 'text-muted';
             const procClass = camp.processing_queue > 0 ? 'text-info' : 'text-muted';
             const delivClass = camp.delivered_count > 0 ? 'text-success' : 'text-muted';
@@ -2218,8 +2332,34 @@ $(document).ready(function() {
             const progressBg = camp.progress_percent >= 100 ? 'bg-success' : 'bg-primary';
             const chargeText = camp.charges ? ` • ৳${camp.charges}` : '';
 
+            let creatorBadge = '';
+            if (camp.creator_type === 'own') {
+                creatorBadge = `<span class="badge bg-success" style="font-size: 9px;"><i class="fas fa-user-check me-1"></i>YOU (Direct)</span>`;
+            } else if (camp.creator_type === 'ssp') {
+                creatorBadge = `<span class="badge badge-soft-primary" style="font-size: 10px;">Sub-Reseller</span>`;
+            } else {
+                creatorBadge = `<span class="badge badge-soft-info" style="font-size: 10px;">Customer</span>`;
+            }
+
+            let viaText = '';
+            if (camp.parent_name && camp.creator_type !== 'own') {
+                viaText = `<small class="text-muted d-block" style="font-size: 10px;"><i class="fas fa-turn-up fa-rotate-90 text-primary me-1"></i>via ${camp.parent_name}</small>`;
+            }
+
+            let actionBtns = '';
+            if (camp.creator_id) {
+                actionBtns = `
+                    <button type="button" class="btn btn-sm btn-outline-success py-1 px-2 btn-open-customer-queue" data-id="${camp.creator_id}" title="Inspect Queue Messages" style="font-size: 11px;">
+                        <i class="fas fa-layer-group me-1"></i> View Queue
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="${camp.creator_id}" title="Drill-down entire dashboard" style="font-size: 11px;">
+                        <i class="fas fa-crosshairs"></i>
+                    </button>
+                `;
+            }
+
             html += `
-                <tr data-campaign-id="${camp.id}">
+                <tr data-campaign-id="${camp.id}" data-creator-type="${camp.creator_type || 'customer'}">
                     <td>
                         <div class="fw-bold text-dark d-flex align-items-center gap-2">
                             <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(220, 53, 69, 0.12); color: #dc3545; font-size: 12px;">
@@ -2230,8 +2370,11 @@ $(document).ready(function() {
                         <small class="text-muted ms-4">ID: #${camp.id}${chargeText}</small>
                     </td>
                     <td>
-                        <div class="fw-bold text-dark">${camp.creator_name}</div>
-                        <small class="badge badge-soft-info" style="font-size: 10px;">${camp.creator_role ? camp.creator_role.charAt(0).toUpperCase() + camp.creator_role.slice(1) : 'User'}</small>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            ${camp.creator_name}
+                            ${creatorBadge}
+                        </div>
+                        ${viaText}
                     </td>
                     <td class="text-center">
                         <span class="badge badge-soft-primary px-2 py-1">${camp.sender}</span>
@@ -2255,6 +2398,9 @@ $(document).ready(function() {
                             ${camp.status}
                         </span>
                         <small class="text-muted d-block mt-1" style="font-size: 11px;">${camp.created_at}</small>
+                    </td>
+                    <td class="text-end text-nowrap">
+                        ${actionBtns}
                     </td>
                 </tr>
             `;
@@ -2757,6 +2903,14 @@ $(document).ready(function() {
         $(this).addClass('active');
         currentCustomerTypeFilter = $(this).data('type');
         renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Campaign Type Tab Filter
+    $(document).on('click', '.camp-type-tab-btn', function() {
+        $('.camp-type-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentCampaignTypeFilter = $(this).data('type');
+        renderCampaignsTable(currentCampaignsData, currentCampaignAggregates);
     });
 
     // Open Live Customer Queue Details

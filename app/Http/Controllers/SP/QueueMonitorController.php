@@ -38,6 +38,7 @@ class QueueMonitorController extends Controller
         $providers = $this->service->getProviderTrafficSummary($user, $filterUserId);
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
+        $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId) : null;
 
@@ -52,6 +53,7 @@ class QueueMonitorController extends Controller
             'providers',
             'routes',
             'campaigns',
+            'campaignAggregates',
             'breadcrumbs',
             'customerQueue'
         ));
@@ -77,22 +79,24 @@ class QueueMonitorController extends Controller
         $providers = $this->service->getProviderTrafficSummary($user, $filterUserId);
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
+        $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter) : null;
 
         return response()->json([
-            'success'        => true,
-            'timestamp'      => now()->format('H:i:s'),
-            'workers'        => $workers,
-            'metrics'        => $metrics,
-            'resellers'      => $resellerSummary,
-            'sub_resellers'  => $subResellers,
-            'customers'      => $customerSummary,
-            'providers'      => $providers,
-            'routes'         => $routes,
-            'campaigns'      => $campaigns,
-            'breadcrumbs'    => $breadcrumbs,
-            'customer_queue' => $customerQueue,
+            'success'             => true,
+            'timestamp'           => now()->format('H:i:s'),
+            'workers'             => $workers,
+            'metrics'             => $metrics,
+            'resellers'           => $resellerSummary,
+            'sub_resellers'       => $subResellers,
+            'customers'           => $customerSummary,
+            'providers'           => $providers,
+            'routes'              => $routes,
+            'campaigns'           => $campaigns,
+            'campaign_aggregates' => $campaignAggregates,
+            'breadcrumbs'         => $breadcrumbs,
+            'customer_queue'      => $customerQueue,
         ]);
     }
 

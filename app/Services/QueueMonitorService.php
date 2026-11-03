@@ -941,12 +941,18 @@ class QueueMonitorService
 
         $summary = [];
 
+        // Preload SSP IDs if SP user
+        $sspIds = [];
+        if ($user && $user->role === 'sp') {
+            $sspIds = User::where('parent_id', $user->id)->where('role', 'ssp')->pluck('id')->toArray();
+        }
+
         // 1. Query CampaignSms records
-        $csQuery = \App\Models\CampaignSms::with(['campaign', 'user', 'senderid'])->latest('id');
+        $csQuery = \App\Models\CampaignSms::with(['campaign', 'user.parent', 'senderid'])->latest('id');
         if ($scopedIds !== null) {
             $csQuery->whereIn('user_id', $scopedIds);
         }
-        $campaignSmsList = $csQuery->take(15)->get();
+        $campaignSmsList = $csQuery->take(25)->get();
 
         foreach ($campaignSmsList as $cs) {
             $numCount = substr_count($cs->numbers ?? '', ',') + (!empty($cs->numbers) ? 1 : 0);
@@ -974,13 +980,27 @@ class QueueMonitorService
                 default => 'badge-soft-warning'
             };
 
+            $creatorType = 'customer';
+            if ($user && $cs->user_id === $user->id) {
+                $creatorType = 'own';
+            } elseif (($cs->user && $cs->user->role === 'ssp') || in_array($cs->user_id, $sspIds, true)) {
+                $creatorType = 'ssp';
+            } else {
+                $creatorType = 'customer';
+            }
+
+            $parentName = ($cs->user && $cs->user->parent) ? $cs->user->parent->name : null;
+
             $summary[] = [
                 'id'               => $cs->id,
                 'campaign_id'      => $cs->campaign_id,
                 'name'             => $cs->campaign->name ?? ($cs->campaing_name ?: "Campaign #{$cs->id}"),
+                'creator_id'       => $cs->user_id,
                 'creator_name'     => $cs->user ? $cs->user->name : 'Platform',
                 'creator_username' => $cs->user ? ($cs->user->username ?? $cs->user->name) : 'platform',
                 'creator_role'     => $cs->user->role ?? 'user',
+                'creator_type'     => $creatorType,
+                'parent_name'      => $parentName,
                 'sender'           => $cs->senderid->sender ?? 'System',
                 'total_recipients' => $totalSms,
                 'pending_queue'    => $pendingCount,
@@ -997,50 +1017,125 @@ class QueueMonitorService
         }
 
         // 2. Also check any campaigns directly in Sms table
-        if (empty($summary)) {
-            $smsCampaignIds = Sms::whereNotNull('campaign_id')->distinct()->pluck('campaign_id')->take(10)->toArray();
-            if (!empty($smsCampaignIds)) {
-                $campaignModels = \App\Models\Campaign::whereIn('id', $smsCampaignIds)->get()->keyBy('id');
-                foreach ($smsCampaignIds as $cId) {
-                    $cQuery = Sms::where('campaign_id', $cId);
-                    if ($scopedIds !== null) {
-                        $cQuery->whereIn('user_id', $scopedIds);
-                    }
-                    $cTotal = (clone $cQuery)->count();
-                    $cPending = (clone $cQuery)->where('status', 'pending')->count();
-                    $cProcessing = (clone $cQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
-                    $cDelivered = (clone $cQuery)->whereIn('status', ['success', 'delivered'])->count();
-                    $cFailed = (clone $cQuery)->where('status', 'failed')->count();
+        $seenCampaignIds = array_filter(array_column($summary, 'campaign_id'));
+        $smsCampaignQuery = Sms::whereNotNull('campaign_id');
+        if (!empty($seenCampaignIds)) {
+            $smsCampaignQuery->whereNotIn('campaign_id', $seenCampaignIds);
+        }
+        if ($scopedIds !== null) {
+            $smsCampaignQuery->whereIn('user_id', $scopedIds);
+        }
+        $smsCampaignIds = $smsCampaignQuery->distinct()->pluck('campaign_id')->take(15)->toArray();
 
-                    $progress = $cTotal > 0 ? min(100.0, round((($cDelivered + $cFailed) / $cTotal) * 100, 1)) : 100.0;
-                    $rate = ($cDelivered + $cFailed) > 0 ? round(($cDelivered / ($cDelivered + $cFailed)) * 100, 1) : 100.0;
-                    $firstSms = (clone $cQuery)->with('user', 'senderid')->first();
-
-                    $summary[] = [
-                        'id'               => $cId,
-                        'campaign_id'      => $cId,
-                        'name'             => $campaignModels[$cId]->name ?? "Bulk Campaign #{$cId}",
-                        'creator_name'     => $firstSms->user->name ?? 'Platform User',
-                        'creator_username' => $firstSms->user->username ?? 'user',
-                        'creator_role'     => $firstSms->user->role ?? 'user',
-                        'sender'           => $firstSms->senderid->sender ?? 'N/A',
-                        'total_recipients' => $cTotal,
-                        'pending_queue'    => $cPending,
-                        'processing_queue' => $cProcessing,
-                        'delivered_count'  => $cDelivered,
-                        'failed_count'     => $cFailed,
-                        'progress_percent' => $progress,
-                        'delivery_rate'    => $rate,
-                        'status'           => $cPending > 0 ? 'Queued' : 'Completed',
-                        'status_badge'     => $cPending > 0 ? 'badge-soft-warning' : 'badge-soft-success',
-                        'charges'          => 0.0,
-                        'created_at'       => $firstSms && $firstSms->created_at ? $firstSms->created_at->format('M d, H:i') : now()->format('M d, H:i'),
-                    ];
+        if (!empty($smsCampaignIds)) {
+            $campaignModels = \App\Models\Campaign::whereIn('id', $smsCampaignIds)->get()->keyBy('id');
+            foreach ($smsCampaignIds as $cId) {
+                $cQuery = Sms::where('campaign_id', $cId);
+                if ($scopedIds !== null) {
+                    $cQuery->whereIn('user_id', $scopedIds);
                 }
+                $cTotal = (clone $cQuery)->count();
+                $cPending = (clone $cQuery)->where('status', 'pending')->count();
+                $cProcessing = (clone $cQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+                $cDelivered = (clone $cQuery)->whereIn('status', ['success', 'delivered'])->count();
+                $cFailed = (clone $cQuery)->where('status', 'failed')->count();
+
+                $progress = $cTotal > 0 ? min(100.0, round((($cDelivered + $cFailed) / $cTotal) * 100, 1)) : 100.0;
+                $rate = ($cDelivered + $cFailed) > 0 ? round(($cDelivered / ($cDelivered + $cFailed)) * 100, 1) : 100.0;
+                $firstSms = (clone $cQuery)->with(['user.parent', 'senderid'])->first();
+
+                $campUserId = $firstSms ? $firstSms->user_id : 0;
+                $creatorType = 'customer';
+                if ($user && $campUserId === $user->id) {
+                    $creatorType = 'own';
+                } elseif (($firstSms && $firstSms->user && $firstSms->user->role === 'ssp') || in_array($campUserId, $sspIds, true)) {
+                    $creatorType = 'ssp';
+                } else {
+                    $creatorType = 'customer';
+                }
+
+                $parentName = ($firstSms && $firstSms->user && $firstSms->user->parent) ? $firstSms->user->parent->name : null;
+
+                $summary[] = [
+                    'id'               => $cId,
+                    'campaign_id'      => $cId,
+                    'name'             => $campaignModels[$cId]->name ?? "Bulk Campaign #{$cId}",
+                    'creator_id'       => $campUserId,
+                    'creator_name'     => $firstSms->user->name ?? 'Platform User',
+                    'creator_username' => $firstSms->user->username ?? 'user',
+                    'creator_role'     => $firstSms->user->role ?? 'user',
+                    'creator_type'     => $creatorType,
+                    'parent_name'      => $parentName,
+                    'sender'           => $firstSms->senderid->sender ?? 'N/A',
+                    'total_recipients' => $cTotal,
+                    'pending_queue'    => $cPending,
+                    'processing_queue' => $cProcessing,
+                    'delivered_count'  => $cDelivered,
+                    'failed_count'     => $cFailed,
+                    'progress_percent' => $progress,
+                    'delivery_rate'    => $rate,
+                    'status'           => $cPending > 0 ? 'Queued' : 'Completed',
+                    'status_badge'     => $cPending > 0 ? 'badge-soft-warning' : 'badge-soft-success',
+                    'charges'          => 0.0,
+                    'created_at'       => $firstSms && $firstSms->created_at ? $firstSms->created_at->format('M d, H:i') : now()->format('M d, H:i'),
+                ];
             }
         }
 
         return $summary;
+    }
+
+    /**
+     * Compute aggregated statistics across monitored campaigns.
+     */
+    public function getCampaignAggregates(array $campaigns): array
+    {
+        $totalCampaigns = count($campaigns);
+        $ownCount = 0;
+        $sspCount = 0;
+        $customerCount = 0;
+        $totalRecipients = 0;
+        $pendingQueue = 0;
+        $processingQueue = 0;
+        $deliveredCount = 0;
+        $failedCount = 0;
+        $totalProgress = 0;
+
+        foreach ($campaigns as $c) {
+            $type = $c['creator_type'] ?? 'customer';
+            if ($type === 'own') {
+                $ownCount++;
+            } elseif ($type === 'ssp') {
+                $sspCount++;
+            } else {
+                $customerCount++;
+            }
+
+            $totalRecipients += (int) ($c['total_recipients'] ?? 0);
+            $pendingQueue += (int) ($c['pending_queue'] ?? 0);
+            $processingQueue += (int) ($c['processing_queue'] ?? 0);
+            $deliveredCount += (int) ($c['delivered_count'] ?? 0);
+            $failedCount += (int) ($c['failed_count'] ?? 0);
+            $totalProgress += (float) ($c['progress_percent'] ?? 0);
+        }
+
+        $avgProgress = $totalCampaigns > 0 ? round($totalProgress / $totalCampaigns, 1) : 0;
+        $activeQueueTotal = $pendingQueue + $processingQueue;
+
+        return [
+            'total_campaigns'    => $totalCampaigns,
+            'own_campaigns'      => $ownCount,
+            'downline_campaigns' => ($sspCount + $customerCount),
+            'ssp_campaigns'      => $sspCount,
+            'customer_campaigns' => $customerCount,
+            'total_recipients'   => $totalRecipients,
+            'active_queue_total' => $activeQueueTotal,
+            'pending_queue'      => $pendingQueue,
+            'processing_queue'   => $processingQueue,
+            'delivered_count'    => $deliveredCount,
+            'failed_count'       => $failedCount,
+            'avg_progress'       => $avgProgress,
+        ];
     }
 
     /**

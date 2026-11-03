@@ -135,4 +135,23 @@ class QueueMonitorController extends Controller
             'message' => $success ? __("Queue '{$queue}' has been purged successfully.") : __("Failed to purge queue '{$queue}'."),
         ]);
     }
+
+    /**
+     * Broadcast graceful restart signal to all active SMS queue workers.
+     */
+    public function restartWorkers(): JsonResponse
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('queue:restart');
+            return response()->json([
+                'success' => true,
+                'message' => __('Worker pool restart signal broadcasted successfully. Active workers will gracefully recycle.'),
+            ]);
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => __('Failed to broadcast worker restart signal: ') . $e->getMessage(),
+            ], 500);
+        }
+    }
 }

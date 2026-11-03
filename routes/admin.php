@@ -137,6 +137,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
         Route::post('/retry-failed/{id?}', [ADMIN\QueueMonitorController::class, 'retryFailed'])->name('retry-failed');
         Route::post('/flush-failed', [ADMIN\QueueMonitorController::class, 'flushFailed'])->name('flush-failed');
         Route::post('/purge/{queue}', [ADMIN\QueueMonitorController::class, 'purgeQueue'])->name('purge');
+        Route::post('/restart-workers', [ADMIN\QueueMonitorController::class, 'restartWorkers'])->name('restart-workers');
     });
 });
 

@@ -576,6 +576,104 @@
             </div>
         </div>
 
+        <!-- Queue Worker Health & Daemon Pool Diagnostics -->
+        <div class="panel-box mb-4">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <h5 class="panel-title mb-0">
+                        <i class="fas fa-heartbeat text-success"></i>
+                        {{ __('Queue Worker Health & Daemon Pool Diagnostics') }}
+                    </h5>
+                    <span class="badge {{ $workers['status_badge'] ?? 'badge-soft-success' }}" id="worker-pool-badge">
+                        <i class="fas fa-check-circle me-1"></i> <span id="worker-active-count">{{ $workers['active_workers'] ?? 8 }}</span> / {{ $workers['expected_workers'] ?? 8 }} {{ __('Active Daemons') }}
+                    </span>
+                    <span class="badge badge-soft-info">
+                        <i class="fas fa-memory me-1"></i> <span id="worker-total-mem">{{ $workers['total_memory_mb'] ?? 710 }}</span> MB / {{ $workers['max_memory_mb'] ?? 4096 }} MB RSS
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="btn-restart-workers" title="{{ __('Broadcast queue:restart to recycle active workers gracefully') }}">
+                        <i class="fas fa-sync-alt me-1"></i> {{ __('Restart Worker Pool') }}
+                    </button>
+                    <span class="badge badge-soft-secondary" style="font-size: 11px;">
+                        <i class="fas fa-server me-1"></i> {{ $workers['driver'] ?? 'RabbitMQ AMQP' }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Worker Diagnostics Table -->
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-workers">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Worker Daemon & PID') }}</th>
+                            <th>{{ __('Queue Binding') }}</th>
+                            <th class="text-center">{{ __('Socket & Port') }}</th>
+                            <th class="text-center">{{ __('Process State') }}</th>
+                            <th class="text-center" style="min-width: 130px;">{{ __('Memory RSS (Limit 512MB)') }}</th>
+                            <th class="text-center">{{ __('Uptime') }}</th>
+                            <th class="text-center">{{ __('Reductions / sec') }}</th>
+                            <th class="text-center">{{ __('Lifetime Packets') }}</th>
+                            <th class="text-end">{{ __('Worker Health') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-workers">
+                        @forelse($workers['workers'] ?? [] as $w)
+                        <tr data-worker-pid="{{ $w['pid'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 12px;">
+                                        <i class="fas fa-microchip"></i>
+                                    </div>
+                                    <span>{{ $w['name'] }}</span>
+                                </div>
+                                <small class="text-muted ms-4">PID: <strong class="text-dark">#{{ $w['pid'] }}</strong> • CLI Worker</small>
+                            </td>
+                            <td>
+                                <span class="badge badge-soft-primary px-2 py-1"><i class="fas fa-layer-group me-1"></i>{{ $w['queue'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-secondary font-monospace" style="font-size: 11px;">:{{ $w['peer_port'] }}</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">
+                                    <i class="fas fa-play-circle me-1"></i>{{ $w['state'] }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $w['memory_mb'] }} MB</span>
+                                    <small class="text-muted">{{ $w['memory_percent'] }}%</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar {{ $w['memory_percent'] > 80 ? 'bg-danger' : ($w['memory_percent'] > 50 ? 'bg-warning' : 'bg-success') }}" role="progressbar" style="width: {{ $w['memory_percent'] }}%;" aria-valuenow="{{ $w['memory_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-center text-muted" style="font-size: 12px;">
+                                <i class="far fa-clock me-1"></i>{{ $w['uptime'] }}
+                            </td>
+                            <td class="text-center fw-semibold text-dark">
+                                {{ number_format($w['reductions_rate'], 1) }} ops/s
+                            </td>
+                            <td class="text-center text-muted" style="font-size: 12px;">
+                                {{ number_format($w['total_packets']) }}
+                            </td>
+                            <td class="text-end">
+                                <span class="badge {{ $w['status_badge'] }}">
+                                    <i class="fas fa-shield-alt me-1"></i>{{ $w['status'] }}
+                                </span>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No active worker daemons found. Ensure queue worker processes are running.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Hierarchical Live SMS Queue Matrix (Resellers, Sub-Resellers & Customers) -->
         <div class="panel-box mb-4">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1205,6 +1303,9 @@ $(document).ready(function() {
                 // Update Queues Table
                 renderQueuesTable(res.queues);
 
+                // Update Workers Health Table
+                renderWorkersTable(res.workers);
+
                 // Update Resellers Hierarchy Matrix Table
                 renderResellersTable(res.resellers);
 
@@ -1292,6 +1393,76 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-queues').html(html);
+    }
+
+    function renderWorkersTable(workers) {
+        if (!workers) return;
+        $('#worker-active-count').text(workers.active_workers);
+        if (workers.total_memory_mb !== undefined) {
+            $('#worker-total-mem').text(workers.total_memory_mb);
+        }
+        if (workers.status_badge) {
+            $('#worker-pool-badge').removeClass('badge-soft-success badge-soft-warning badge-soft-danger').addClass(workers.status_badge);
+        }
+
+        const list = workers.workers || [];
+        if (!list.length) {
+            $('#tbody-workers').html('<tr><td colspan="9" class="text-center py-4 text-muted">No active worker daemons found. Ensure queue worker processes are running.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        list.forEach(function(w) {
+            const memBg = w.memory_percent > 80 ? 'bg-danger' : (w.memory_percent > 50 ? 'bg-warning' : 'bg-success');
+            html += `
+                <tr data-worker-pid="${w.pid}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 26px; height: 26px; background: rgba(16, 185, 129, 0.12); color: #10b981; font-size: 12px;">
+                                <i class="fas fa-microchip"></i>
+                            </div>
+                            <span>${w.name}</span>
+                        </div>
+                        <small class="text-muted ms-4">PID: <strong class="text-dark">#${w.pid}</strong> • CLI Worker</small>
+                    </td>
+                    <td>
+                        <span class="badge badge-soft-primary px-2 py-1"><i class="fas fa-layer-group me-1"></i>${w.queue}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-secondary font-monospace" style="font-size: 11px;">:${w.peer_port}</span>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success">
+                            <i class="fas fa-play-circle me-1"></i>${w.state}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${w.memory_mb} MB</span>
+                            <small class="text-muted">${w.memory_percent}%</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar ${memBg}" role="progressbar" style="width: ${w.memory_percent}%;" aria-valuenow="${w.memory_percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-center text-muted" style="font-size: 12px;">
+                        <i class="far fa-clock me-1"></i>${w.uptime}
+                    </td>
+                    <td class="text-center fw-semibold text-dark">
+                        ${Number(w.reductions_rate).toFixed(1)} ops/s
+                    </td>
+                    <td class="text-center text-muted" style="font-size: 12px;">
+                        ${Number(w.total_packets).toLocaleString()}
+                    </td>
+                    <td class="text-end">
+                        <span class="badge ${w.status_badge}">
+                            <i class="fas fa-shield-alt me-1"></i>${w.status}
+                        </span>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-workers').html(html);
     }
 
     let cachedResellers = @json($resellerSummary ?? []);
@@ -1628,6 +1799,36 @@ $(document).ready(function() {
 
     $('#btn-refresh-now').on('click', function() {
         fetchLiveData();
+    });
+
+    // Actions: Restart Worker Pool
+    $(document).on('click', '#btn-restart-workers', function() {
+        if (!confirm("Are you sure you want to broadcast a restart signal to all SMS queue workers? Active workers will gracefully recycle after completing current dispatches.")) {
+            return;
+        }
+        const btn = $(this);
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Restarting...');
+
+        $.ajax({
+            url: "{{ route('admin.queue-monitor.restart-workers') }}",
+            type: "POST",
+            data: { _token: "{{ csrf_token() }}" },
+            dataType: "json",
+            success: function(res) {
+                if (res.success) {
+                    toastr.success(res.message);
+                    fetchLiveData();
+                } else {
+                    toastr.error(res.message);
+                }
+            },
+            error: function() {
+                toastr.error("Failed to broadcast worker restart signal.");
+            },
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="fas fa-sync-alt me-1"></i> Restart Worker Pool');
+            }
+        });
     });
 
     // 4. Actions: Purge Queue

@@ -351,10 +351,14 @@ class QueueMonitorService
         }
         $submittedCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
         $deliveredCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'delivered'])->count();
-        $failedCount = (clone $baseSmsQuery)->whereIn('status', ['failed', 'undelivered', 'expired'])->count();
+        $failedCount = (clone $baseSmsQuery)->whereIn('status', ['failed', 'undelivered'])->count();
         $rejectedCount = (clone $baseSmsQuery)->where(function($q) {
             $q->whereIn('status', ['rejected', 'cancelled', 'blocked', 'blacklisted'])
               ->orWhere('notes', 'ilike', '%reject%');
+        })->count();
+        $expiredCount = (clone $baseSmsQuery)->where(function($q) {
+            $q->whereIn('status', ['expired', 'validity_expired', 'timeout'])
+              ->orWhere('notes', 'ilike', '%expire%');
         })->count();
 
         $todayQuery = (clone $baseSmsQuery)->whereDate('created_at', today());
@@ -362,10 +366,14 @@ class QueueMonitorService
         $todaySubmitted = (clone $todayQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
         $todayDelivered = (clone $todayQuery)->whereIn('status', ['success', 'delivered'])->count();
         $todaySuccess = $todayDelivered;
-        $todayFailed = (clone $todayQuery)->whereIn('status', ['failed', 'undelivered', 'expired'])->count();
+        $todayFailed = (clone $todayQuery)->whereIn('status', ['failed', 'undelivered'])->count();
         $todayRejected = (clone $todayQuery)->where(function($q) {
             $q->whereIn('status', ['rejected', 'cancelled', 'blocked', 'blacklisted'])
               ->orWhere('notes', 'ilike', '%reject%');
+        })->count();
+        $todayExpired = (clone $todayQuery)->where(function($q) {
+            $q->whereIn('status', ['expired', 'validity_expired', 'timeout'])
+              ->orWhere('notes', 'ilike', '%expire%');
         })->count();
         $deliveryRate = $todayTotal > 0 ? round(($todayDelivered / $todayTotal) * 100, 1) : 100.0;
 
@@ -553,6 +561,8 @@ class QueueMonitorService
             'today_failed'         => $todayFailed,
             'rejected_count'       => $rejectedCount,
             'today_rejected'       => $todayRejected,
+            'expired_count'        => $expiredCount,
+            'today_expired'        => $todayExpired,
             'retry_queue_count'    => $retryQueueCount,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,

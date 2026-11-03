@@ -370,7 +370,25 @@
                 </div>
             </div>
 
-            <!-- 8. Retry Queue -->
+            <!-- 8. Expired SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Expired SMS') }}</div>
+                            <div class="kpi-val" id="val-today-expired" style="color: #64748b;">{{ number_format($metrics['today_expired'] ?? 0) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #f1f5f9; color: #64748b;">
+                            <i class="fas fa-hourglass-end"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Today: <strong id="val-sub-today-expired">{{ number_format($metrics['today_expired'] ?? 0) }}</strong> • All: <strong id="val-total-expired">{{ number_format($metrics['expired_count'] ?? 0) }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. Retry Queue -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -841,6 +859,9 @@ $(document).ready(function() {
                 $('#val-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
                 $('#val-sub-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
                 $('#val-total-rejected').text((res.metrics.rejected_count || 0).toLocaleString());
+                $('#val-today-expired').text((res.metrics.today_expired || 0).toLocaleString());
+                $('#val-sub-today-expired').text((res.metrics.today_expired || 0).toLocaleString());
+                $('#val-total-expired').text((res.metrics.expired_count || 0).toLocaleString());
                 $('#val-retry-queue').text((res.metrics.retry_queue_count || 0).toLocaleString());
 
                 // Update Queues Table

@@ -776,6 +776,148 @@
             </div>
         </div>
 
+        <!-- Customer-Wise SMS Queue Statistics -->
+        <div class="panel-box mb-4" id="panel-customer-matrix">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #dcfce7; color: #15803d;">
+                        <i class="fas fa-user-tag"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Customer-Wise SMS Queue Statistics') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Real-time client queue status, processing velocity, and dispatch progress across your entire customer base') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-success ms-1"><span id="customers-matrix-count">{{ count($customerSummary['list'] ?? []) }}</span> {{ __('Customers Monitored') }}</span>
+                </div>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Customer Type Filter">
+                    <button type="button" class="btn btn-outline-success cust-type-tab-btn active" data-type="all">{{ __('All Customers') }}</button>
+                    <button type="button" class="btn btn-outline-success cust-type-tab-btn" data-type="direct">{{ __('Direct (SP)') }}</button>
+                    <button type="button" class="btn btn-outline-success cust-type-tab-btn" data-type="ssp">{{ __('Via Sub-Resellers') }}</button>
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Customers -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE CLIENTS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="cust-agg-total">{{ $customerSummary['aggregates']['total_customers'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DIRECT / VIA SSP') }}</span>
+                            <span class="fs-5 fw-bold text-primary"><span id="cust-agg-direct">{{ $customerSummary['aggregates']['direct_customers'] ?? 0 }}</span> / <span id="cust-agg-ssp">{{ $customerSummary['aggregates']['ssp_customers'] ?? 0 }}</span></span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING QUEUE') }}</span>
+                            <span class="fs-5 fw-bold {{ ($customerSummary['aggregates']['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="cust-agg-pending">{{ number_format($customerSummary['aggregates']['pending_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold {{ ($customerSummary['aggregates']['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="cust-agg-processing">{{ number_format($customerSummary['aggregates']['processing_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TODAY DISPATCHED') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="cust-agg-today">{{ number_format($customerSummary['aggregates']['today_total'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERY RATE') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="cust-agg-rate">{{ $customerSummary['aggregates']['delivery_rate'] ?? 100 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-customers-matrix">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Customer Account') }}</th>
+                            <th>{{ __('Parent Ownership') }}</th>
+                            <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Processing (RAM)') }}</th>
+                            <th class="text-center">{{ __('Today Total SMS') }}</th>
+                            <th class="text-center">{{ __('Delivered') }}</th>
+                            <th class="text-center">{{ __('Failed') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate') }}</th>
+                            <th class="text-center" style="min-width: 130px;">{{ __('Traffic Share') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-customers-matrix">
+                        @forelse($customerSummary['list'] ?? [] as $cust)
+                        <tr data-cust-id="{{ $cust['id'] }}" data-is-direct="{{ $cust['is_direct'] ? '1' : '0' }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    <i class="fas fa-user text-success me-1"></i>
+                                    {{ $cust['name'] }}
+                                </div>
+                                <small class="text-muted">@{{ $cust['username'] }} @if(!empty($cust['phone']) && $cust['phone'] !== 'N/A') • {{ $cust['phone'] }} @endif</small>
+                            </td>
+                            <td>
+                                <span class="badge {{ $cust['is_direct'] ? 'badge-soft-primary' : 'badge-soft-info' }}" style="font-size: 10px;">
+                                    {{ $cust['parent_label'] }}
+                                </span>
+                            </td>
+                            <td class="text-center fw-bold {{ $cust['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($cust['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $cust['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($cust['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($cust['today_total']) }}</td>
+                            <td class="text-center fw-bold text-success">{{ number_format($cust['today_delivered']) }}</td>
+                            <td class="text-center fw-bold {{ $cust['today_failed'] > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($cust['today_failed']) }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">{{ $cust['delivery_rate'] }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $cust['traffic_share'] }}%</span>
+                                    <small class="text-muted">{{ number_format($cust['lifetime_total']) }}</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ $cust['traffic_share'] }}%;" aria-valuenow="{{ $cust['traffic_share'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($cust['balance'], 2) }}</td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-success py-1 px-2 btn-open-customer-queue" data-id="{{ $cust['id'] }}" title="{{ __('Open live queue messages for this customer') }}" style="font-size: 11px;">
+                                    <i class="fas fa-layer-group me-1"></i> {{ __('View Queue') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="{{ $cust['id'] }}" title="{{ __('Drill-down entire dashboard') }}" style="font-size: 11px;">
+                                    <i class="fas fa-crosshairs"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $cust['id'] }}" title="{{ __('Inspect Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="11" class="text-center py-4 text-muted">{{ __('No customers registered in your network.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Hierarchical Live SMS Queue Matrix (Sub-Resellers & Customers) -->
         <div class="panel-box mb-4">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1672,6 +1814,9 @@ $(document).ready(function() {
                 // Sub-Resellers Table & Mini Counters
                 renderSubResellersTable(res.sub_resellers);
 
+                // Customer-Wise Queue Matrix & Mini Counters
+                renderCustomersMatrixTable(res.customers);
+
                 // Providers Table
                 renderProvidersTable(res.providers);
 
@@ -1854,6 +1999,94 @@ $(document).ready(function() {
             `;
         });
         $('#tbody-subresellers').html(html);
+    }
+
+    // 4c. Render Customer-Wise Queue Matrix & Mini Counters
+    let currentCustomerMatrixData = @json($customerSummary ?? []);
+    let currentCustomerTypeFilter = 'all';
+
+    function renderCustomersMatrixTable(customerSummary) {
+        if (!customerSummary) return;
+        currentCustomerMatrixData = customerSummary;
+        const list = customerSummary.list || [];
+        const agg = customerSummary.aggregates || {};
+
+        let filtered = list.slice();
+        if (currentCustomerTypeFilter === 'direct') {
+            filtered = filtered.filter(c => c.is_direct);
+        } else if (currentCustomerTypeFilter === 'ssp') {
+            filtered = filtered.filter(c => !c.is_direct);
+        }
+
+        $('#customers-matrix-count').text(filtered.length);
+        $('#cust-agg-total').text(agg.total_customers || 0);
+        $('#cust-agg-direct').text(agg.direct_customers || 0);
+        $('#cust-agg-ssp').text(agg.ssp_customers || 0);
+        $('#cust-agg-pending').text(Number(agg.pending_queue || 0).toLocaleString());
+        $('#cust-agg-processing').text(Number(agg.processing_queue || 0).toLocaleString());
+        $('#cust-agg-today').text(Number(agg.today_total || 0).toLocaleString());
+        $('#cust-agg-rate').text((agg.delivery_rate || 100) + '%');
+
+        if (!filtered.length) {
+            $('#tbody-customers-matrix').html('<tr><td colspan="11" class="text-center py-4 text-muted">No customers match this filter.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        filtered.forEach(function(cust) {
+            const pendingClass = cust.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = cust.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const failClass = cust.today_failed > 0 ? 'text-danger' : 'text-muted';
+            const phoneStr = (cust.phone && cust.phone !== 'N/A') ? ` • ${cust.phone}` : '';
+            const parentBadgeClass = cust.is_direct ? 'badge-soft-primary' : 'badge-soft-info';
+
+            html += `
+                <tr data-cust-id="${cust.id}" data-is-direct="${cust.is_direct ? '1' : '0'}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <i class="fas fa-user text-success me-1"></i>
+                            ${cust.name}
+                        </div>
+                        <small class="text-muted">@${cust.username}${phoneStr}</small>
+                    </td>
+                    <td>
+                        <span class="badge ${parentBadgeClass}" style="font-size: 10px;">
+                            ${cust.parent_label}
+                        </span>
+                    </td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(cust.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(cust.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-dark">${Number(cust.today_total).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-success">${Number(cust.today_delivered).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${failClass}">${Number(cust.today_failed).toLocaleString()}</td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success">${cust.delivery_rate}%</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${cust.traffic_share}%</span>
+                            <small class="text-muted">${Number(cust.lifetime_total).toLocaleString()}</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: ${cust.traffic_share}%;" aria-valuenow="${cust.traffic_share}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark">৳${Number(cust.balance).toFixed(2)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-success py-1 px-2 btn-open-customer-queue" data-id="${cust.id}" title="Open live queue messages for this customer" style="font-size: 11px;">
+                            <i class="fas fa-layer-group me-1"></i> View Queue
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="${cust.id}" title="Drill-down entire dashboard" style="font-size: 11px;">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${cust.id}" title="Inspect Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-customers-matrix').html(html);
     }
 
     // 5. Render Provider Table
@@ -2511,6 +2744,28 @@ $(document).ready(function() {
         fetchLiveData();
         setTimeout(function() {
             if ($('#panel-customer-queue').length && !$('#panel-customer-queue').hasClass('d-none')) {
+                $('html, body').animate({
+                    scrollTop: $('#panel-customer-queue').offset().top - 80
+                }, 'fast');
+            }
+        }, 300);
+    });
+
+    // Customer Type Tab Filter
+    $(document).on('click', '.cust-type-tab-btn', function() {
+        $('.cust-type-tab-btn').removeClass('active');
+        $(this).addClass('active');
+        currentCustomerTypeFilter = $(this).data('type');
+        renderCustomersMatrixTable(currentCustomerMatrixData);
+    });
+
+    // Open Live Customer Queue Details
+    $(document).on('click', '.btn-open-customer-queue', function() {
+        const custId = $(this).data('id');
+        $('#select-filter-user').val(custId);
+        fetchLiveData();
+        setTimeout(function() {
+            if ($('#panel-customer-queue').length) {
                 $('html, body').animate({
                     scrollTop: $('#panel-customer-queue').offset().top - 80
                 }, 'fast');

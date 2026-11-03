@@ -449,6 +449,105 @@ class QueueMonitorService
     }
 
     /**
+     * Get dedicated Customer-wise SMS queue and performance statistics.
+     */
+    public function getCustomerQueueSummary(User $viewer, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($viewer);
+        if (!$scopedIds) {
+            return ['list' => [], 'aggregates' => []];
+        }
+
+        $query = User::where('role', 'user')->whereIn('id', $scopedIds);
+
+        if ($filterUserId) {
+            $targetUser = User::find($filterUserId);
+            if ($targetUser) {
+                if ($targetUser->role === 'user') {
+                    $query->where('id', $targetUser->id);
+                } elseif ($targetUser->role === 'ssp') {
+                    $query->where('parent_id', $targetUser->id);
+                }
+            }
+        }
+
+        $customers = $query->orderBy('name')->get();
+        $totalNetworkSms = Sms::whereIn('user_id', $scopedIds)->count();
+
+        $parents = User::whereIn('role', ['sp', 'ssp'])->pluck('name', 'id')->toArray();
+        $parentUsernames = User::whereIn('role', ['sp', 'ssp'])->pluck('username', 'id')->toArray();
+
+        $list = [];
+        $aggregates = [
+            'total_customers'  => $customers->count(),
+            'direct_customers' => 0,
+            'ssp_customers'    => 0,
+            'pending_queue'    => 0,
+            'processing_queue' => 0,
+            'today_total'      => 0,
+            'today_delivered'  => 0,
+            'today_failed'     => 0,
+            'delivery_rate'    => 100.0,
+        ];
+
+        foreach ($customers as $cust) {
+            $isDirect = ($cust->parent_id === $viewer->id);
+            if ($isDirect) {
+                $aggregates['direct_customers']++;
+                $parentLabel = 'Direct Customer (Reseller)';
+            } else {
+                $aggregates['ssp_customers']++;
+                $pName = $parents[$cust->parent_id] ?? 'Sub-Reseller';
+                $pUser = $parentUsernames[$cust->parent_id] ?? $pName;
+                $parentLabel = 'Sub-Reseller: ' . $pName . ' (@' . $pUser . ')';
+            }
+
+            $pending = Sms::where('user_id', $cust->id)->where('status', 'pending')->count();
+            $processing = Sms::where('user_id', $cust->id)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+            $today = Sms::where('user_id', $cust->id)->whereDate('created_at', today())->count();
+            $todayDelivered = Sms::where('user_id', $cust->id)->whereDate('created_at', today())->whereIn('status', ['success', 'delivered'])->count();
+            $todayFailed = Sms::where('user_id', $cust->id)->whereDate('created_at', today())->where('status', 'failed')->count();
+            $lifetime = Sms::where('user_id', $cust->id)->count();
+            $deliveryRate = ($todayDelivered + $todayFailed) > 0 ? round(($todayDelivered / ($todayDelivered + $todayFailed)) * 100, 1) : 100.0;
+            $share = $totalNetworkSms > 0 ? round(($lifetime / $totalNetworkSms) * 100, 1) : 0.0;
+
+            $aggregates['pending_queue']    += $pending;
+            $aggregates['processing_queue'] += $processing;
+            $aggregates['today_total']      += $today;
+            $aggregates['today_delivered']  += $todayDelivered;
+            $aggregates['today_failed']     += $todayFailed;
+
+            $list[] = [
+                'id'               => $cust->id,
+                'name'             => $cust->name,
+                'username'         => $cust->username ?? $cust->name,
+                'email'            => $cust->email,
+                'phone'            => $cust->phone ?? 'N/A',
+                'parent_id'        => $cust->parent_id,
+                'parent_label'     => $parentLabel,
+                'is_direct'        => $isDirect,
+                'pending_queue'    => $pending,
+                'processing_queue' => $processing,
+                'today_total'      => $today,
+                'today_delivered'  => $todayDelivered,
+                'today_failed'     => $todayFailed,
+                'lifetime_total'   => $lifetime,
+                'delivery_rate'    => $deliveryRate,
+                'balance'          => round((float) ($cust->balance ?? 0), 2),
+                'traffic_share'    => $share,
+            ];
+        }
+
+        $allProcessed = $aggregates['today_delivered'] + $aggregates['today_failed'];
+        $aggregates['delivery_rate'] = $allProcessed > 0 ? round(($aggregates['today_delivered'] / $allProcessed) * 100, 1) : 100.0;
+
+        return [
+            'list'       => $list,
+            'aggregates' => $aggregates,
+        ];
+    }
+
+    /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
     public function getUserHierarchyBreadcrumbs(int $userId): array

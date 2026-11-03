@@ -34,6 +34,7 @@ class QueueMonitorController extends Controller
         $downlineUsers = $this->service->getFilterableDownline($user);
         $resellerSummary = $this->service->getResellerHierarchySummary($user);
         $subResellers = $this->service->getSubResellerQueueSummary($user, $filterUserId);
+        $customerSummary = $this->service->getCustomerQueueSummary($user, $filterUserId);
         $providers = $this->service->getProviderTrafficSummary($user, $filterUserId);
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
@@ -47,6 +48,7 @@ class QueueMonitorController extends Controller
             'filterUserId',
             'resellerSummary',
             'subResellers',
+            'customerSummary',
             'providers',
             'routes',
             'campaigns',
@@ -71,6 +73,7 @@ class QueueMonitorController extends Controller
         $metrics = $this->service->getScopedLiveMetrics($user, $filterUserId);
         $resellerSummary = $this->service->getResellerHierarchySummary($user);
         $subResellers = $this->service->getSubResellerQueueSummary($user, $filterUserId);
+        $customerSummary = $this->service->getCustomerQueueSummary($user, $filterUserId);
         $providers = $this->service->getProviderTrafficSummary($user, $filterUserId);
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
@@ -84,6 +87,7 @@ class QueueMonitorController extends Controller
             'metrics'        => $metrics,
             'resellers'      => $resellerSummary,
             'sub_resellers'  => $subResellers,
+            'customers'      => $customerSummary,
             'providers'      => $providers,
             'routes'         => $routes,
             'campaigns'      => $campaigns,

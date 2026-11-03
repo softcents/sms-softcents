@@ -891,12 +891,16 @@ $(document).ready(function() {
                 $('#val-workers-status').text(res.workers.active_workers + '/' + res.workers.expected_workers);
 
                 // KPI values
-                const totalBacklog = res.metrics.queue_backlog ?? ((res.broker.ready_messages || 0) + (res.metrics.pending_count || 0));
+                const isFiltered = !!$('#select-filter-user').val();
+                const readyMsg = isFiltered ? res.metrics.pending_count : (res.broker.ready_messages || 0);
+                const unackMsg = isFiltered ? (res.metrics.processing_count || 0) : (res.broker.unack_messages || 0);
+                const totalBacklog = res.metrics.queue_backlog ?? (readyMsg + (res.metrics.pending_count || 0));
+
                 $('#val-queue-backlog').text(totalBacklog.toLocaleString());
                 $('#val-backlog-drain').text(res.metrics.drain_eta || 'Optimal Flow');
-                $('#val-rmq-ready').text(res.broker.ready_messages.toLocaleString());
+                $('#val-rmq-ready').text(readyMsg.toLocaleString());
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
-                $('#val-unack').text(res.broker.unack_messages.toLocaleString());
+                $('#val-unack').text(unackMsg.toLocaleString());
                 $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());
                 $('#val-today-submitted').text((res.metrics.today_submitted || 0).toLocaleString());
                 $('#val-total-submitted').text((res.metrics.submitted_count || 0).toLocaleString());
@@ -1263,8 +1267,16 @@ $(document).ready(function() {
         fetchLiveData();
     });
 
-    // Start Poller
+    // Start Poller & initial sync
+    fetchLiveData();
     startPolling();
+
+    // Auto-sync immediately when tab regains focus
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && pollingInterval > 0) {
+            fetchLiveData();
+        }
+    });
 });
 </script>
 @endpush

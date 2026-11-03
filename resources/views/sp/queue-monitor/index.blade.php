@@ -177,7 +177,7 @@
                     <div class="d-flex flex-wrap align-items-center gap-3 mt-1" style="font-size: 13px; color: #64748b;">
                         <span><i class="fas fa-sitemap me-1"></i> Reseller Network: <strong>{{ auth()->user()->name }}</strong> ({{ '@' . (auth()->user()->username ?? auth()->user()->name) }})</span>
                         <span>•</span>
-                        <span><i class="fas fa-microchip me-1"></i> Worker Engine: <strong class="text-success">{{ $workers['active_workers'] }} Active</strong></span>
+                        <span><i class="fas fa-microchip me-1"></i> Worker Engine: <strong class="text-success" id="workers-top-count">{{ $workers['active_workers'] }} Active</strong></span>
                         <span>•</span>
                         <span><i class="fas fa-tachometer-alt me-1 text-info"></i> Speed: <strong id="val-tps" class="text-info">{{ $metrics['current_tps'] }}</strong> TPS</span>
                         <span>•</span>
@@ -633,9 +633,11 @@ $(document).ready(function() {
                 $('#val-kpi-5m').text(res.metrics.last_5_min_volume.toLocaleString());
                 const activeW = (res.metrics.active_workers ?? (res.workers ? res.workers.active_workers : 8));
                 $('#val-kpi-workers').text(activeW);
+                $('#workers-top-count').text(activeW + ' Active');
                 const wStat = (res.metrics.worker_status ?? (res.workers ? res.workers.status : 'healthy'));
                 $('#val-kpi-worker-badge').text(wStat.charAt(0).toUpperCase() + wStat.slice(1));
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
+                $('#live-indicator').removeClass('warning danger');
 
                 // Operator Chart
                 if (operatorChart && res.metrics.operators) {
@@ -659,6 +661,10 @@ $(document).ready(function() {
 
                 // Live Stream
                 renderStreamTable(res.metrics.live_stream);
+            },
+            error: function(err) {
+                console.warn('Queue monitor poll failed:', err);
+                $('#live-indicator').addClass('warning');
             },
             complete: function() {
                 isFetching = false;
@@ -735,11 +741,7 @@ $(document).ready(function() {
         $('.interval-btn').removeClass('active');
         $(this).addClass('active');
         pollingInterval = parseInt($(this).data('interval'), 10);
-        $('#select-filter-user').on('change', function() {
-        fetchLiveData();
-    });
-
-    startPolling();
+        startPolling();
     });
 
     $('#btn-refresh-now').on('click', function() {
@@ -750,7 +752,16 @@ $(document).ready(function() {
         fetchLiveData();
     });
 
+    // Start Poller & initial sync
+    fetchLiveData();
     startPolling();
+
+    // Auto-sync immediately when tab regains focus
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && pollingInterval > 0) {
+            fetchLiveData();
+        }
+    });
 });
 </script>
 @endpush

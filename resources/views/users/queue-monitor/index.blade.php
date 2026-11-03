@@ -640,6 +640,7 @@ $(document).ready(function() {
                 const wStat = (res.metrics.worker_status ?? (res.workers ? res.workers.status : 'healthy'));
                 $('#val-kpi-worker-badge').text(wStat.charAt(0).toUpperCase() + wStat.slice(1));
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
+                $('#live-indicator').removeClass('warning danger');
 
                 // Operator Chart
                 if (operatorChart && res.metrics.operators) {
@@ -663,6 +664,10 @@ $(document).ready(function() {
 
                 // Live Stream
                 renderStreamTable(res.metrics.live_stream);
+            },
+            error: function(err) {
+                console.warn('Queue monitor poll failed:', err);
+                $('#live-indicator').addClass('warning');
             },
             complete: function() {
                 isFetching = false;
@@ -765,7 +770,16 @@ $(document).ready(function() {
         fetchLiveData();
     });
 
+    // Start Poller & initial sync
+    fetchLiveData();
     startPolling();
+
+    // Auto-sync immediately when tab regains focus
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden && pollingInterval > 0) {
+            fetchLiveData();
+        }
+    });
 });
 </script>
 @endpush

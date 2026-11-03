@@ -640,6 +640,142 @@
             </div>
         </div>
 
+        <!-- Sub-Reseller-Wise SMS Queue Statistics -->
+        <div class="panel-box mb-4" id="panel-subreseller-queue">
+            <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0f2fe; color: #0284c7;">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div>
+                        <h5 class="panel-title mb-0">
+                            {{ __('Sub-Reseller-Wise SMS Queue Statistics') }}
+                        </h5>
+                        <small class="text-muted" style="font-size: 11px;">
+                            {{ __('Real-time queue backlog, dispatch progress, and delivery performance across your Sub-Reseller networks') }}
+                        </small>
+                    </div>
+                    <span class="badge badge-soft-info ms-1"><span id="subresellers-count">{{ count($subResellers['list'] ?? []) }}</span> {{ __('Sub-Resellers') }}</span>
+                </div>
+                <div class="text-muted" style="font-size: 12px;">
+                    <i class="fas fa-network-wired text-info me-1"></i> {{ __('Sub-Reseller (SSP) Tier Matrix') }}
+                </div>
+            </div>
+
+            <!-- Aggregated Mini Counters for Sub-Resellers -->
+            <div class="p-3 bg-light border-bottom">
+                <div class="row g-2 text-center" style="font-size: 12px;">
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('ACTIVE SUB-RESELLERS') }}</span>
+                            <span class="fs-5 fw-bold text-dark" id="ssp-kpi-count">{{ $subResellers['aggregates']['total_sub_resellers'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('MANAGED CUSTOMERS') }}</span>
+                            <span class="fs-5 fw-bold text-primary" id="ssp-kpi-customers">{{ $subResellers['aggregates']['total_customers'] ?? 0 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PENDING QUEUE') }}</span>
+                            <span class="fs-5 fw-bold {{ ($subResellers['aggregates']['pending_queue'] ?? 0) > 0 ? 'text-warning' : 'text-muted' }}" id="ssp-kpi-pending">{{ number_format($subResellers['aggregates']['pending_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('PROCESSING (RAM)') }}</span>
+                            <span class="fs-5 fw-bold {{ ($subResellers['aggregates']['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}" id="ssp-kpi-processing">{{ number_format($subResellers['aggregates']['processing_queue'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('TODAY DISPATCHED') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="ssp-kpi-today">{{ number_format($subResellers['aggregates']['today_total'] ?? 0) }}</span>
+                        </div>
+                    </div>
+                    <div class="col-lg col-md-4 col-6">
+                        <div class="bg-white p-2 rounded border">
+                            <span class="text-muted d-block text-uppercase" style="font-size: 10px;">{{ __('DELIVERY RATE') }}</span>
+                            <span class="fs-5 fw-bold text-success" id="ssp-kpi-rate">{{ $subResellers['aggregates']['delivery_rate'] ?? 100 }}%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-modern align-middle" id="table-subresellers">
+                    <thead>
+                        <tr>
+                            <th>{{ __('Sub-Reseller (SSP)') }}</th>
+                            <th class="text-center">{{ __('Customers') }}</th>
+                            <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Processing (RAM)') }}</th>
+                            <th class="text-center">{{ __('Today Total SMS') }}</th>
+                            <th class="text-center">{{ __('Delivered') }}</th>
+                            <th class="text-center">{{ __('Failed') }}</th>
+                            <th class="text-center">{{ __('Delivery Rate') }}</th>
+                            <th class="text-center" style="min-width: 130px;">{{ __('Traffic Share') }}</th>
+                            <th class="text-end">{{ __('Wallet Balance') }}</th>
+                            <th class="text-end">{{ __('Action') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-subresellers">
+                        @forelse($subResellers['list'] ?? [] as $ssp)
+                        <tr data-ssp-id="{{ $ssp['id'] }}">
+                            <td>
+                                <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                                    <i class="fas fa-user-tie text-info me-1"></i>
+                                    {{ $ssp['name'] }}
+                                </div>
+                                <small class="text-muted">@{{ $ssp['username'] }} @if(!empty($ssp['phone']) && $ssp['phone'] !== 'N/A') • {{ $ssp['phone'] }} @endif</small>
+                            </td>
+                            <td class="text-center fw-bold">{{ $ssp['customers_count'] }}</td>
+                            <td class="text-center fw-bold {{ $ssp['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
+                                {{ number_format($ssp['pending_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold {{ $ssp['processing_queue'] > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($ssp['processing_queue']) }}
+                            </td>
+                            <td class="text-center fw-bold text-dark">{{ number_format($ssp['today_total']) }}</td>
+                            <td class="text-center fw-bold text-success">{{ number_format($ssp['today_delivered']) }}</td>
+                            <td class="text-center fw-bold {{ $ssp['today_failed'] > 0 ? 'text-danger' : 'text-muted' }}">{{ number_format($ssp['today_failed']) }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-soft-success">{{ $ssp['delivery_rate'] }}%</span>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                                    <span class="fw-bold">{{ $ssp['traffic_share'] }}%</span>
+                                    <small class="text-muted">{{ number_format($ssp['lifetime_total']) }}</small>
+                                </div>
+                                <div class="progress mt-1" style="height: 6px;">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: {{ $ssp['traffic_share'] }}%;" aria-valuenow="{{ $ssp['traffic_share'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                </div>
+                            </td>
+                            <td class="text-end fw-bold text-dark">৳{{ number_format($ssp['balance'], 2) }}</td>
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="{{ $ssp['id'] }}" title="{{ __('Drill-down entire dashboard') }}" style="font-size: 11px;">
+                                    <i class="fas fa-crosshairs me-1"></i> {{ __('Drill-Down') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info py-1 px-2 btn-downline-reseller" data-id="{{ $ssp['id'] }}" data-name="{{ $ssp['name'] }}" title="{{ __('Filter hierarchy table to downline accounts') }}" style="font-size: 11px;">
+                                    <i class="fas fa-sitemap me-1"></i> {{ __('Downline') }}
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $ssp['id'] }}" title="{{ __('Inspect Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="11" class="text-center py-4 text-muted">{{ __('No Sub-resellers registered under your account.') }}</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Hierarchical Live SMS Queue Matrix (Sub-Resellers & Customers) -->
         <div class="panel-box mb-4">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
@@ -1533,6 +1669,9 @@ $(document).ready(function() {
                     renderResellersTable();
                 }
 
+                // Sub-Resellers Table & Mini Counters
+                renderSubResellersTable(res.sub_resellers);
+
                 // Providers Table
                 renderProvidersTable(res.providers);
 
@@ -1645,6 +1784,77 @@ $(document).ready(function() {
         currentRoleFilter = $(this).data('role');
         renderResellersTable();
     });
+
+    // 4b. Render Sub-Reseller Table & Aggregated Counters
+    function renderSubResellersTable(subResellers) {
+        if (!subResellers) return;
+        const list = subResellers.list || [];
+        const agg = subResellers.aggregates || {};
+
+        $('#subresellers-count').text(list.length);
+        $('#ssp-kpi-count').text(agg.total_sub_resellers || 0);
+        $('#ssp-kpi-customers').text(agg.total_customers || 0);
+        $('#ssp-kpi-pending').text(Number(agg.pending_queue || 0).toLocaleString());
+        $('#ssp-kpi-processing').text(Number(agg.processing_queue || 0).toLocaleString());
+        $('#ssp-kpi-today').text(Number(agg.today_total || 0).toLocaleString());
+        $('#ssp-kpi-rate').text((agg.delivery_rate || 100) + '%');
+
+        if (!list.length) {
+            $('#tbody-subresellers').html('<tr><td colspan="11" class="text-center py-4 text-muted">No Sub-resellers registered under your account.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        list.forEach(function(ssp) {
+            const pendingClass = ssp.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = ssp.processing_queue > 0 ? 'text-info' : 'text-muted';
+            const failClass = ssp.today_failed > 0 ? 'text-danger' : 'text-muted';
+            const phoneStr = (ssp.phone && ssp.phone !== 'N/A') ? ` • ${ssp.phone}` : '';
+
+            html += `
+                <tr data-ssp-id="${ssp.id}">
+                    <td>
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <i class="fas fa-user-tie text-info me-1"></i>
+                            ${ssp.name}
+                        </div>
+                        <small class="text-muted">@${ssp.username}${phoneStr}</small>
+                    </td>
+                    <td class="text-center fw-bold">${ssp.customers_count}</td>
+                    <td class="text-center fw-bold ${pendingClass}">${Number(ssp.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(ssp.processing_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-dark">${Number(ssp.today_total).toLocaleString()}</td>
+                    <td class="text-center fw-bold text-success">${Number(ssp.today_delivered).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${failClass}">${Number(ssp.today_failed).toLocaleString()}</td>
+                    <td class="text-center">
+                        <span class="badge badge-soft-success">${ssp.delivery_rate}%</span>
+                    </td>
+                    <td class="text-center">
+                        <div class="d-flex align-items-center justify-content-between" style="font-size: 11px;">
+                            <span class="fw-bold">${ssp.traffic_share}%</span>
+                            <small class="text-muted">${Number(ssp.lifetime_total).toLocaleString()}</small>
+                        </div>
+                        <div class="progress mt-1" style="height: 6px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: ${ssp.traffic_share}%;" aria-valuenow="${ssp.traffic_share}" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark">৳${Number(ssp.balance).toFixed(2)}</td>
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="${ssp.id}" title="Drill-down entire dashboard" style="font-size: 11px;">
+                            <i class="fas fa-crosshairs me-1"></i> Drill-Down
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-info py-1 px-2 btn-downline-reseller" data-id="${ssp.id}" data-name="${ssp.name}" title="Filter hierarchy table to downline accounts" style="font-size: 11px;">
+                            <i class="fas fa-sitemap me-1"></i> Downline
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${ssp.id}" title="Inspect Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+        $('#tbody-subresellers').html(html);
+    }
 
     // 5. Render Provider Table
     function renderProvidersTable(providers) {

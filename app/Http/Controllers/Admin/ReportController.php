@@ -170,16 +170,22 @@ class ReportController extends Controller
     public function subscriptions(Request $request)
     {
         $subscribers = PlanSubscribe::with('user', 'plan:id,title')
-                        ->when($request->has('search'), function ($q) use ($request) {
-                            $q->where(function ($query) use ($request) {
-                                $query->where('invoice_no', 'like', '%' . $request->search . '%')
-                                    ->orWhere('price', 'like', '%' . $request->search . '%')
-                                    ->orWhere('total_sms', 'like', '%' . $request->search . '%')
-                                    ->orWhereHas('user', function ($q) use ($request) {
-                                        $q->where('name', 'like', '%' . $request->search . '%');
+                        ->when($request->filled('search'), function ($q) use ($request) {
+                            $search = trim($request->search);
+                            $cleanSearch = ltrim($search, '@');
+                            $q->where(function ($query) use ($search, $cleanSearch) {
+                                $query->where('invoice_no', 'like', '%' . $search . '%')
+                                    ->orWhere('price', 'like', '%' . $search . '%')
+                                    ->orWhere('total_sms', 'like', '%' . $search . '%')
+                                    ->orWhereHas('user', function ($uq) use ($search, $cleanSearch) {
+                                        $uq->where('name', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $cleanSearch . '%')
+                                            ->orWhere('phone', 'like', '%' . $search . '%')
+                                            ->orWhere('email', 'like', '%' . $search . '%');
                                     })
-                                    ->orWhereHas('plan', function ($q) use ($request) {
-                                        $q->where('title', 'like', '%' . $request->search . '%');
+                                    ->orWhereHas('plan', function ($pq) use ($search) {
+                                        $pq->where('title', 'like', '%' . $search . '%');
                                     });
                             });
                         })
@@ -201,16 +207,22 @@ class ReportController extends Controller
     public function recharges(Request $request)
     {
         $recharges = Recharge::with('user', 'gateway')
-                        ->when($request->has('search'), function ($q) use ($request) {
-                            $q->where(function ($query) use ($request) {
-                                $query->where('invoice_no', 'like', '%' . $request->search . '%')
-                                    ->orWhere('amount', 'like', '%' . $request->search . '%')
-                                    ->orWhere('status', 'like', '%' . $request->search . '%')
-                                    ->orWhereHas('user', function ($q) use ($request) {
-                                        $q->where('name', 'like', '%' . $request->search . '%');
+                        ->when($request->filled('search'), function ($q) use ($request) {
+                            $search = trim($request->search);
+                            $cleanSearch = ltrim($search, '@');
+                            $q->where(function ($query) use ($search, $cleanSearch) {
+                                $query->where('invoice_no', 'like', '%' . $search . '%')
+                                    ->orWhere('amount', 'like', '%' . $search . '%')
+                                    ->orWhere('status', 'like', '%' . $search . '%')
+                                    ->orWhereHas('user', function ($uq) use ($search, $cleanSearch) {
+                                        $uq->where('name', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $cleanSearch . '%')
+                                            ->orWhere('phone', 'like', '%' . $search . '%')
+                                            ->orWhere('email', 'like', '%' . $search . '%');
                                     })
-                                    ->orWhereHas('gateway', function ($q) use ($request) {
-                                        $q->where('name', 'like', '%' . $request->search . '%');
+                                    ->orWhereHas('gateway', function ($gq) use ($search) {
+                                        $gq->where('name', 'like', '%' . $search . '%');
                                     });
                             });
                         })
@@ -231,14 +243,20 @@ class ReportController extends Controller
     public function transactions(Request $request)
     {
         $transactions = Transaction::with('user', 'gateway')
-                        ->when($request->has('search'), function ($q) use ($request) {
-                            $q->where(function ($query) use ($request) {
-                                $query->where('invoice_no', 'like', '%' . $request->search . '%')
-                                    ->orWhere('amount', 'like', '%' . $request->search . '%')
-                                    ->orWhere('charge', 'like', '%' . $request->search . '%')
-                                    ->orWhere('reason', 'like', '%' . $request->search . '%')
-                                    ->orWhereHas('user', function ($q) use ($request) {
-                                        $q->where('name', 'like', '%' . $request->search . '%');
+                        ->when($request->filled('search'), function ($q) use ($request) {
+                            $search = trim($request->search);
+                            $cleanSearch = ltrim($search, '@');
+                            $q->where(function ($query) use ($search, $cleanSearch) {
+                                $query->where('invoice_no', 'like', '%' . $search . '%')
+                                    ->orWhere('amount', 'like', '%' . $search . '%')
+                                    ->orWhere('charge', 'like', '%' . $search . '%')
+                                    ->orWhere('reason', 'like', '%' . $search . '%')
+                                    ->orWhereHas('user', function ($uq) use ($search, $cleanSearch) {
+                                        $uq->where('name', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $search . '%')
+                                            ->orWhere('username', 'like', '%' . $cleanSearch . '%')
+                                            ->orWhere('phone', 'like', '%' . $search . '%')
+                                            ->orWhere('email', 'like', '%' . $search . '%');
                                     });
                             });
                         })

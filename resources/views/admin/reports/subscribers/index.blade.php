@@ -1,8 +1,19 @@
 @extends('layouts.admin.master')
 
 @section('title')
-    {{__('Subscriptions List') }}
+    {{ __('Subscriptions List') }}
 @endsection
+
+@push('css')
+<style>
+    .erp-table-section .card,
+    .erp-table-section .cards,
+    .erp-table-section .couter-box {
+        min-height: auto !important;
+        height: auto;
+    }
+</style>
+@endpush
 
 @section('main_content')
     <div class="erp-table-section">
@@ -10,13 +21,12 @@
             <div class="card shadow-sm">
                 <div class="card-bodys p-16">
                     <div class="table-header">
-                        <h4>{{__('Subscribers List')}}</h4>
+                        <h4>{{ __('Subscribers List') }}</h4>
                     </div>
                     <div class="table-top-form">
-                        <form action="{{ route('admin.reports.subscriptions') }}" method="post" >
-                            @csrf
+                        <form action="{{ route('admin.reports.subscriptions') }}" method="GET">
                             <div class="table-search">
-                                <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search') }}..." value="{{ request('search') }}">
+                                <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search invoice, customer, @username, plan...') }}" value="{{ request('search') }}">
                             </div>
                         </form>
                     </div>
@@ -27,7 +37,7 @@
                             <tr>
                                 <th>{{ __('SL') }}.</th>
                                 <th>{{ __('Invoice No') }}.</th>
-                                <th>{{ __('User') }}</th>
+                                <th>{{ __('Customer / User') }}</th>
                                 <th>{{ __('Plan name') }}</th>
                                 <th>{{ __('Payment Method') }}</th>
                                 <th>{{ __('Price') }}</th>

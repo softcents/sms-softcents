@@ -576,27 +576,28 @@
             </div>
         </div>
 
-        <!-- Reseller & Sub-Reseller-Wise SMS Queue Matrix -->
+        <!-- Hierarchical Live SMS Queue Matrix (Resellers, Sub-Resellers & Customers) -->
         <div class="panel-box mb-4">
             <div class="panel-header d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <h5 class="panel-title mb-0">
                         <i class="fas fa-sitemap text-primary"></i>
-                        {{ __('Reseller & Sub-Reseller SMS Queue Matrix') }}
+                        {{ __('Hierarchical Live SMS Queue Matrix') }}
                     </h5>
-                    <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Partners Monitored') }}</span>
+                    <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Accounts Monitored') }}</span>
                 </div>
-                <div class="btn-group btn-group-sm" role="group" aria-label="Partner Hierarchy Filter">
-                    <button type="button" class="btn btn-outline-primary partner-tab-btn active" data-role="all">{{ __('All Partners') }}</button>
+                <div class="btn-group btn-group-sm" role="group" aria-label="Hierarchy Level Filter">
+                    <button type="button" class="btn btn-outline-primary partner-tab-btn active" data-role="all">{{ __('All Accounts') }}</button>
                     <button type="button" class="btn btn-outline-primary partner-tab-btn" data-role="sp">{{ __('Resellers (SP)') }}</button>
                     <button type="button" class="btn btn-outline-primary partner-tab-btn" data-role="ssp">{{ __('Sub-Resellers (SSP)') }}</button>
+                    <button type="button" class="btn btn-outline-primary partner-tab-btn" data-role="user">{{ __('Customers') }}</button>
                 </div>
             </div>
             <div class="table-responsive">
                 <table class="table table-modern align-middle" id="table-resellers">
                     <thead>
                         <tr>
-                            <th>{{ __('Partner Name & Username') }}</th>
+                            <th>{{ __('Account Name & Username') }}</th>
                             <th>{{ __('Hierarchy Level') }}</th>
                             <th class="text-center">{{ __('Active Customers') }}</th>
                             <th class="text-center">{{ __('Pending in Queue') }}</th>
@@ -618,11 +619,11 @@
                                 @endif
                             </td>
                             <td>
-                                <span class="badge {{ $res['role'] === 'sp' ? 'badge-soft-primary' : 'badge-soft-info' }}">
+                                <span class="badge {{ $res['role'] === 'sp' ? 'badge-soft-primary' : ($res['role'] === 'ssp' ? 'badge-soft-info' : 'badge-soft-success') }}">
                                     {{ $res['role_label'] }}
                                 </span>
                             </td>
-                            <td class="text-center fw-bold">{{ $res['customers'] }}</td>
+                            <td class="text-center fw-bold">{{ $res['role'] === 'user' ? '—' : $res['customers'] }}</td>
                             <td class="text-center fw-bold {{ $res['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
                                 {{ number_format($res['pending_queue']) }}
                             </td>
@@ -642,7 +643,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No resellers or sub-resellers registered yet.') }}</td>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No accounts registered yet.') }}</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -1056,17 +1057,18 @@ $(document).ready(function() {
         $('#resellers-count').text(filtered.length);
 
         if (!filtered.length) {
-            const roleLabel = currentPartnerRoleFilter === 'ssp' ? 'sub-resellers' : (currentPartnerRoleFilter === 'sp' ? 'resellers' : 'partners');
+            const roleLabel = currentPartnerRoleFilter === 'ssp' ? 'sub-resellers' : (currentPartnerRoleFilter === 'sp' ? 'resellers' : (currentPartnerRoleFilter === 'user' ? 'customers' : 'accounts'));
             $('#tbody-resellers').html(`<tr><td colspan="9" class="text-center py-4 text-muted">No ${roleLabel} registered yet.</td></tr>`);
             return;
         }
 
         let html = '';
         filtered.forEach(function(r) {
-            const roleBadge = r.role === 'sp' ? 'badge-soft-primary' : 'badge-soft-info';
+            const roleBadge = r.role === 'sp' ? 'badge-soft-primary' : (r.role === 'ssp' ? 'badge-soft-info' : 'badge-soft-success');
             const pendingClass = r.pending_queue > 0 ? 'text-warning' : 'text-muted';
             const procClass = (r.processing_queue || 0) > 0 ? 'text-info' : 'text-muted';
             const parentInfo = r.parent_name ? `<div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Reseller: <strong>${r.parent_name}</strong></div>` : '';
+            const customerCell = r.role === 'user' ? '—' : r.customers;
 
             html += `
                 <tr data-reseller-id="${r.id}" data-role="${r.role}">
@@ -1076,7 +1078,7 @@ $(document).ready(function() {
                         ${parentInfo}
                     </td>
                     <td><span class="badge ${roleBadge}">${r.role_label}</span></td>
-                    <td class="text-center fw-bold">${r.customers}</td>
+                    <td class="text-center fw-bold">${customerCell}</td>
                     <td class="text-center fw-bold ${pendingClass}">${Number(r.pending_queue).toLocaleString()}</td>
                     <td class="text-center fw-bold ${procClass}">${Number(r.processing_queue || 0).toLocaleString()}</td>
                     <td class="text-center fw-bold text-dark">${Number(r.today_total).toLocaleString()}</td>

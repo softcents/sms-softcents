@@ -182,15 +182,15 @@ class QueueMonitorService
      */
     public function getResellerHierarchySummary(): array
     {
-        $resellers = User::whereIn('role', ['sp', 'ssp'])->orderBy('role')->orderBy('name')->get();
+        $users = User::whereIn('role', ['sp', 'ssp', 'user'])->orderBy('role')->orderBy('name')->get();
         $summary = [];
 
-        $parents = User::whereIn('role', ['sp', 'admin'])->pluck('name', 'id')->toArray();
-        $parentUsernames = User::whereIn('role', ['sp', 'admin'])->pluck('username', 'id')->toArray();
+        $parents = User::whereIn('role', ['admin', 'sp', 'ssp'])->pluck('name', 'id')->toArray();
+        $parentUsernames = User::whereIn('role', ['admin', 'sp', 'ssp'])->pluck('username', 'id')->toArray();
 
-        foreach ($resellers as $r) {
+        foreach ($users as $r) {
             $parentName = null;
-            if ($r->role === 'ssp' && $r->parent_id && isset($parents[$r->parent_id])) {
+            if ($r->parent_id && isset($parents[$r->parent_id])) {
                 $pUser = $parentUsernames[$r->parent_id] ?? $parents[$r->parent_id];
                 $parentName = $parents[$r->parent_id] . ' (@' . $pUser . ')';
             }
@@ -204,9 +204,17 @@ class QueueMonitorService
                     }
                 })->pluck('id')->toArray();
                 $allIds = array_unique(array_merge([$r->id], $sspIds, $downline));
-            } else {
+                $customerCount = count($downline);
+                $roleLabel = 'Reseller (SP)';
+            } elseif ($r->role === 'ssp') {
                 $downline = User::where('parent_id', $r->id)->pluck('id')->toArray();
                 $allIds = array_unique(array_merge([$r->id], $downline));
+                $customerCount = count($downline);
+                $roleLabel = 'Sub-Reseller (SSP)';
+            } else {
+                $allIds = [$r->id];
+                $customerCount = 0;
+                $roleLabel = 'Customer';
             }
 
             $pending = Sms::whereIn('user_id', $allIds)->where('status', 'pending')->count();
@@ -221,10 +229,10 @@ class QueueMonitorService
                 'name'             => $r->name,
                 'username'         => $r->username ?? $r->name,
                 'role'             => $r->role,
-                'role_label'       => $r->role === 'sp' ? 'Reseller (SP)' : 'Sub-Reseller (SSP)',
+                'role_label'       => $roleLabel,
                 'parent_id'        => $r->parent_id,
                 'parent_name'      => $parentName,
-                'customers'        => count($downline),
+                'customers'        => $customerCount,
                 'pending_queue'    => $pending,
                 'processing_queue' => $processing,
                 'today_total'      => $today,

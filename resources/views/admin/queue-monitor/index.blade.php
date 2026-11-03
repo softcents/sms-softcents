@@ -240,12 +240,12 @@
 
         <!-- 5 KPI Cards Row -->
         <div class="row g-3 mb-4">
-            <!-- 1. Queue Backlog -->
+            <!-- 1. Total Queued SMS -->
             <div class="col-xl col-md-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <div class="kpi-label">{{ __('Queue Backlog') }}</div>
+                            <div class="kpi-label">{{ __('Total Queued SMS') }}</div>
                             <div class="kpi-val text-primary" id="val-queue-backlog">{{ number_format($broker['ready_messages'] + $metrics['pending_count']) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #e0e7ff; color: #4f46e5;">

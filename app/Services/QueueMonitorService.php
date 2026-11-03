@@ -335,10 +335,113 @@ class QueueMonitorService
                 'today_failed'     => $todayFailed,
                 'delivery_rate'    => $rate,
                 'balance'          => round((float) ($r->balance ?? 0), 2),
+                'downline_ids'     => $allIds,
             ];
         }
 
         return $summary;
+    }
+
+    /**
+     * Get ancestor hierarchy breadcrumbs for a given user.
+     */
+    public function getUserHierarchyBreadcrumbs(int $userId): array
+    {
+        $user = User::find($userId);
+        if (!$user) return [];
+
+        $breadcrumbs = [];
+        $curr = $user;
+        while ($curr) {
+            $breadcrumbs[] = [
+                'id'         => $curr->id,
+                'name'       => $curr->name,
+                'username'   => $curr->username ?? $curr->name,
+                'role'       => $curr->role,
+                'role_label' => match($curr->role) {
+                    'admin' => 'Super Admin',
+                    'sp'    => 'Reseller (SP)',
+                    'ssp'   => 'Sub-Reseller (SSP)',
+                    default => 'Customer',
+                }
+            ];
+            if ($curr->parent_id && $curr->parent_id != $curr->id) {
+                $curr = User::find($curr->parent_id);
+            } else {
+                break;
+            }
+        }
+
+        return array_reverse($breadcrumbs);
+    }
+
+    /**
+     * Get rich inspection details for a specific drill-down account.
+     */
+    public function getUserDrilldownDetails(int $userId): ?array
+    {
+        $user = User::with('parent')->find($userId);
+        if (!$user) return null;
+
+        $scopedIds = [$userId];
+        if ($user->role === 'sp') {
+            $sspIds = User::where('parent_id', $user->id)->where('role', 'ssp')->pluck('id')->toArray();
+            $downline = User::where(function ($q) use ($user, $sspIds) {
+                $q->where('parent_id', $user->id);
+                if (!empty($sspIds)) $q->orWhereIn('parent_id', $sspIds);
+            })->pluck('id')->toArray();
+            $scopedIds = array_unique(array_merge([$user->id], $sspIds, $downline));
+        } elseif ($user->role === 'ssp') {
+            $downline = User::where('parent_id', $user->id)->pluck('id')->toArray();
+            $scopedIds = array_unique(array_merge([$user->id], $downline));
+        }
+
+        $pending = Sms::whereIn('user_id', $scopedIds)->where('status', 'pending')->count();
+        $processing = Sms::whereIn('user_id', $scopedIds)->where('status', 'processing')->count();
+        $todayTotal = Sms::whereIn('user_id', $scopedIds)->whereDate('created_at', today())->count();
+        $todaySuccess = Sms::whereIn('user_id', $scopedIds)->whereDate('created_at', today())->where('status', 'success')->count();
+        $todayFailed = Sms::whereIn('user_id', $scopedIds)->whereDate('created_at', today())->where('status', 'failed')->count();
+        $lifetimeTotal = Sms::whereIn('user_id', $scopedIds)->count();
+        $deliveryRate = ($todaySuccess + $todayFailed) > 0 ? round(($todaySuccess / ($todaySuccess + $todayFailed)) * 100, 1) : 100.0;
+
+        $senderIds = \App\Models\Senderid::whereIn('user_id', $scopedIds)->pluck('sender')->take(10)->toArray();
+        $recentSms = Sms::whereIn('user_id', $scopedIds)->with('senderid')->latest('id')->take(8)->get()->map(function ($s) {
+            return [
+                'id'         => $s->id,
+                'recipient'  => $s->number,
+                'sender'     => $s->senderid->sender ?? 'N/A',
+                'operator'   => $s->operator ?? 'Unknown',
+                'status'     => $s->status,
+                'time'       => $s->created_at ? $s->created_at->format('H:i:s') : 'N/A',
+            ];
+        })->toArray();
+
+        return [
+            'id'             => $user->id,
+            'name'           => $user->name,
+            'username'       => $user->username ?? $user->name,
+            'email'          => $user->email,
+            'phone'          => $user->phone ?? 'N/A',
+            'role'           => $user->role,
+            'role_label'     => match($user->role) {
+                'admin' => 'Super Admin',
+                'sp'    => 'Reseller (SP)',
+                'ssp'   => 'Sub-Reseller (SSP)',
+                default => 'Customer',
+            },
+            'parent_name'    => $user->parent ? ($user->parent->name . ' (@' . $user->parent->username . ')') : 'Direct Platform',
+            'balance'        => round((float) ($user->balance ?? 0), 2),
+            'pending_queue'  => $pending,
+            'processing_queue' => $processing,
+            'today_total'    => $todayTotal,
+            'today_success'  => $todaySuccess,
+            'today_failed'   => $todayFailed,
+            'lifetime_total' => $lifetimeTotal,
+            'delivery_rate'  => $deliveryRate,
+            'sender_ids'     => $senderIds,
+            'recent_sms'     => $recentSms,
+            'breadcrumbs'    => $this->getUserHierarchyBreadcrumbs($user->id),
+        ];
     }
 
     /**

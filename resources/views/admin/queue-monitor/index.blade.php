@@ -242,6 +242,31 @@
             </div>
         </div>
 
+        <!-- Hierarchical Drill-Down Navigation & Breadcrumb Trail -->
+        <div class="card border-0 shadow-sm mb-3 {{ empty($breadcrumbs) ? 'd-none' : '' }}" id="drilldown-nav-container" style="background: #f8fafc; border-left: 4px solid #4f46e5 !important; border-radius: 8px;">
+            <div class="card-body py-2 px-3 d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap" id="drilldown-breadcrumbs-list">
+                    <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
+                        <i class="fas fa-globe text-primary"></i> {{ __('Global Platform') }}
+                    </button>
+                    @foreach($breadcrumbs ?? [] as $bc)
+                        <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                        <button type="button" class="btn btn-sm {{ $loop->last ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="{{ $bc['id'] }}" style="font-size: 12px; font-weight: 600;">
+                            <i class="{{ $bc['role'] === 'sp' ? 'fas fa-user-tie' : ($bc['role'] === 'ssp' ? 'fas fa-users' : 'fas fa-user') }}"></i>
+                            <span>{{ $bc['name'] }}</span>
+                            <span class="badge {{ $loop->last ? 'bg-light text-dark' : 'badge-soft-info' }}" style="font-size: 10px;">{{ $bc['role_label'] }}</span>
+                        </button>
+                    @endforeach
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-warning"><i class="fas fa-filter me-1"></i>{{ __('Hierarchical Scope Active') }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-danger py-1 px-2" id="btn-reset-drilldown" style="font-size: 11px;">
+                        <i class="fas fa-times me-1"></i> {{ __('Exit Drill-Down') }}
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Global SMS Queue Statistics Heading -->
         <div class="d-flex flex-wrap align-items-center justify-content-between mb-3 px-1">
             <div class="d-flex align-items-center gap-2">
@@ -842,9 +867,17 @@
                                 <span class="badge badge-soft-success">{{ $res['delivery_rate'] }}%</span>
                             </td>
                             <td class="text-end fw-bold text-dark">৳{{ number_format($res['balance'], 2) }}</td>
-                            <td class="text-end">
-                                <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="{{ $res['id'] }}" style="font-size: 11px;">
-                                    <i class="fas fa-filter me-1"></i> {{ __('Filter Traffic') }}
+                            <td class="text-end text-nowrap">
+                                <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="{{ $res['id'] }}" title="{{ __('Drill-down entire dashboard') }}" style="font-size: 11px;">
+                                    <i class="fas fa-crosshairs me-1"></i> {{ __('Drill-Down') }}
+                                </button>
+                                @if($res['role'] !== 'user')
+                                <button type="button" class="btn btn-sm btn-outline-info py-1 px-2 btn-downline-reseller" data-id="{{ $res['id'] }}" data-name="{{ $res['name'] }}" title="{{ __('Filter hierarchy table to downline accounts') }}" style="font-size: 11px;">
+                                    <i class="fas fa-sitemap me-1"></i> {{ __('Downline') }}
+                                </button>
+                                @endif
+                                <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="{{ $res['id'] }}" title="{{ __('Inspect Queue Details') }}" style="font-size: 11px;">
+                                    <i class="fas fa-search-plus"></i>
                                 </button>
                             </td>
                         </tr>
@@ -1239,6 +1272,38 @@
 
     </div>
 </div>
+
+<!-- Drill-Down Account Queue Inspector Modal -->
+<div class="modal fade" id="modal-drilldown-inspector" tabindex="-1" aria-labelledby="modalDrilldownTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-light py-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #e0e7ff; color: #4338ca;">
+                        <i class="fas fa-search-plus"></i>
+                    </div>
+                    <div>
+                        <h6 class="modal-title fw-bold mb-0" id="modal-inspect-name">Account Queue Inspector</h6>
+                        <small class="text-muted" id="modal-inspect-role">Loading details...</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4" id="modal-inspect-body">
+                <div class="text-center py-5">
+                    <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                    <p class="mt-2 text-muted">Loading live queue analytics...</p>
+                </div>
+            </div>
+            <div class="modal-footer bg-light py-2 border-top d-flex justify-content-between">
+                <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-sm btn-primary" id="btn-modal-apply-scope">
+                    <i class="fas fa-crosshairs me-1"></i> {{ __('Drill-Down Dashboard Scope') }}
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('js')
@@ -1501,6 +1566,9 @@ $(document).ready(function() {
 
                 // Update Failed Jobs
                 renderFailedJobs(res.failed);
+
+                // Update Hierarchical Breadcrumbs
+                updateBreadcrumbs(res.breadcrumbs);
             },
             error: function(err) {
                 console.warn('Queue monitor poll failed:', err);
@@ -1615,20 +1683,24 @@ $(document).ready(function() {
 
     let cachedResellers = @json($resellerSummary ?? []);
     let currentPartnerRoleFilter = 'all';
+    let currentDownlineParentId = null;
+    let currentDownlineParentName = '';
 
     function renderResellersTable(resellers) {
         if (resellers) cachedResellers = resellers;
         const list = cachedResellers || [];
 
         let filtered = list;
-        if (currentPartnerRoleFilter !== 'all') {
+        if (currentDownlineParentId !== null) {
+            filtered = list.filter(r => r.id === currentDownlineParentId || r.parent_id === currentDownlineParentId || (r.downline_ids && r.downline_ids.includes(currentDownlineParentId)));
+        } else if (currentPartnerRoleFilter !== 'all') {
             filtered = list.filter(r => r.role === currentPartnerRoleFilter);
         }
 
         $('#resellers-count').text(filtered.length);
 
         if (!filtered.length) {
-            const roleLabel = currentPartnerRoleFilter === 'ssp' ? 'sub-resellers' : (currentPartnerRoleFilter === 'sp' ? 'resellers' : (currentPartnerRoleFilter === 'user' ? 'customers' : 'accounts'));
+            const roleLabel = currentDownlineParentId ? 'downline accounts' : (currentPartnerRoleFilter === 'ssp' ? 'sub-resellers' : (currentPartnerRoleFilter === 'sp' ? 'resellers' : (currentPartnerRoleFilter === 'user' ? 'customers' : 'accounts')));
             $('#tbody-resellers').html(`<tr><td colspan="9" class="text-center py-4 text-muted">No ${roleLabel} registered yet.</td></tr>`);
             return;
         }
@@ -1640,6 +1712,11 @@ $(document).ready(function() {
             const procClass = (r.processing_queue || 0) > 0 ? 'text-info' : 'text-muted';
             const parentInfo = r.parent_name ? `<div style="font-size: 11px;" class="text-muted mt-1"><i class="fas fa-level-up-alt fa-rotate-90 text-primary me-1"></i> Reseller: <strong>${r.parent_name}</strong></div>` : '';
             const customerCell = r.role === 'user' ? '—' : r.customers;
+            const downlineBtn = r.role !== 'user' ? `
+                <button type="button" class="btn btn-sm btn-outline-info py-1 px-2 btn-downline-reseller" data-id="${r.id}" data-name="${r.name}" title="Filter hierarchy table to downline accounts" style="font-size: 11px;">
+                    <i class="fas fa-sitemap me-1"></i> Downline
+                </button>
+            ` : '';
 
             html += `
                 <tr data-reseller-id="${r.id}" data-role="${r.role}">
@@ -1655,9 +1732,13 @@ $(document).ready(function() {
                     <td class="text-center fw-bold text-dark">${Number(r.today_total).toLocaleString()}</td>
                     <td class="text-center"><span class="badge badge-soft-success">${r.delivery_rate}%</span></td>
                     <td class="text-end fw-bold text-dark">৳${Number(r.balance).toFixed(2)}</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-primary py-1 px-2 btn-filter-reseller" data-id="${r.id}" style="font-size: 11px;">
-                            <i class="fas fa-filter me-1"></i> Filter Traffic
+                    <td class="text-end text-nowrap">
+                        <button type="button" class="btn btn-sm btn-primary py-1 px-2 btn-filter-reseller" data-id="${r.id}" title="Drill-down entire dashboard" style="font-size: 11px;">
+                            <i class="fas fa-crosshairs me-1"></i> Drill-Down
+                        </button>
+                        ${downlineBtn}
+                        <button type="button" class="btn btn-sm btn-outline-secondary py-1 px-2 btn-inspect-user" data-id="${r.id}" title="Inspect Queue Details" style="font-size: 11px;">
+                            <i class="fas fa-search-plus"></i>
                         </button>
                     </td>
                 </tr>
@@ -2078,15 +2159,224 @@ $(document).ready(function() {
         });
     });
 
+    // 8. Hierarchical Drill-Down Navigation Engine
+    function updateBreadcrumbs(breadcrumbs) {
+        if (!breadcrumbs || !breadcrumbs.length) {
+            $('#drilldown-nav-container').addClass('d-none');
+            return;
+        }
+
+        $('#drilldown-nav-container').removeClass('d-none');
+        let html = `
+            <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
+                <i class="fas fa-globe text-primary"></i> Global Platform
+            </button>
+        `;
+
+        breadcrumbs.forEach(function(bc, idx) {
+            const isLast = idx === (breadcrumbs.length - 1);
+            const btnClass = isLast ? 'btn-primary shadow-sm' : 'btn-light border';
+            const badgeClass = isLast ? 'bg-light text-dark' : 'badge-soft-info';
+            const icon = bc.role === 'sp' ? 'fas fa-user-tie' : (bc.role === 'ssp' ? 'fas fa-users' : 'fas fa-user');
+
+            html += `
+                <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                <button type="button" class="btn btn-sm ${btnClass} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="${bc.id}" style="font-size: 12px; font-weight: 600;">
+                    <i class="${icon}"></i>
+                    <span>${bc.name}</span>
+                    <span class="badge ${badgeClass}" style="font-size: 10px;">${bc.role_label}</span>
+                </button>
+            `;
+        });
+
+        $('#drilldown-breadcrumbs-list').html(html);
+    }
+
+    // Click Breadcrumb Trail Link
+    $(document).on('click', '.btn-nav-breadcrumb', function() {
+        const id = $(this).data('id');
+        $('#select-filter-user').val(id).trigger('change');
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    });
+
+    // Reset Drill-down back to Global
+    $(document).on('click', '#btn-reset-drilldown', function() {
+        $('#select-filter-user').val('').trigger('change');
+        currentDownlineParentId = null;
+        renderResellersTable();
+        $('html, body').animate({ scrollTop: 0 }, 'fast');
+    });
+
+    // Drill-Down into account
     $(document).on('click', '.btn-filter-reseller', function() {
         const id = $(this).data('id');
         $('#select-filter-user').val(id).trigger('change');
         $('html, body').animate({ scrollTop: 0 }, 'fast');
     });
 
+    // Filter Hierarchy Table to Reseller Downline
+    $(document).on('click', '.btn-downline-reseller', function() {
+        const id = parseInt($(this).data('id'));
+        const name = $(this).data('name');
+
+        if (currentDownlineParentId === id) {
+            currentDownlineParentId = null;
+            $(this).removeClass('btn-info text-white').addClass('btn-outline-info');
+        } else {
+            currentDownlineParentId = id;
+            currentDownlineParentName = name;
+            $('.btn-downline-reseller').removeClass('btn-info text-white').addClass('btn-outline-info');
+            $(this).removeClass('btn-outline-info').addClass('btn-info text-white');
+        }
+
+        renderResellersTable();
+    });
+
+    // Inspect Account Queue Details Modal
+    let activeInspectedUserId = null;
+    $(document).on('click', '.btn-inspect-user', function() {
+        const id = $(this).data('id');
+        activeInspectedUserId = id;
+        const modal = new bootstrap.Modal(document.getElementById('modal-drilldown-inspector'));
+        modal.show();
+
+        $('#modal-inspect-body').html(`
+            <div class="text-center py-5">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+                <p class="mt-2 text-muted">Loading live queue analytics for account #${id}...</p>
+            </div>
+        `);
+
+        $.ajax({
+            url: "{{ url('admin/queue-monitor/inspect') }}/" + id,
+            type: "GET",
+            dataType: "json",
+            success: function(res) {
+                if (!res.success || !res.data) {
+                    $('#modal-inspect-body').html('<div class="alert alert-danger">Failed to load account details.</div>');
+                    return;
+                }
+
+                const d = res.data;
+                $('#modal-inspect-name').text(d.name + ' (@' + d.username + ')');
+                $('#modal-inspect-role').text(d.role_label + ' • Parent: ' + d.parent_name);
+
+                let recentSmsHtml = '';
+                if (d.recent_sms && d.recent_sms.length) {
+                    d.recent_sms.forEach(function(s) {
+                        const sBadge = s.status === 'success' ? 'badge-soft-success' : (s.status === 'pending' ? 'badge-soft-warning' : 'badge-soft-danger');
+                        recentSmsHtml += `
+                            <tr>
+                                <td class="text-muted" style="font-size: 11px;">${s.time}</td>
+                                <td class="fw-bold">${s.recipient}</td>
+                                <td><span class="badge badge-soft-primary">${s.sender}</span></td>
+                                <td>${s.operator}</td>
+                                <td><span class="badge ${sBadge}">${s.status}</span></td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    recentSmsHtml = '<tr><td colspan="5" class="text-center py-3 text-muted">No recent SMS transactions.</td></tr>';
+                }
+
+                let sendersHtml = '';
+                if (d.sender_ids && d.sender_ids.length) {
+                    d.sender_ids.forEach(function(s) {
+                        sendersHtml += `<span class="badge badge-soft-primary me-1">${s}</span>`;
+                    });
+                } else {
+                    sendersHtml = '<span class="text-muted" style="font-size: 11px;">No dedicated Sender IDs assigned.</span>';
+                }
+
+                $('#modal-inspect-body').html(`
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-3 col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <small class="text-muted d-block" style="font-size: 11px;">PENDING QUEUE</small>
+                                <span class="fs-4 fw-bold ${d.pending_queue > 0 ? 'text-warning' : 'text-dark'}">${Number(d.pending_queue).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <small class="text-muted d-block" style="font-size: 11px;">PROCESSING</small>
+                                <span class="fs-4 fw-bold ${d.processing_queue > 0 ? 'text-info' : 'text-dark'}">${Number(d.processing_queue).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <small class="text-muted d-block" style="font-size: 11px;">TODAY TOTAL</small>
+                                <span class="fs-4 fw-bold text-dark">${Number(d.today_total).toLocaleString()}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="p-3 border rounded bg-light text-center">
+                                <small class="text-muted d-block" style="font-size: 11px;">DELIVERY RATE</small>
+                                <span class="fs-4 fw-bold text-success">${d.delivery_rate}%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card border rounded p-3 mb-3 bg-white">
+                        <div class="row g-2" style="font-size: 12px;">
+                            <div class="col-md-6"><strong>Account Balance:</strong> <span class="text-dark fw-bold">৳${Number(d.balance).toFixed(2)}</span></div>
+                            <div class="col-md-6"><strong>Lifetime Dispatches:</strong> ${Number(d.lifetime_total).toLocaleString()} SMS</div>
+                            <div class="col-md-6"><strong>Parent Hierarchy:</strong> ${d.parent_name}</div>
+                            <div class="col-md-6"><strong>Email:</strong> ${d.email || 'N/A'}</div>
+                        </div>
+                        <div class="mt-2 pt-2 border-top">
+                            <strong style="font-size: 11px;" class="d-block mb-1">Active Sender IDs:</strong>
+                            ${sendersHtml}
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2" style="font-size: 12px;"><i class="fas fa-history me-1 text-primary"></i> Recent Dispatches:</h6>
+                    <div class="table-responsive border rounded">
+                        <table class="table table-sm table-modern align-middle mb-0" style="font-size: 11px;">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Recipient</th>
+                                    <th>Sender</th>
+                                    <th>Operator</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recentSmsHtml}
+                            </tbody>
+                        </table>
+                    </div>
+                `);
+            },
+            error: function() {
+                $('#modal-inspect-body').html('<div class="alert alert-danger">Error loading queue details.</div>');
+            }
+        });
+    });
+
+    // Apply Scope from Modal
+    $('#btn-modal-apply-scope').on('click', function() {
+        if (activeInspectedUserId) {
+            bootstrap.Modal.getInstance(document.getElementById('modal-drilldown-inspector')).hide();
+            $('#select-filter-user').val(activeInspectedUserId).trigger('change');
+            $('html, body').animate({ scrollTop: 0 }, 'fast');
+        }
+    });
+
+    // Dropdown Scope Change Handler with URL State Sync
     $('#select-filter-user').on('change', function() {
         const selectedVal = $(this).val();
         const selectedText = $(this).find('option:selected').text().trim();
+
+        // Update URL query state for deep-linking
+        const url = new URL(window.location.href);
+        if (selectedVal) {
+            url.searchParams.set('filter_user_id', selectedVal);
+        } else {
+            url.searchParams.delete('filter_user_id');
+        }
+        window.history.pushState({ filter_user_id: selectedVal }, '', url.toString());
+
         if (selectedVal) {
             $('#label-kpi-heading').text("{{ __('Scoped SMS Queue Statistics') }}");
             $('#badge-traffic-scope').removeClass('badge-soft-primary').addClass('badge-soft-warning').text(selectedText);
@@ -2097,6 +2387,15 @@ $(document).ready(function() {
             $('#sub-kpi-heading').html('<i class="fas fa-info-circle me-1"></i>Cross-tenant aggregated live queue performance across all gateways & workers');
         }
         fetchLiveData();
+    });
+
+    // Browser back/forward navigation support
+    window.addEventListener('popstate', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const uid = urlParams.get('filter_user_id') || '';
+        if ($('#select-filter-user').val() !== uid) {
+            $('#select-filter-user').val(uid).trigger('change');
+        }
     });
 
     // Start Poller & initial sync

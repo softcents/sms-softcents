@@ -35,6 +35,7 @@ class QueueMonitorController extends Controller
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
+        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
 
         return view('admin.queue-monitor.index', compact(
             'broker',
@@ -47,7 +48,8 @@ class QueueMonitorController extends Controller
             'resellerSummary',
             'providers',
             'routes',
-            'campaigns'
+            'campaigns',
+            'breadcrumbs'
         ));
     }
 
@@ -66,19 +68,40 @@ class QueueMonitorController extends Controller
         $providers = $this->service->getProviderTrafficSummary(auth()->user(), $filterUserId);
         $routes = $this->service->getRouteTrafficSummary(auth()->user(), $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary(auth()->user(), $filterUserId);
+        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
 
         return response()->json([
-            'success'   => true,
-            'timestamp' => now()->format('H:i:s'),
-            'broker'    => $broker,
-            'workers'   => $workers,
-            'queues'    => $queues,
-            'metrics'   => $metrics,
-            'failed'    => $failedJobs,
-            'resellers' => $resellerSummary,
-            'providers' => $providers,
-            'routes'    => $routes,
-            'campaigns' => $campaigns,
+            'success'     => true,
+            'timestamp'   => now()->format('H:i:s'),
+            'broker'      => $broker,
+            'workers'     => $workers,
+            'queues'      => $queues,
+            'metrics'     => $metrics,
+            'failed'      => $failedJobs,
+            'resellers'   => $resellerSummary,
+            'providers'   => $providers,
+            'routes'      => $routes,
+            'campaigns'   => $campaigns,
+            'breadcrumbs' => $breadcrumbs,
+        ]);
+    }
+
+    /**
+     * Inspect rich drill-down metrics for a specific user.
+     */
+    public function inspectUser(Request $request, int $id): JsonResponse
+    {
+        $details = $this->service->getUserDrilldownDetails($id);
+        if (!$details) {
+            return response()->json([
+                'success' => false,
+                'message' => __('User not found or unauthorized.'),
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data'    => $details,
         ]);
     }
 

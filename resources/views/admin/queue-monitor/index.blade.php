@@ -395,24 +395,37 @@
                 </div>
             </div>
 
-            <!-- Operator Breakdown Donut Chart -->
+            <!-- Operator Breakdown & Live TPS Timeline -->
             <div class="col-lg-4 col-12">
                 <div class="panel-box h-100">
                     <div class="panel-header">
                         <h5 class="panel-title">
+                            <i class="fas fa-chart-line text-info"></i>
+                            {{ __('Live Throughput (TPS)') }}
+                        </h5>
+                        <span class="badge badge-soft-info" id="live-tps-badge">{{ $metrics['current_tps'] }} TPS</span>
+                    </div>
+                    <div class="p-3">
+                        <div style="position: relative; width: 100%; height: 110px;">
+                            <canvas id="tpsChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="panel-header border-top" style="background: #f8fafc;">
+                        <h5 class="panel-title" style="font-size: 13px;">
                             <i class="fas fa-chart-pie text-success"></i>
                             {{ __('Operator Distribution (24h)') }}
                         </h5>
                     </div>
-                    <div class="p-3 d-flex flex-column align-items-center justify-content-center" style="min-height: 240px;">
-                        <div style="position: relative; width: 100%; max-width: 220px; height: 200px;">
+                    <div class="p-3 d-flex flex-column align-items-center justify-content-center">
+                        <div style="position: relative; width: 100%; max-width: 170px; height: 130px;">
                             <canvas id="operatorChart"></canvas>
                         </div>
-                        <div class="d-flex flex-wrap justify-content-center gap-3 mt-3 w-100" style="font-size: 12px;" id="operator-legend">
-                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #0ea5e9;"></span> GP: <strong id="leg-gp">{{ $metrics['operators']['GP'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #f97316;"></span> BL: <strong id="leg-bl">{{ $metrics['operators']['BL'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #e11d48;"></span> Robi: <strong id="leg-robi">{{ $metrics['operators']['Robi'] }}</strong></span>
-                            <span class="d-flex align-items-center gap-1"><span style="width: 10px; height: 10px; border-radius: 2px; background: #16a34a;"></span> TT: <strong id="leg-tt">{{ $metrics['operators']['Teletalk'] }}</strong></span>
+                        <div class="d-flex flex-wrap justify-content-center gap-2 mt-2 w-100" style="font-size: 11px;" id="operator-legend">
+                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #0ea5e9;"></span> GP: <strong id="leg-gp">{{ $metrics['operators']['GP'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #f97316;"></span> BL: <strong id="leg-bl">{{ $metrics['operators']['BL'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #e11d48;"></span> Robi: <strong id="leg-robi">{{ $metrics['operators']['Robi'] }}</strong></span>
+                            <span class="d-flex align-items-center gap-1"><span style="width: 8px; height: 8px; border-radius: 2px; background: #16a34a;"></span> TT: <strong id="leg-tt">{{ $metrics['operators']['Teletalk'] }}</strong></span>
                         </div>
                     </div>
                 </div>
@@ -673,6 +686,44 @@ $(document).ready(function() {
         });
     }
 
+    // TPS Line Chart
+    const tpsCtx = document.getElementById('tpsChart');
+    let tpsChart = null;
+    let tpsLabels = ['-14s', '-12s', '-10s', '-8s', '-6s', '-4s', '-2s', 'Now'];
+    let tpsData = [0, 0, 0, 0, 0, 0, 0, {{ (float)($metrics['current_tps'] ?? 0) }}];
+
+    if (tpsCtx) {
+        tpsChart = new Chart(tpsCtx, {
+            type: 'line',
+            data: {
+                labels: tpsLabels,
+                datasets: [{
+                    label: 'TPS',
+                    data: tpsData,
+                    borderColor: '#0284c7',
+                    backgroundColor: 'rgba(2, 132, 199, 0.12)',
+                    fill: true,
+                    tension: 0.35,
+                    borderWidth: 2,
+                    pointRadius: 2,
+                    pointHoverRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { display: false },
+                    y: {
+                        beginAtZero: true,
+                        ticks: { font: { size: 9 }, maxTicksLimit: 4 }
+                    }
+                }
+            }
+        });
+    }
+
     // 2. Main Live Update Function
     function fetchLiveData() {
         if (isFetching) return;
@@ -726,6 +777,16 @@ $(document).ready(function() {
 
                 // Update Resellers Hierarchy Matrix Table
                 renderResellersTable(res.resellers);
+
+                // Update TPS Line Chart
+                if (tpsChart) {
+                    $('#live-tps-badge').text(res.metrics.current_tps + ' TPS');
+                    tpsLabels.shift();
+                    tpsLabels.push(res.timestamp);
+                    tpsData.shift();
+                    tpsData.push(res.metrics.current_tps);
+                    tpsChart.update('none');
+                }
 
                 // Update Operator Chart
                 if (operatorChart && res.metrics.operators) {

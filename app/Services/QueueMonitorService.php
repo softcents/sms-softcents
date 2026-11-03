@@ -351,14 +351,22 @@ class QueueMonitorService
         }
         $submittedCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
         $deliveredCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'delivered'])->count();
-        $failedCount = (clone $baseSmsQuery)->whereIn('status', ['failed', 'rejected', 'undelivered'])->count();
+        $failedCount = (clone $baseSmsQuery)->whereIn('status', ['failed', 'undelivered', 'expired'])->count();
+        $rejectedCount = (clone $baseSmsQuery)->where(function($q) {
+            $q->whereIn('status', ['rejected', 'cancelled', 'blocked', 'blacklisted'])
+              ->orWhere('notes', 'ilike', '%reject%');
+        })->count();
 
         $todayQuery = (clone $baseSmsQuery)->whereDate('created_at', today());
         $todayTotal = (clone $todayQuery)->count();
         $todaySubmitted = (clone $todayQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
         $todayDelivered = (clone $todayQuery)->whereIn('status', ['success', 'delivered'])->count();
         $todaySuccess = $todayDelivered;
-        $todayFailed = (clone $todayQuery)->whereIn('status', ['failed', 'rejected', 'undelivered'])->count();
+        $todayFailed = (clone $todayQuery)->whereIn('status', ['failed', 'undelivered', 'expired'])->count();
+        $todayRejected = (clone $todayQuery)->where(function($q) {
+            $q->whereIn('status', ['rejected', 'cancelled', 'blocked', 'blacklisted'])
+              ->orWhere('notes', 'ilike', '%reject%');
+        })->count();
         $deliveryRate = $todayTotal > 0 ? round(($todayDelivered / $todayTotal) * 100, 1) : 100.0;
 
         // 3. Real-time Throughput (TPS in last 60s, last 5m, last 1h)
@@ -514,9 +522,11 @@ class QueueMonitorService
             'delivered_count'      => $deliveredCount,
             'today_delivered'      => $todayDelivered,
             'failed_count'         => $failedCount,
+            'today_failed'         => $todayFailed,
+            'rejected_count'       => $rejectedCount,
+            'today_rejected'       => $todayRejected,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
-            'today_failed'         => $todayFailed,
             'delivery_rate'        => $deliveryRate,
             'current_tps'          => $currentTps,
             'last_1_min_volume'    => $last1MinCount,

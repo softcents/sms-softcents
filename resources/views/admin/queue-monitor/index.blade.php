@@ -242,10 +242,10 @@
             </div>
         </div>
 
-        <!-- 6 KPI Cards Row -->
+        <!-- 7 KPI Cards Row -->
         <div class="row g-3 mb-4">
             <!-- 1. Total Queued SMS (RabbitMQ Ready) -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -263,7 +263,7 @@
             </div>
 
             <!-- 2. Pending SMS (Database Queued) -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -281,7 +281,7 @@
             </div>
 
             <!-- 3. Processing SMS -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -299,7 +299,7 @@
             </div>
 
             <!-- 4. Submitted SMS -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -317,7 +317,7 @@
             </div>
 
             <!-- 5. Delivered SMS -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -335,7 +335,7 @@
             </div>
 
             <!-- 6. Failed SMS -->
-            <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+            <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
@@ -348,6 +348,24 @@
                     </div>
                     <div class="kpi-sub">
                         <span>Today: <strong id="val-sub-today-failed">{{ number_format($metrics['today_failed']) }}</strong> • All: <strong id="val-total-failed">{{ number_format($metrics['failed_count']) }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Rejected SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Rejected SMS') }}</div>
+                            <div class="kpi-val" id="val-today-rejected" style="color: #e11d48;">{{ number_format($metrics['today_rejected'] ?? 0) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ffe4e6; color: #e11d48;">
+                            <i class="fas fa-ban"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Today: <strong id="val-sub-today-rejected">{{ number_format($metrics['today_rejected'] ?? 0) }}</strong> • All: <strong id="val-total-rejected">{{ number_format($metrics['rejected_count'] ?? 0) }}</strong></span>
                     </div>
                 </div>
             </div>
@@ -802,6 +820,9 @@ $(document).ready(function() {
                 $('#val-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
                 $('#val-sub-today-failed').text((res.metrics.today_failed || 0).toLocaleString());
                 $('#val-total-failed').text((res.metrics.failed_count || 0).toLocaleString());
+                $('#val-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
+                $('#val-sub-today-rejected').text((res.metrics.today_rejected || 0).toLocaleString());
+                $('#val-total-rejected').text((res.metrics.rejected_count || 0).toLocaleString());
 
                 // Update Queues Table
                 renderQueuesTable(res.queues);

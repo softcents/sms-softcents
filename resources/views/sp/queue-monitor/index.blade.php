@@ -241,7 +241,7 @@
             <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <div class="d-flex align-items-center gap-2">
                     <span class="text-muted fw-bold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">
-                        <i class="fas fa-sitemap text-primary me-1"></i> {{ __('Network Hierarchy Scope') }}:
+                        <i class="fas fa-sitemap text-primary me-1"></i> {{ __('Hierarchy Drill-Down Navigation') }}:
                     </span>
                     <div class="d-flex flex-wrap align-items-center gap-1" id="drilldown-breadcrumbs-list">
                         <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
@@ -249,17 +249,24 @@
                         </button>
                         @foreach($breadcrumbs ?? [] as $idx => $bc)
                             <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
-                            <button type="button" class="btn btn-sm {{ $loop->last ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="{{ $bc['id'] }}" style="font-size: 12px; font-weight: 600;">
+                            <button type="button" class="btn btn-sm {{ $loop->last && empty($customerQueue) ? 'btn-primary shadow-sm' : 'btn-light border' }} py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="{{ $bc['id'] }}" style="font-size: 12px; font-weight: 600;">
                                 <i class="{{ $bc['role'] === 'sp' ? 'fas fa-user-tie' : ($bc['role'] === 'ssp' ? 'fas fa-users' : 'fas fa-user') }}"></i>
                                 <span>{{ $bc['name'] }}</span>
-                                <span class="badge {{ $loop->last ? 'bg-light text-dark' : 'badge-soft-info' }}" style="font-size: 10px;">{{ $bc['role_label'] }}</span>
+                                <span class="badge {{ $loop->last && empty($customerQueue) ? 'bg-light text-dark' : 'badge-soft-info' }}" style="font-size: 10px;">{{ $bc['role_label'] }}</span>
                             </button>
                         @endforeach
+                        @if(!empty($customerQueue))
+                            <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                            <span class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600;">
+                                <i class="fas fa-layer-group"></i>
+                                <span>{{ __('SMS Queue Details') }}</span>
+                            </span>
+                        @endif
                     </div>
                 </div>
                 <div>
                     <button type="button" class="btn btn-xs btn-outline-danger py-1 px-2" id="btn-reset-drilldown" style="font-size: 11px;">
-                        <i class="fas fa-times me-1"></i> {{ __('Clear Filter') }}
+                        <i class="fas fa-times me-1"></i> {{ __('Reset to All Network') }}
                     </button>
                 </div>
             </div>
@@ -1465,7 +1472,7 @@
                                     <i class="fas fa-redo-alt me-1"></i> Retry
                                 </button>
                                 @endif
-                                <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="{{ $msg['id'] }}" data-content="{{ encodeURIComponent ?? $msg['content'] }}" title="{{ __('View message content') }}" style="font-size: 11px;">
+                                <button type="button" class="btn btn-sm btn-light border py-0 px-2 btn-view-sms" data-id="{{ $msg['id'] }}" data-content="{{ rawurlencode($msg['content']) }}" title="{{ __('View message content') }}" style="font-size: 11px;">
                                     <i class="fas fa-eye"></i>
                                 </button>
                             </td>
@@ -1911,7 +1918,7 @@ $(document).ready(function() {
                 renderCampaignsTable(res.campaigns, res.campaign_aggregates);
 
                 // Breadcrumb trail
-                updateBreadcrumbs(res.breadcrumbs);
+                updateBreadcrumbs(res.breadcrumbs, !!res.customer_queue);
 
                 // Dedicated Customer SMS Queue Details
                 renderCustomerQueueDetails(res.customer_queue);
@@ -2566,7 +2573,7 @@ $(document).ready(function() {
     }
 
     // 10. Breadcrumbs Engine
-    function updateBreadcrumbs(breadcrumbs) {
+    function updateBreadcrumbs(breadcrumbs, hasCustomerQueue) {
         if (!breadcrumbs || !breadcrumbs.length) {
             $('#drilldown-nav-container').addClass('d-none');
             return;
@@ -2575,14 +2582,15 @@ $(document).ready(function() {
         $('#drilldown-nav-container').removeClass('d-none');
         let html = `
             <button type="button" class="btn btn-sm btn-light border py-1 px-2 btn-nav-breadcrumb d-flex align-items-center gap-1" data-id="" style="font-size: 12px; font-weight: 600;">
-                <i class="fas fa-globe text-primary"></i> All Network
+                <i class="fas fa-globe text-primary"></i> {{ __('All Network') }}
             </button>
         `;
 
         breadcrumbs.forEach(function(bc, idx) {
             const isLast = idx === (breadcrumbs.length - 1);
-            const btnClass = isLast ? 'btn-primary shadow-sm' : 'btn-light border';
-            const badgeClass = isLast ? 'bg-light text-dark' : 'badge-soft-info';
+            const isLeafActive = isLast && !hasCustomerQueue;
+            const btnClass = isLeafActive ? 'btn-primary shadow-sm' : 'btn-light border';
+            const badgeClass = isLeafActive ? 'bg-light text-dark' : 'badge-soft-info';
             const icon = bc.role === 'sp' ? 'fas fa-user-tie' : (bc.role === 'ssp' ? 'fas fa-users' : 'fas fa-user');
 
             html += `
@@ -2594,6 +2602,16 @@ $(document).ready(function() {
                 </button>
             `;
         });
+
+        if (hasCustomerQueue) {
+            html += `
+                <i class="fas fa-chevron-right text-muted" style="font-size: 10px;"></i>
+                <span class="btn btn-sm btn-primary shadow-sm py-1 px-2 d-flex align-items-center gap-1" style="font-size: 12px; font-weight: 600;">
+                    <i class="fas fa-layer-group"></i>
+                    <span>{{ __('SMS Queue Details') }}</span>
+                </span>
+            `;
+        }
 
         $('#drilldown-breadcrumbs-list').html(html);
     }

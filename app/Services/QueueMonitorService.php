@@ -550,7 +550,7 @@ class QueueMonitorService
     /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
-    public function getUserHierarchyBreadcrumbs(int $userId): array
+    public function getUserHierarchyBreadcrumbs(int $userId, ?User $actor = null): array
     {
         $user = User::find($userId);
         if (!$user) return [];
@@ -564,12 +564,18 @@ class QueueMonitorService
                 'username'   => $curr->username ?? $curr->name,
                 'role'       => $curr->role,
                 'role_label' => match($curr->role) {
-                    'admin' => 'Super Admin',
-                    'sp'    => 'Reseller (SP)',
-                    'ssp'   => 'Sub-Reseller (SSP)',
-                    default => 'Customer',
+                    'admin', 'superadmin' => 'Super Admin',
+                    'sp'                  => 'Reseller (SP)',
+                    'ssp'                 => 'Sub-Reseller (SSP)',
+                    default               => 'Customer',
                 }
             ];
+
+            // If viewer is Reseller (SP), stop upward traversal at the Reseller level
+            if ($actor && $actor->role === 'sp' && $curr->id === $actor->id) {
+                break;
+            }
+
             if ($curr->parent_id && $curr->parent_id != $curr->id) {
                 $curr = User::find($curr->parent_id);
             } else {
@@ -652,13 +658,13 @@ class QueueMonitorService
     /**
      * Get detailed SMS queue breakdown and real-time message dispatches for a specific Customer.
      */
-    public function getCustomerSmsQueueDetails(int $userId, ?string $statusFilter = null, int $limit = 25): ?array
+    public function getCustomerSmsQueueDetails(int $userId, ?string $statusFilter = null, int $limit = 25, ?User $actor = null): ?array
     {
         $user = User::with('parent')->find($userId);
         if (!$user) return null;
 
-        // Resolve 4-tier hierarchy ancestry: Super Admin -> Reseller -> Sub-Reseller -> Customer
-        $breadcrumbs = $this->getUserHierarchyBreadcrumbs($userId);
+        // Resolve hierarchy ancestry: Reseller -> Sub-Reseller -> Customer
+        $breadcrumbs = $this->getUserHierarchyBreadcrumbs($userId, $actor);
 
         $baseQuery = Sms::where('user_id', $userId);
         $pendingCount = (clone $baseQuery)->where('status', 'pending')->count();
@@ -773,10 +779,7 @@ class QueueMonitorService
      */
     public function getProviderTrafficSummary(?User $user = null, ?int $filterUserId = null): array
     {
-        $scopedIds = $this->getScopedUserIds($user);
-        if ($filterUserId) {
-            $scopedIds = [$filterUserId];
-        }
+        $scopedIds = $this->resolveEffectiveScopedIds($user, $filterUserId);
 
         $baseQuery = Sms::query();
         if ($scopedIds !== null) {
@@ -830,10 +833,7 @@ class QueueMonitorService
      */
     public function getRouteTrafficSummary(?User $user = null, ?int $filterUserId = null): array
     {
-        $scopedIds = $this->getScopedUserIds($user);
-        if ($filterUserId) {
-            $scopedIds = [$filterUserId];
-        }
+        $scopedIds = $this->resolveEffectiveScopedIds($user, $filterUserId);
 
         $baseQuery = Sms::query();
         if ($scopedIds !== null) {
@@ -934,10 +934,7 @@ class QueueMonitorService
      */
     public function getCampaignTrafficSummary(?User $user = null, ?int $filterUserId = null): array
     {
-        $scopedIds = $this->getScopedUserIds($user);
-        if ($filterUserId) {
-            $scopedIds = [$filterUserId];
-        }
+        $scopedIds = $this->resolveEffectiveScopedIds($user, $filterUserId);
 
         $summary = [];
 
@@ -1190,6 +1187,38 @@ class QueueMonitorService
     }
 
     /**
+     * Resolve effective scoped user IDs for drill-down operations across Reseller/SSP/Customer levels.
+     */
+    public function resolveEffectiveScopedIds(?User $actor, ?int $filterUserId): ?array
+    {
+        if (!$filterUserId) {
+            return $this->getScopedUserIds($actor);
+        }
+
+        if (!$this->validateAccountAccess($actor, $filterUserId)) {
+            abort(403, 'Unauthorized access: You do not have permission to monitor this account queue.');
+        }
+
+        $targetUser = User::find($filterUserId);
+        if (!$targetUser) {
+            return $this->getScopedUserIds($actor);
+        }
+
+        // If explicitly drilling down to own account, isolate to own direct traffic
+        if ($actor && $targetUser->id === $actor->id) {
+            return [$actor->id];
+        }
+
+        // If target is Sub-Reseller, scope to that Sub-Reseller and their downline customers
+        if ($targetUser->role === 'ssp') {
+            return $this->getScopedUserIds($targetUser);
+        }
+
+        // Otherwise single customer
+        return [$targetUser->id];
+    }
+
+    /**
      * Get list of downline accounts available for queue drill-down filtering.
      */
     public function getFilterableDownline(?User $user): array
@@ -1253,15 +1282,7 @@ class QueueMonitorService
      */
     public function getScopedLiveMetrics(?User $user, ?int $filterUserId = null): array
     {
-        $scopedIds = $this->getScopedUserIds($user);
-
-        // Apply drill-down filter if provided and strictly validate backend authorization
-        if ($filterUserId) {
-            if (!$this->validateAccountAccess($user, $filterUserId)) {
-                abort(403, 'Unauthorized access: You do not have permission to monitor this account queue.');
-            }
-            $scopedIds = [$filterUserId];
-        }
+        $scopedIds = $this->resolveEffectiveScopedIds($user, $filterUserId);
 
         // 1. Pending & Processing Queue in DB
         $pendingQuery = Sms::query();

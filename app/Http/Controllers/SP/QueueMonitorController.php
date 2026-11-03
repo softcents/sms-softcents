@@ -39,8 +39,8 @@ class QueueMonitorController extends Controller
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
         $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
-        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
-        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId) : null;
+        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
+        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, null, 25, $user) : null;
 
         return view('sp.queue-monitor.index', compact(
             'workers',
@@ -80,8 +80,8 @@ class QueueMonitorController extends Controller
         $routes = $this->service->getRouteTrafficSummary($user, $filterUserId);
         $campaigns = $this->service->getCampaignTrafficSummary($user, $filterUserId);
         $campaignAggregates = $this->service->getCampaignAggregates($campaigns);
-        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId) : [];
-        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter) : null;
+        $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
+        $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter, 25, $user) : null;
 
         return response()->json([
             'success'             => true,

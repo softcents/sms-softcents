@@ -35,6 +35,7 @@ class QueueMonitorController extends Controller
         $customerSummary = $this->service->getCustomerQueueSummary($user, $filterUserId);
         $customerPendingSummary = $this->service->getCustomerPendingSmsSummary($user, $filterUserId);
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
+        $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, null, 25, $user) : null;
 
@@ -46,6 +47,7 @@ class QueueMonitorController extends Controller
             'customerSummary',
             'customerPendingSummary',
             'customerProcessingSummary',
+            'customerSubmittedSummary',
             'breadcrumbs',
             'customerQueue'
         ));
@@ -68,19 +70,21 @@ class QueueMonitorController extends Controller
         $customerSummary = $this->service->getCustomerQueueSummary($user, $filterUserId);
         $customerPendingSummary = $this->service->getCustomerPendingSmsSummary($user, $filterUserId);
         $customerProcessingSummary = $this->service->getCustomerProcessingSmsSummary($user, $filterUserId);
+        $customerSubmittedSummary = $this->service->getCustomerSubmittedSmsSummary($user, $filterUserId);
         $breadcrumbs = $filterUserId ? $this->service->getUserHierarchyBreadcrumbs($filterUserId, $user) : [];
         $customerQueue = $filterUserId ? $this->service->getCustomerSmsQueueDetails($filterUserId, $statusFilter, 25, $user) : null;
 
         return response()->json([
-            'success'             => true,
-            'timestamp'           => now()->format('H:i:s'),
-            'workers'             => $workers,
-            'metrics'             => $metrics,
-            'customers'           => $customerSummary,
-            'customer_pending'    => $customerPendingSummary,
-            'customer_processing' => $customerProcessingSummary,
-            'breadcrumbs'         => $breadcrumbs,
-            'customer_queue'      => $customerQueue,
+            'success'              => true,
+            'timestamp'            => now()->format('H:i:s'),
+            'workers'              => $workers,
+            'metrics'              => $metrics,
+            'customers'            => $customerSummary,
+            'customer_pending'     => $customerPendingSummary,
+            'customer_processing'  => $customerProcessingSummary,
+            'customer_submitted'   => $customerSubmittedSummary,
+            'breadcrumbs'          => $breadcrumbs,
+            'customer_queue'       => $customerQueue,
         ]);
     }
 

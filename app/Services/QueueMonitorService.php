@@ -823,6 +823,143 @@ class QueueMonitorService
     }
 
     /**
+     * Get customer-wise submitted SMS statistics specifically for Sub-reseller (or Reseller).
+     */
+    public function getCustomerSubmittedSmsSummary(User $viewer, ?int $filterUserId = null): array
+    {
+        $scopedIds = $this->getScopedUserIds($viewer);
+        if (!$scopedIds) {
+            return [
+                'list'       => [],
+                'aggregates' => [
+                    'today_submitted'      => 0,
+                    'total_submitted'      => 0,
+                    'today_delivered'      => 0,
+                    'today_failed'         => 0,
+                    'active_clients_today' => 0,
+                    'total_customers'      => 0,
+                    'acceptance_rate'      => 100.0,
+                    'operator_submitted'   => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+                ],
+            ];
+        }
+
+        $query = User::where('role', 'user')->whereIn('id', $scopedIds);
+
+        if ($filterUserId) {
+            $targetUser = User::find($filterUserId);
+            if ($targetUser && $targetUser->role === 'user') {
+                $query->where('id', $targetUser->id);
+            }
+        }
+
+        $customers = $query->orderBy('name')->get();
+
+        $allNetworkSubmitted = Sms::whereIn('user_id', $scopedIds)
+            ->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])
+            ->count();
+
+        $list = [];
+        $aggregates = [
+            'today_submitted'      => 0,
+            'total_submitted'      => 0,
+            'today_delivered'      => 0,
+            'today_failed'         => 0,
+            'active_clients_today' => 0,
+            'total_customers'      => $customers->count(),
+            'acceptance_rate'      => 100.0,
+            'operator_submitted'   => ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0],
+        ];
+
+        foreach ($customers as $cust) {
+            $baseSubmitted = Sms::where('user_id', $cust->id)
+                ->whereIn('status', ['success', 'submitted', 'sent', 'delivered']);
+            
+            $todaySubmitted = (clone $baseSubmitted)->whereDate('created_at', today())->count();
+            $lifetimeSubmitted = (clone $baseSubmitted)->count();
+
+            $todayDelivered = Sms::where('user_id', $cust->id)
+                ->whereDate('created_at', today())
+                ->whereIn('status', ['success', 'delivered'])
+                ->count();
+            $todayFailed = Sms::where('user_id', $cust->id)
+                ->whereDate('created_at', today())
+                ->where('status', 'failed')
+                ->count();
+
+            $aggregates['today_submitted'] += $todaySubmitted;
+            $aggregates['total_submitted'] += $lifetimeSubmitted;
+            $aggregates['today_delivered'] += $todayDelivered;
+            $aggregates['today_failed'] += $todayFailed;
+
+            if ($todaySubmitted > 0) {
+                $aggregates['active_clients_today']++;
+            }
+
+            $ops = (clone $baseSubmitted)
+                ->groupBy('operator')
+                ->selectRaw('operator, count(*) as count')
+                ->pluck('count', 'operator')
+                ->toArray();
+
+            $opBreakdown = ['GP' => 0, 'BL' => 0, 'Robi' => 0, 'Teletalk' => 0];
+            foreach (['GP', 'BL', 'Robi', 'Teletalk'] as $opKey) {
+                $opVal = (int) ($ops[$opKey] ?? 0);
+                $opBreakdown[$opKey] = $opVal;
+                $aggregates['operator_submitted'][$opKey] = ($aggregates['operator_submitted'][$opKey] ?? 0) + $opVal;
+            }
+
+            $campaignSubmitted = (clone $baseSubmitted)->whereNotNull('campaign_id')->count();
+            $directSubmitted = max(0, $lifetimeSubmitted - $campaignSubmitted);
+
+            $processedToday = $todayDelivered + $todayFailed;
+            $acceptanceRate = $processedToday > 0 ? round(($todayDelivered / $processedToday) * 100, 1) : 100.0;
+            $share = $allNetworkSubmitted > 0 ? round(($lifetimeSubmitted / $allNetworkSubmitted) * 100, 1) : 0.0;
+
+            $velocity = 'idle';
+            if ($todaySubmitted > 50) {
+                $velocity = 'high_volume';
+            } elseif ($todaySubmitted > 0) {
+                $velocity = 'active';
+            }
+
+            $list[] = [
+                'id'                  => $cust->id,
+                'name'                => $cust->name,
+                'username'            => $cust->username ?? $cust->name,
+                'email'               => $cust->email,
+                'phone'               => $cust->phone ?? 'N/A',
+                'balance'             => round((float) ($cust->balance ?? 0), 2),
+                'today_submitted'     => $todaySubmitted,
+                'lifetime_submitted'  => $lifetimeSubmitted,
+                'today_delivered'     => $todayDelivered,
+                'today_failed'        => $todayFailed,
+                'acceptance_rate'     => $acceptanceRate,
+                'traffic_share'       => $share,
+                'operator_breakdown'  => $opBreakdown,
+                'campaign_submitted'  => $campaignSubmitted,
+                'direct_submitted'    => $directSubmitted,
+                'velocity'            => $velocity,
+            ];
+        }
+
+        $allProcessedToday = $aggregates['today_delivered'] + $aggregates['today_failed'];
+        $aggregates['acceptance_rate'] = $allProcessedToday > 0 ? round(($aggregates['today_delivered'] / $allProcessedToday) * 100, 1) : 100.0;
+
+        usort($list, function ($a, $b) {
+            if ($a['today_submitted'] === $b['today_submitted']) {
+                return $b['lifetime_submitted'] <=> $a['lifetime_submitted'];
+            }
+            return $b['today_submitted'] <=> $a['today_submitted'];
+        });
+
+        return [
+            'list'       => $list,
+            'aggregates' => $aggregates,
+        ];
+    }
+
+    /**
      * Get ancestor hierarchy breadcrumbs for a given user.
      */
     public function getUserHierarchyBreadcrumbs(int $userId, ?User $actor = null): array

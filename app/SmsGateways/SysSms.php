@@ -50,7 +50,8 @@ class SysSms
             return false;
         }
 
-        $endpoint = rtrim($params['api_url'], '/') . '/sendtext';
+        $baseUrl = preg_replace('#/sendtext.*#i', '', $params['api_url'] ?? '');
+        $endpoint = rtrim($baseUrl, '/') . '/sendtext';
 
         $payload = [
             'apikey'         => $params['apikey'],

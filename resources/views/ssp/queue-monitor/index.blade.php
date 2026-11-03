@@ -273,9 +273,9 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Submitted SMS') }}</div>
-                            <div class="kpi-val text-success" id="val-submitted-count">{{ number_format($metrics['today_submitted']) }}</div>
+                            <div class="kpi-val" id="val-submitted-count" style="color: #0284c7;">{{ number_format($metrics['today_submitted']) }}</div>
                         </div>
-                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                        <div class="kpi-icon" style="background: #e0f2fe; color: #0284c7;">
                             <i class="fas fa-paper-plane"></i>
                         </div>
                     </div>
@@ -285,7 +285,25 @@
                 </div>
             </div>
 
-            <!-- 5. Real-Time TPS -->
+            <!-- 5. Delivered SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Delivered SMS') }}</div>
+                            <div class="kpi-val text-success" id="val-delivered-count">{{ number_format($metrics['today_delivered']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #dcfce7; color: #16a34a;">
+                            <i class="fas fa-check-double"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Today: <strong id="val-today-delivered">{{ number_format($metrics['today_delivered']) }}</strong> • All: <strong id="val-total-delivered">{{ number_format($metrics['delivered_count']) }}</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Real-Time TPS -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -496,6 +514,9 @@ $(document).ready(function() {
                 $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());
                 $('#val-today-submitted').text((res.metrics.today_submitted || 0).toLocaleString());
                 $('#val-total-submitted').text((res.metrics.submitted_count || 0).toLocaleString());
+                $('#val-delivered-count').text((res.metrics.today_delivered || 0).toLocaleString());
+                $('#val-today-delivered').text((res.metrics.today_delivered || 0).toLocaleString());
+                $('#val-total-delivered').text((res.metrics.delivered_count || 0).toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());

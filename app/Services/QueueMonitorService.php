@@ -344,19 +344,22 @@ class QueueMonitorService
             $processingCount = max($processingCount, (int) ($broker['unack_messages'] ?? 0));
         }
 
-        // 2. Submitted SMS (Dispatched to Gateway) & Today's Volume
+        // 2. Submitted & Delivered SMS & Today's Volume
         $baseSmsQuery = Sms::query();
         if ($scopedIds !== null) {
             $baseSmsQuery->whereIn('user_id', $scopedIds);
         }
-        $submittedCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'submitted', 'sent'])->count();
+        $submittedCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
+        $deliveredCount = (clone $baseSmsQuery)->whereIn('status', ['success', 'delivered'])->count();
+        $failedCount = (clone $baseSmsQuery)->whereIn('status', ['failed', 'rejected', 'undelivered'])->count();
 
         $todayQuery = (clone $baseSmsQuery)->whereDate('created_at', today());
         $todayTotal = (clone $todayQuery)->count();
-        $todaySubmitted = (clone $todayQuery)->whereIn('status', ['success', 'submitted', 'sent'])->count();
-        $todaySuccess = (clone $todayQuery)->where('status', 'success')->count();
-        $todayFailed = (clone $todayQuery)->where('status', 'failed')->count();
-        $deliveryRate = $todayTotal > 0 ? round(($todaySuccess / $todayTotal) * 100, 1) : 100.0;
+        $todaySubmitted = (clone $todayQuery)->whereIn('status', ['success', 'submitted', 'sent', 'delivered'])->count();
+        $todayDelivered = (clone $todayQuery)->whereIn('status', ['success', 'delivered'])->count();
+        $todaySuccess = $todayDelivered;
+        $todayFailed = (clone $todayQuery)->whereIn('status', ['failed', 'rejected', 'undelivered'])->count();
+        $deliveryRate = $todayTotal > 0 ? round(($todayDelivered / $todayTotal) * 100, 1) : 100.0;
 
         // 3. Real-time Throughput (TPS in last 60s, last 5m, last 1h)
         $tpsQuery = Sms::query()->where('created_at', '>=', now()->subMinute());
@@ -508,6 +511,9 @@ class QueueMonitorService
             'processing_count'     => $processingCount,
             'submitted_count'      => $submittedCount,
             'today_submitted'      => $todaySubmitted,
+            'delivered_count'      => $deliveredCount,
+            'today_delivered'      => $todayDelivered,
+            'failed_count'         => $failedCount,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
             'today_failed'         => $todayFailed,

@@ -27,9 +27,10 @@ class QueueMonitorController extends Controller
             abort(403, 'Unauthorized access: You can only monitor your own queue.');
         }
 
+        $workers = $this->service->getWorkerPoolStatus();
         $metrics = $this->service->getScopedLiveMetrics($user);
 
-        return view('users.queue-monitor.index', compact('metrics'));
+        return view('users.queue-monitor.index', compact('workers', 'metrics'));
     }
 
     /**
@@ -42,11 +43,13 @@ class QueueMonitorController extends Controller
             abort(403, 'Unauthorized access: You can only monitor your own queue.');
         }
 
+        $workers = $this->service->getWorkerPoolStatus();
         $metrics = $this->service->getScopedLiveMetrics($user);
 
         return response()->json([
             'success'   => true,
             'timestamp' => now()->format('H:i:s'),
+            'workers'   => $workers,
             'metrics'   => $metrics,
         ]);
     }

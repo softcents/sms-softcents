@@ -384,6 +384,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 11. Active Queue Workers -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Active Queue Workers') }}</div>
+                            <div class="kpi-val" style="color: #059669;"><span id="val-kpi-workers">{{ $metrics['active_workers'] ?? ($workers['active_workers'] ?? 8) }}</span> <small style="font-size: 13px; font-weight: 600; color: #64748b;">/ {{ $metrics['expected_workers'] ?? ($workers['expected_workers'] ?? 8) }}</small></div>
+                        </div>
+                        <div class="kpi-icon" style="background: #d1fae5; color: #059669;">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span class="badge bg-success" id="val-kpi-worker-badge" style="font-size: 11px;">{{ ucfirst($metrics['worker_status'] ?? ($workers['status'] ?? 'Healthy')) }}</span> <span class="text-muted ms-1">{{ __('Processing Engine') }}</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Middle Section: Operator Distribution & Quick Actions -->
@@ -597,6 +615,10 @@ $(document).ready(function() {
                 $('#val-kpi-tps').text(res.metrics.current_tps);
                 $('#val-kpi-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-kpi-5m').text(res.metrics.last_5_min_volume.toLocaleString());
+                const activeW = (res.metrics.active_workers ?? (res.workers ? res.workers.active_workers : 8));
+                $('#val-kpi-workers').text(activeW);
+                const wStat = (res.metrics.worker_status ?? (res.workers ? res.workers.status : 'healthy'));
+                $('#val-kpi-worker-badge').text(wStat.charAt(0).toUpperCase() + wStat.slice(1));
                 $('#val-delivery-rate').text(res.metrics.delivery_rate + '%');
 
                 // Operator Chart

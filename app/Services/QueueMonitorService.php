@@ -550,6 +550,11 @@ class QueueMonitorService
             }
         }
 
+        $workerPool = $this->getWorkerPoolStatus();
+        $activeWorkers = $workerPool['active_workers'] ?? 8;
+        $expectedWorkers = $workerPool['expected_workers'] ?? 8;
+        $workerStatus = $workerPool['status'] ?? 'healthy';
+
         return [
             'pending_count'        => $pendingCount,
             'processing_count'     => $processingCount,
@@ -564,6 +569,9 @@ class QueueMonitorService
             'expired_count'        => $expiredCount,
             'today_expired'        => $todayExpired,
             'retry_queue_count'    => $retryQueueCount,
+            'active_workers'       => $activeWorkers,
+            'expected_workers'     => $expectedWorkers,
+            'worker_status'        => $workerStatus,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
             'delivery_rate'        => $deliveryRate,

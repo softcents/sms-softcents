@@ -208,11 +208,61 @@ class QueueMonitorService
     }
 
     /**
+     * Get list of downline accounts available for queue drill-down filtering.
+     */
+    public function getFilterableDownline(?User $user): array
+    {
+        if (!$user || in_array($user->role, ['admin', 'superadmin'])) {
+            return User::whereIn('role', ['sp', 'ssp', 'user'])
+                ->select('id', 'name', 'username', 'role')
+                ->orderBy('role')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        }
+
+        if ($user->role === 'sp') {
+            $sspIds = User::where('parent_id', $user->id)->where('role', 'ssp')->pluck('id')->toArray();
+            return User::where(function ($q) use ($user, $sspIds) {
+                $q->where('parent_id', $user->id);
+                if (!empty($sspIds)) {
+                    $q->orWhereIn('parent_id', $sspIds);
+                }
+            })
+            ->select('id', 'name', 'username', 'role')
+            ->orderBy('role')
+            ->orderBy('name')
+            ->get()
+            ->toArray();
+        }
+
+        if ($user->role === 'ssp') {
+            return User::where('parent_id', $user->id)
+                ->where('role', 'user')
+                ->select('id', 'name', 'username', 'role')
+                ->orderBy('name')
+                ->get()
+                ->toArray();
+        }
+
+        return [];
+    }
+
+    /**
      * Get Live Scoped CDR and Queue Metrics.
      */
-    public function getScopedLiveMetrics(?User $user): array
+    public function getScopedLiveMetrics(?User $user, ?int $filterUserId = null): array
     {
         $scopedIds = $this->getScopedUserIds($user);
+
+        // Apply drill-down filter if provided and permitted
+        if ($filterUserId) {
+            if ($scopedIds === null) {
+                $scopedIds = [$filterUserId];
+            } elseif (in_array($filterUserId, $scopedIds)) {
+                $scopedIds = [$filterUserId];
+            }
+        }
 
         // 1. Pending Queue in DB
         $pendingQuery = Sms::query();
@@ -338,6 +388,45 @@ class QueueMonitorService
             ];
         }
 
+        // 7. Active Campaign Progress & Queue ETA
+        $campaignsData = [];
+        $recentCampaignIds = Sms::query()
+            ->whereNotNull('campaign_id')
+            ->where('created_at', '>=', now()->subDays(7));
+        if ($scopedIds !== null) {
+            $recentCampaignIds->whereIn('user_id', $scopedIds);
+        }
+        $campaignIds = $recentCampaignIds->distinct()->pluck('campaign_id')->take(5)->toArray();
+
+        if (!empty($campaignIds)) {
+            $campaignModels = \App\Models\Campaign::whereIn('id', $campaignIds)->get()->keyBy('id');
+            foreach ($campaignIds as $cId) {
+                $cQuery = Sms::where('campaign_id', $cId);
+                if ($scopedIds !== null) {
+                    $cQuery->whereIn('user_id', $scopedIds);
+                }
+                $cTotal = (clone $cQuery)->count();
+                $cSuccess = (clone $cQuery)->where('status', 'success')->count();
+                $cPending = (clone $cQuery)->where('status', 'pending')->count();
+                $cFailed = (clone $cQuery)->where('status', 'failed')->count();
+                $cProgress = $cTotal > 0 ? round((($cSuccess + $cFailed) / $cTotal) * 100, 1) : 100.0;
+
+                $etaSeconds = ($currentTps > 0 && $cPending > 0) ? ceil($cPending / $currentTps) : 0;
+                $etaHuman = $cPending === 0 ? 'Completed' : ($etaSeconds > 0 ? ($etaSeconds < 60 ? "{$etaSeconds}s" : ceil($etaSeconds / 60) . ' mins') : 'Calculating...');
+
+                $campaignsData[] = [
+                    'id'               => $cId,
+                    'name'             => $campaignModels[$cId]->name ?? "Campaign #{$cId}",
+                    'total'            => $cTotal,
+                    'success'          => $cSuccess,
+                    'pending'          => $cPending,
+                    'failed'           => $cFailed,
+                    'progress_percent' => $cProgress,
+                    'eta'              => $etaHuman,
+                ];
+            }
+        }
+
         return [
             'pending_count'        => $pendingCount,
             'today_total'          => $todayTotal,
@@ -351,6 +440,7 @@ class QueueMonitorService
             'operators'            => $operators,
             'top_senders'          => $topSenders,
             'live_stream'          => $liveStream,
+            'active_campaigns'     => $campaignsData,
         ];
     }
 

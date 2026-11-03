@@ -22,32 +22,37 @@ class QueueMonitorController extends Controller
     /**
      * Display live queue monitoring NOC dashboard.
      */
-    public function index(): View
+    public function index(Request $request): View
     {
+        $filterUserId = $request->input('filter_user_id') ? (int) $request->input('filter_user_id') : null;
         $broker = $this->service->getBrokerOverview();
         $workers = $this->service->getWorkerPoolStatus();
         $queues = $this->service->getQueues();
-        $metrics = $this->service->getScopedLiveMetrics(auth()->user());
+        $metrics = $this->service->getScopedLiveMetrics(auth()->user(), $filterUserId);
         $failedJobs = $this->service->getFailedJobs(15);
+        $downlineUsers = $this->service->getFilterableDownline(auth()->user());
 
         return view('admin.queue-monitor.index', compact(
             'broker',
             'workers',
             'queues',
             'metrics',
-            'failedJobs'
+            'failedJobs',
+            'downlineUsers',
+            'filterUserId'
         ));
     }
 
     /**
      * AJAX endpoint for real-time polling updates.
      */
-    public function liveData(): JsonResponse
+    public function liveData(Request $request): JsonResponse
     {
+        $filterUserId = $request->input('filter_user_id') ? (int) $request->input('filter_user_id') : null;
         $broker = $this->service->getBrokerOverview();
         $workers = $this->service->getWorkerPoolStatus();
         $queues = $this->service->getQueues();
-        $metrics = $this->service->getScopedLiveMetrics(auth()->user());
+        $metrics = $this->service->getScopedLiveMetrics(auth()->user(), $filterUserId);
         $failedJobs = $this->service->getFailedJobs(15);
 
         return response()->json([

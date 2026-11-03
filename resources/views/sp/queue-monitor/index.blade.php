@@ -183,7 +183,19 @@
                     </div>
                 </div>
 
-                <div class="d-flex align-items-center gap-2">
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Hierarchy Drill-Down Selector -->
+                    <div style="min-width: 200px;">
+                        <select class="form-select form-select-sm" id="select-filter-user" style="font-size: 12px; font-weight: 600;">
+                            <option value="">{{ __('🌐 All Network Traffic') }}</option>
+                            @foreach($downlineUsers ?? [] as $u)
+                                <option value="{{ $u['id'] }}" {{ ($filterUserId ?? null) == $u['id'] ? 'selected' : '' }}>
+                                    [{{ strtoupper($u['role']) }}] {{ $u['username'] ?? $u['name'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
                     <div class="btn-group btn-group-sm" role="group" aria-label="Refresh Interval">
                         <button type="button" class="btn btn-outline-secondary interval-btn active" data-interval="2000">2s</button>
                         <button type="button" class="btn btn-outline-secondary interval-btn" data-interval="5000">5s</button>
@@ -429,9 +441,11 @@ $(document).ready(function() {
         isFetching = true;
         $('#refresh-spinner').addClass('fa-spin');
 
+        const filterUserId = $('#select-filter-user').val();
         $.ajax({
             url: "{{ route('sp.queue-monitor.data') }}",
             type: "GET",
+            data: { filter_user_id: filterUserId },
             dataType: "json",
             timeout: 5000,
             success: function(res) {
@@ -547,10 +561,18 @@ $(document).ready(function() {
         $('.interval-btn').removeClass('active');
         $(this).addClass('active');
         pollingInterval = parseInt($(this).data('interval'), 10);
-        startPolling();
+        $('#select-filter-user').on('change', function() {
+        fetchLiveData();
+    });
+
+    startPolling();
     });
 
     $('#btn-refresh-now').on('click', function() {
+        fetchLiveData();
+    });
+
+    $('#select-filter-user').on('change', function() {
         fetchLiveData();
     });
 

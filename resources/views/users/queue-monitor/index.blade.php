@@ -299,30 +299,52 @@
                 </div>
             </div>
 
-            <!-- Fast SMS Dispatch Shortcuts -->
+            <!-- Live Campaign Queue & Progress Tracker -->
             <div class="col-lg-6 col-12">
                 <div class="panel-box h-100">
                     <div class="panel-header">
                         <h5 class="panel-title">
-                            <i class="fas fa-bolt text-warning"></i>
-                            {{ __('Instant Dispatch Actions') }}
+                            <i class="fas fa-tasks text-primary"></i>
+                            {{ __('Campaign Dispatch & Queue Tracker') }}
                         </h5>
+                        <span class="badge badge-soft-info" id="active-campaigns-badge">{{ count($metrics['active_campaigns'] ?? []) }} {{ __('Recent') }}</span>
                     </div>
-                    <div class="p-4 d-flex flex-column justify-content-center h-100">
-                        <p class="text-muted mb-3" style="font-size: 13px;">
-                            {{ __('All SMS messages sent from Quick SMS, Group SMS, Bulk Campaigns, or HTTP API are automatically processed via the dedicated RabbitMQ real-time pipeline.') }}
-                        </p>
-                        <div class="d-flex flex-wrap gap-2">
-                            <a href="{{ route('users.quick-sms.index') }}" class="btn btn-outline-primary btn-sm px-3 py-2">
-                                <i class="fas fa-paper-plane me-1"></i> {{ __('Send Quick SMS') }}
-                            </a>
-                            <a href="{{ route('users.bulk-sms.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-2">
-                                <i class="fas fa-mail-bulk me-1"></i> {{ __('Launch Bulk Campaign') }}
-                            </a>
-                            <a href="{{ route('users.reports.quick-sms') }}" class="btn btn-outline-info btn-sm px-3 py-2">
-                                <i class="fas fa-history me-1"></i> {{ __('View Detailed CDRs') }}
-                            </a>
+                    <div class="p-3" id="active-campaigns-container">
+                        @forelse($metrics['active_campaigns'] ?? [] as $camp)
+                        <div class="border rounded p-3 mb-3 bg-light">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <div class="fw-bold text-dark fs-6">{{ $camp['name'] }}</div>
+                                <span class="badge {{ $camp['pending'] > 0 ? 'badge-soft-warning' : 'badge-soft-success' }}">
+                                    {{ $camp['pending'] > 0 ? __('In-Queue: ') . number_format($camp['pending']) : __('Completed') }}
+                                </span>
+                            </div>
+
+                            <div class="progress mb-2" style="height: 8px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $camp['progress_percent'] }}%;" aria-valuenow="{{ $camp['progress_percent'] }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+
+                            <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                                <span>Sent: <strong class="text-success">{{ number_format($camp['success']) }}</strong> / {{ number_format($camp['total']) }} ({{ $camp['progress_percent'] }}%)</span>
+                                <span>ETA: <strong class="text-primary">{{ $camp['eta'] }}</strong></span>
+                            </div>
                         </div>
+                        @empty
+                        <div class="p-4 d-flex flex-column justify-content-center text-center h-100">
+                            <i class="fas fa-check-circle text-success fs-1 mb-2"></i>
+                            <h6 class="fw-bold text-dark">{{ __('No Active Campaigns in Queue') }}</h6>
+                            <p class="text-muted mb-3" style="font-size: 13px;">
+                                {{ __('All your scheduled campaigns have finished processing. Start a new campaign or send quick messages at any time.') }}
+                            </p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <a href="{{ route('users.quick-sms.index') }}" class="btn btn-outline-primary btn-sm px-3 py-1">
+                                    <i class="fas fa-paper-plane me-1"></i> {{ __('Send Quick SMS') }}
+                                </a>
+                                <a href="{{ route('users.bulk-sms.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-1">
+                                    <i class="fas fa-mail-bulk me-1"></i> {{ __('Launch Bulk Campaign') }}
+                                </a>
+                            </div>
+                        </div>
+                        @endforelse
                     </div>
                 </div>
             </div>
@@ -462,6 +484,9 @@ $(document).ready(function() {
                     $('#leg-tt').text(ops.Teletalk || 0);
                 }
 
+                // Active Campaigns
+                renderActiveCampaigns(res.metrics.active_campaigns);
+
                 // Live Stream
                 renderStreamTable(res.metrics.live_stream);
             },
@@ -470,6 +495,54 @@ $(document).ready(function() {
                 $('#refresh-spinner').removeClass('fa-spin');
             }
         });
+    }
+
+    function renderActiveCampaigns(campaigns) {
+        if (!campaigns || !campaigns.length) {
+            $('#active-campaigns-badge').text('0 Recent');
+            $('#active-campaigns-container').html(`
+                <div class="p-4 d-flex flex-column justify-content-center text-center h-100">
+                    <i class="fas fa-check-circle text-success fs-1 mb-2"></i>
+                    <h6 class="fw-bold text-dark">No Active Campaigns in Queue</h6>
+                    <p class="text-muted mb-3" style="font-size: 13px;">
+                        All your scheduled campaigns have finished processing. Start a new campaign or send quick messages at any time.
+                    </p>
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ route('users.quick-sms.index') }}" class="btn btn-outline-primary btn-sm px-3 py-1">
+                            <i class="fas fa-paper-plane me-1"></i> Send Quick SMS
+                        </a>
+                        <a href="{{ route('users.bulk-sms.index') }}" class="btn btn-outline-secondary btn-sm px-3 py-1">
+                            <i class="fas fa-mail-bulk me-1"></i> Launch Bulk Campaign
+                        </a>
+                    </div>
+                </div>
+            `);
+            return;
+        }
+
+        $('#active-campaigns-badge').text(campaigns.length + ' Recent');
+        let html = '';
+        campaigns.forEach(function(c) {
+            const badgeClass = c.pending > 0 ? 'badge-soft-warning' : 'badge-soft-success';
+            const badgeText = c.pending > 0 ? 'In-Queue: ' + Number(c.pending).toLocaleString() : 'Completed';
+
+            html += `
+                <div class="border rounded p-3 mb-3 bg-light">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="fw-bold text-dark fs-6">${c.name}</div>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="progress mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: ${c.progress_percent}%;" aria-valuenow="${c.progress_percent}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <div class="d-flex justify-content-between text-muted" style="font-size: 11px;">
+                        <span>Sent: <strong class="text-success">${Number(c.success).toLocaleString()}</strong> / ${Number(c.total).toLocaleString()} (${c.progress_percent}%)</span>
+                        <span>ETA: <strong class="text-primary">${c.eta}</strong></span>
+                    </div>
+                </div>
+            `;
+        });
+        $('#active-campaigns-container').html(html);
     }
 
     function renderStreamTable(stream) {

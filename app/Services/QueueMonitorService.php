@@ -425,6 +425,28 @@ class QueueMonitorService
         }
         $last1HourCount = (clone $last1HourQuery)->count();
 
+        // 4. Total Queue Backlog and Estimated Drain Time
+        $queueBacklog = $pendingCount + $retryQueueCount;
+        if ($scopedIds === null) {
+            $broker = $this->getBrokerOverview();
+            $queueBacklog += (int) ($broker['ready_messages'] ?? 0);
+        }
+
+        $drainEta = 'Optimal / Clear';
+        if ($queueBacklog > 0) {
+            if ($currentTps > 0) {
+                $seconds = ceil($queueBacklog / $currentTps);
+                if ($seconds < 60) {
+                    $drainEta = "~{$seconds}s to clear";
+                } else {
+                    $mins = round($seconds / 60, 1);
+                    $drainEta = "~{$mins}m to clear";
+                }
+            } else {
+                $drainEta = 'Ready for dispatch';
+            }
+        }
+
         // 4. Operator Distribution (Last 24 Hours)
         $opQuery = Sms::query()
             ->select('operator', DB::raw('count(*) as count'))
@@ -569,6 +591,8 @@ class QueueMonitorService
             'expired_count'        => $expiredCount,
             'today_expired'        => $todayExpired,
             'retry_queue_count'    => $retryQueueCount,
+            'queue_backlog'        => $queueBacklog,
+            'drain_eta'            => $drainEta,
             'active_workers'       => $activeWorkers,
             'expected_workers'     => $expectedWorkers,
             'worker_status'        => $workerStatus,

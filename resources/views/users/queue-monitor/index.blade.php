@@ -211,7 +211,7 @@
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
                             <div class="kpi-label">{{ __('Total Queued SMS') }}</div>
-                            <div class="kpi-val text-primary" id="val-queue-backlog">{{ number_format($metrics['pending_count']) }}</div>
+                            <div class="kpi-val text-primary" id="val-total-queued">{{ number_format($metrics['pending_count']) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #e0e7ff; color: #4f46e5;">
                             <i class="fas fa-layer-group"></i>
@@ -402,6 +402,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 12. Queue Backlog -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Queue Backlog') }}</div>
+                            <div class="kpi-val" id="val-queue-backlog" style="color: #6366f1;">{{ number_format($metrics['queue_backlog'] ?? $metrics['pending_count']) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ede9fe; color: #6366f1;">
+                            <i class="fas fa-stream"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Drain: <strong id="val-backlog-drain">{{ $metrics['drain_eta'] ?? 'Optimal Flow' }}</strong></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Middle Section: Operator Distribution & Quick Actions -->
@@ -588,7 +606,9 @@ $(document).ready(function() {
                 $('#last-synced-time').text(res.timestamp);
 
                 // KPI
-                $('#val-queue-backlog').text(res.metrics.pending_count.toLocaleString());
+                $('#val-total-queued').text(res.metrics.pending_count.toLocaleString());
+                $('#val-queue-backlog').text((res.metrics.queue_backlog ?? res.metrics.pending_count).toLocaleString());
+                $('#val-backlog-drain').text(res.metrics.drain_eta || 'Optimal Flow');
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-processing-count').text((res.metrics.processing_count || 0).toLocaleString());
                 $('#val-submitted-count').text((res.metrics.today_submitted || 0).toLocaleString());

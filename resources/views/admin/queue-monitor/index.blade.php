@@ -441,6 +441,24 @@
                     </div>
                 </div>
             </div>
+
+            <!-- 12. Queue Backlog -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Queue Backlog') }}</div>
+                            <div class="kpi-val" id="val-queue-backlog" style="color: #6366f1;">{{ number_format($metrics['queue_backlog'] ?? (($broker['ready_messages'] ?? 0) + $metrics['pending_count'])) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #ede9fe; color: #6366f1;">
+                            <i class="fas fa-stream"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>Drain: <strong id="val-backlog-drain">{{ $metrics['drain_eta'] ?? 'Optimal Flow' }}</strong></span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Middle Section: Active Queues & Operator Breakdown -->
@@ -873,8 +891,9 @@ $(document).ready(function() {
                 $('#val-workers-status').text(res.workers.active_workers + '/' + res.workers.expected_workers);
 
                 // KPI values
-                const totalBacklog = (res.broker.ready_messages || 0) + (res.metrics.pending_count || 0);
+                const totalBacklog = res.metrics.queue_backlog ?? ((res.broker.ready_messages || 0) + (res.metrics.pending_count || 0));
                 $('#val-queue-backlog').text(totalBacklog.toLocaleString());
+                $('#val-backlog-drain').text(res.metrics.drain_eta || 'Optimal Flow');
                 $('#val-rmq-ready').text(res.broker.ready_messages.toLocaleString());
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
                 $('#val-unack').text(res.broker.unack_messages.toLocaleString());

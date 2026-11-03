@@ -276,12 +276,12 @@
                 </div>
             </div>
 
-            <!-- 3. In-Flight Processing -->
+            <!-- 3. Processing SMS -->
             <div class="col-xl-2 col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
                         <div>
-                            <div class="kpi-label">{{ __('In-Flight / Processing') }}</div>
+                            <div class="kpi-label">{{ __('Processing SMS') }}</div>
                             <div class="kpi-val text-warning" id="val-unack">{{ number_format($broker['unack_messages']) }}</div>
                         </div>
                         <div class="kpi-icon" style="background: #fef3c7; color: #d97706;">

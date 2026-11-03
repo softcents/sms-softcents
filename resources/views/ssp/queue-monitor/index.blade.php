@@ -249,7 +249,25 @@
                 </div>
             </div>
 
-            <!-- 3. Real-Time TPS -->
+            <!-- 3. Processing SMS -->
+            <div class="col-xl col-md-4 col-sm-6 col-12">
+                <div class="kpi-card">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div>
+                            <div class="kpi-label">{{ __('Processing SMS') }}</div>
+                            <div class="kpi-val text-warning" id="val-processing-count">{{ number_format($metrics['processing_count'] ?? 0) }}</div>
+                        </div>
+                        <div class="kpi-icon" style="background: #fef3c7; color: #d97706;">
+                            <i class="fas fa-cog fa-spin"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-sub">
+                        <span>{{ __('In Worker RAM / Dispatching') }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Real-Time TPS -->
             <div class="col-xl col-md-4 col-sm-6 col-12">
                 <div class="kpi-card">
                     <div class="d-flex align-items-center justify-content-between">
@@ -474,6 +492,7 @@ $(document).ready(function() {
                 // KPI
                 $('#val-queue-backlog').text(res.metrics.pending_count.toLocaleString());
                 $('#val-pending-count').text(res.metrics.pending_count.toLocaleString());
+                $('#val-processing-count').text((res.metrics.processing_count || 0).toLocaleString());
                 $('#val-tps').text(res.metrics.current_tps);
                 $('#val-1m').text(res.metrics.last_1_min_volume.toLocaleString());
                 $('#val-5m').text(res.metrics.last_5_min_volume.toLocaleString());

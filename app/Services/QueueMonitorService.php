@@ -330,12 +330,19 @@ class QueueMonitorService
             $scopedIds = [$filterUserId];
         }
 
-        // 1. Pending Queue in DB
+        // 1. Pending & Processing Queue in DB
         $pendingQuery = Sms::query();
         if ($scopedIds !== null) {
             $pendingQuery->whereIn('user_id', $scopedIds);
         }
         $pendingCount = (clone $pendingQuery)->where('status', 'pending')->count();
+        $processingCount = (clone $pendingQuery)->whereIn('status', ['processing', 'sending', 'in_progress', 'queued'])->count();
+
+        // If global NOC view, incorporate active RabbitMQ unacknowledged worker messages
+        if ($scopedIds === null) {
+            $broker = $this->getBrokerOverview();
+            $processingCount = max($processingCount, (int) ($broker['unack_messages'] ?? 0));
+        }
 
         // 2. Today's Dispatched Volume & Delivery Rate
         $todayQuery = Sms::query()->whereDate('created_at', today());
@@ -495,6 +502,7 @@ class QueueMonitorService
 
         return [
             'pending_count'        => $pendingCount,
+            'processing_count'     => $processingCount,
             'today_total'          => $todayTotal,
             'today_success'        => $todaySuccess,
             'today_failed'         => $todayFailed,

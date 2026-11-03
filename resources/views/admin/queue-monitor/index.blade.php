@@ -576,12 +576,12 @@
             </div>
         </div>
 
-        <!-- Resellers & Sub-Resellers Hierarchy Queue Matrix -->
+        <!-- Reseller-Wise SMS Queue & Hierarchy Matrix -->
         <div class="panel-box mb-4">
             <div class="panel-header">
                 <h5 class="panel-title">
                     <i class="fas fa-sitemap text-primary"></i>
-                    {{ __('Reseller & Sub-Reseller Network Queue Matrix') }}
+                    {{ __('Reseller-Wise SMS Queue & Hierarchy Matrix') }}
                 </h5>
                 <span class="badge badge-soft-primary"><span id="resellers-count">{{ count($resellerSummary ?? []) }}</span> {{ __('Partners Monitored') }}</span>
             </div>
@@ -593,6 +593,7 @@
                             <th>{{ __('Hierarchy Level') }}</th>
                             <th class="text-center">{{ __('Active Customers') }}</th>
                             <th class="text-center">{{ __('Pending in Queue') }}</th>
+                            <th class="text-center">{{ __('Processing') }}</th>
                             <th class="text-center">{{ __('Today Total SMS') }}</th>
                             <th class="text-center">{{ __('Delivery Rate') }}</th>
                             <th class="text-end">{{ __('Wallet Balance') }}</th>
@@ -615,6 +616,9 @@
                             <td class="text-center fw-bold {{ $res['pending_queue'] > 0 ? 'text-warning' : 'text-muted' }}">
                                 {{ number_format($res['pending_queue']) }}
                             </td>
+                            <td class="text-center fw-bold {{ ($res['processing_queue'] ?? 0) > 0 ? 'text-info' : 'text-muted' }}">
+                                {{ number_format($res['processing_queue'] ?? 0) }}
+                            </td>
                             <td class="text-center fw-bold text-dark">{{ number_format($res['today_total']) }}</td>
                             <td class="text-center">
                                 <span class="badge badge-soft-success">{{ $res['delivery_rate'] }}%</span>
@@ -628,7 +632,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center py-4 text-muted">{{ __('No resellers or sub-resellers registered yet.') }}</td>
+                            <td colspan="9" class="text-center py-4 text-muted">{{ __('No resellers or sub-resellers registered yet.') }}</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -1032,7 +1036,7 @@ $(document).ready(function() {
         $('#resellers-count').text(resellers.length);
 
         if (!resellers.length) {
-            $('#tbody-resellers').html('<tr><td colspan="8" class="text-center py-4 text-muted">No resellers or sub-resellers registered yet.</td></tr>');
+            $('#tbody-resellers').html('<tr><td colspan="9" class="text-center py-4 text-muted">No resellers or sub-resellers registered yet.</td></tr>');
             return;
         }
 
@@ -1040,6 +1044,7 @@ $(document).ready(function() {
         resellers.forEach(function(r) {
             const roleBadge = r.role === 'sp' ? 'badge-soft-primary' : 'badge-soft-info';
             const pendingClass = r.pending_queue > 0 ? 'text-warning' : 'text-muted';
+            const procClass = (r.processing_queue || 0) > 0 ? 'text-info' : 'text-muted';
 
             html += `
                 <tr data-reseller-id="${r.id}">
@@ -1050,6 +1055,7 @@ $(document).ready(function() {
                     <td><span class="badge ${roleBadge}">${r.role_label}</span></td>
                     <td class="text-center fw-bold">${r.customers}</td>
                     <td class="text-center fw-bold ${pendingClass}">${Number(r.pending_queue).toLocaleString()}</td>
+                    <td class="text-center fw-bold ${procClass}">${Number(r.processing_queue || 0).toLocaleString()}</td>
                     <td class="text-center fw-bold text-dark">${Number(r.today_total).toLocaleString()}</td>
                     <td class="text-center"><span class="badge badge-soft-success">${r.delivery_rate}%</span></td>
                     <td class="text-end fw-bold text-dark">৳${Number(r.balance).toFixed(2)}</td>

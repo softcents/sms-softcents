@@ -201,22 +201,26 @@ class QueueMonitorService
             }
 
             $pending = Sms::whereIn('user_id', $allIds)->where('status', 'pending')->count();
+            $processing = Sms::whereIn('user_id', $allIds)->where('status', 'processing')->count();
             $today = Sms::whereIn('user_id', $allIds)->whereDate('created_at', today())->count();
             $todaySuccess = Sms::whereIn('user_id', $allIds)->whereDate('created_at', today())->where('status', 'success')->count();
+            $todayFailed = Sms::whereIn('user_id', $allIds)->whereDate('created_at', today())->where('status', 'failed')->count();
             $rate = $today > 0 ? round(($todaySuccess / $today) * 100, 1) : 100.0;
 
             $summary[] = [
-                'id'            => $r->id,
-                'name'          => $r->name,
-                'username'      => $r->username ?? $r->name,
-                'role'          => $r->role,
-                'role_label'    => $r->role === 'sp' ? 'Reseller (SP)' : 'Sub-Reseller (SSP)',
-                'customers'     => count($downline),
-                'pending_queue' => $pending,
-                'today_total'   => $today,
-                'today_success' => $todaySuccess,
-                'delivery_rate' => $rate,
-                'balance'       => round((float) ($r->balance ?? 0), 2),
+                'id'               => $r->id,
+                'name'             => $r->name,
+                'username'         => $r->username ?? $r->name,
+                'role'             => $r->role,
+                'role_label'       => $r->role === 'sp' ? 'Reseller (SP)' : 'Sub-Reseller (SSP)',
+                'customers'        => count($downline),
+                'pending_queue'    => $pending,
+                'processing_queue' => $processing,
+                'today_total'      => $today,
+                'today_success'    => $todaySuccess,
+                'today_failed'     => $todayFailed,
+                'delivery_rate'    => $rate,
+                'balance'          => round((float) ($r->balance ?? 0), 2),
             ];
         }
 

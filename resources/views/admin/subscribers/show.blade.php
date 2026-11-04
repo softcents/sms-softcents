@@ -34,7 +34,7 @@
                                     <td>{{ $subscribe->invoice_no }}</td>
                                     <td>{{ optional($subscribe->user)->name }}</td>
                                     <td>{{ optional($subscribe->plan)->title }}</td>
-                                    <td>{{ $subscribe->gateway->name ?? '' }}</td>
+                                    <td>{{ $subscribe->gateway->name ?? __('System / Admin') }}</td>
                                     <td class="fw-bold text-dark">{{ $subscribe->price }}</td>
                                     <td class="fw-bold text-dark">{{ $subscribe->total_sms }}</td>
                                     <td>{{ $subscribe->will_expire }}</td>
@@ -58,7 +58,7 @@
                             </tbody>
                         </table>
                     </div>
-                    @if ($subscribe->gateway->is_manual)
+                    @if ($subscribe->gateway && !empty($subscribe->gateway->is_manual))
                         <div class="row mt-4">
                             @foreach ($subscribe->gateway->manual_data['label'] ?? [] as $key => $label)
                             <div class="col-sm-12">

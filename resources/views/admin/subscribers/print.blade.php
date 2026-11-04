@@ -38,7 +38,7 @@
                             <td>{{ $subscribe->invoice_no }}</td>
                             <td>{{ optional($subscribe->user)->name }}</td>
                             <td>{{ optional($subscribe->plan)->title }}</td>
-                            <td>{{ $subscribe->gateway->name ?? '' }}</td>
+                            <td>{{ $subscribe->gateway->name ?? __('System / Admin') }}</td>
                             <td class="fw-bold text-dark">{{ $subscribe->price }}</td>
                             <td class="fw-bold text-dark">{{ $subscribe->total_sms }}</td>
                             <td>{{ $subscribe->will_expire }}</td>

@@ -149,29 +149,24 @@ $(document).on('click', '#btn-trigger-sms-modal', function (e) {
     var unitCost = parts * rate;
     var totalCost = (unitCost * recipientsCount).toFixed(2);
 
-    // User Balance check
-    var currentBalanceText = $('.user-balance-amount, #user_balance').first().text().replace(/[^0-9.]/g, '') || '';
-    var userBalance = parseFloat(currentBalanceText) || 0;
-    var remain = (userBalance - parseFloat(totalCost)).toFixed(2);
+    // User Balance check: Old Balance & New Balance
+    var oldBalance = parseFloat($('#the-count').data('balance')) || 0;
+    var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
 
     var senderText = senderSelect.find('option:selected').text().trim();
 
-    // Populate Modal
+    // Populate Compact Modal
+    $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
+    $('#modal-new-balance').text('৳' + newBalance);
+    $('#modal-total-cost').text(totalCost);
     $('#modal-sender-id').text(senderText);
     $('#modal-recipients-count').text(recipientsCount + (recipientsCount > 1 ? ' Numbers' : ' Number'));
     $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
     $('#modal-sms-rate').text('৳' + rate.toFixed(2));
-    $('#modal-sms-type').text(isUnicode ? 'Unicode (বাংলা / ইমোজি)' : 'Text (English)');
-    $('#modal-char-count').text(charCount + ' Chars');
-    $('#modal-unit-cost').text(unitCost.toFixed(2));
-    $('#modal-total-cost').text(totalCost);
-    $('#modal-remain-balance').text('৳' + (remain > 0 ? remain : '0.00'));
-
-    $('#modal-num-summary').text(recipientsCount + (recipientsCount > 1 ? ' numbers' : ' number'));
-    $('#modal-numbers-preview').text(validNums.join(', '));
+    $('#modal-char-info').text(charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')');
     $('#modal-content-preview').text(contentText);
 
-    // Show Modal
+    // Show Small Modal
     $('#sms-confirm-modal').modal('show');
 });
 

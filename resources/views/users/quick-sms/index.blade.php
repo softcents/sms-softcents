@@ -87,7 +87,7 @@
                                             </div>
                                             <div class="col-sm-9 mt-4">
                                                 <textarea name="contents" id="contents" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
-                                                <div id="the-count" class="pull-right mt-1" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}">
+                                                <div id="the-count" class="pull-right mt-1" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}" data-balance="{{ (float)auth()->user()->balance }}">
                                                     <span id="current">{{ __('0') }}</span> <span class="ps-1">{{ __('Characters') }}</span> <span class="text-primary fw-bold">|</span>
                                                     <span id="no_of_sms" class="fw-bold text-dark"> {{ __('0') }} </span> {{ __('SMS') }} <span class="text-primary fw-bold">|</span>
                                                     <span class="text-danger"><span id="char_per_sms"> {{ __('160') }} </span> {{ __('Char per sms') }}</span> <span class="text-primary fw-bold">|</span>

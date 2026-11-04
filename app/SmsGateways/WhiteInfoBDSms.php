@@ -13,6 +13,25 @@ class WhiteInfoBDSms
      */
     public function send($number, $message, $senderid, $apiurl, $apikey)
     {
+        // Normalize receiver number to 8801XXXXXXXXX
+        $cleanNumber = preg_replace('/[^0-9]/', '', (string) $number);
+        if (str_starts_with($cleanNumber, '01') && strlen($cleanNumber) === 11) {
+            $number = '88' . $cleanNumber;
+        } elseif (preg_match('/^1[3-9]\d{8}$/', $cleanNumber)) {
+            $number = '880' . $cleanNumber;
+        } else {
+            $number = $cleanNumber;
+        }
+
+        // Ensure sender ID is valid for WhiteInfoBD account (8809639228873 or 09639900454)
+        $validSenders = ['8809639228873', '09639900454'];
+        $cleanSender = preg_replace('/[^0-9]/', '', (string) $senderid);
+        if (!in_array($cleanSender, $validSenders)) {
+            $senderid = '8809639228873';
+        } else {
+            $senderid = $cleanSender;
+        }
+
         $payload = [
             'sender_id' => $senderid,
             'numbers'   => $number,
@@ -63,9 +82,12 @@ class WhiteInfoBDSms
         $params = is_array($gateway->params) ? $gateway->params : json_decode($gateway->params, true);
 
         $senderId = trim((string) ($sender_name ?: ($params['sender_id'] ?? '')));
-        if ($senderId === '') {
-            Log::error('WhiteInfoBDSms::send_message - Missing sender ID');
-            return false;
+        $validSenders = ['8809639228873', '09639900454'];
+        $cleanSender = preg_replace('/[^0-9]/', '', $senderId);
+        if (!in_array($cleanSender, $validSenders)) {
+            $senderId = '8809639228873';
+        } else {
+            $senderId = $cleanSender;
         }
 
         $apiurl = $params['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages';
@@ -77,9 +99,14 @@ class WhiteInfoBDSms
         }
 
         if (is_array($numbers)) {
-            $numbersStr = implode(',', $numbers);
+            $normalizedNumbers = array_map(function ($num) {
+                $clean = preg_replace('/[^0-9]/', '', (string) $num);
+                return (str_starts_with($clean, '01') && strlen($clean) === 11) ? '88' . $clean : $clean;
+            }, $numbers);
+            $numbersStr = implode(',', $normalizedNumbers);
         } else {
-            $numbersStr = (string) $numbers;
+            $clean = preg_replace('/[^0-9]/', '', (string) $numbers);
+            $numbersStr = (str_starts_with($clean, '01') && strlen($clean) === 11) ? '88' . $clean : $clean;
         }
 
         $payload = [

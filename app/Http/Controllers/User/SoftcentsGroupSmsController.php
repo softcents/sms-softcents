@@ -22,7 +22,11 @@ class SoftcentsGroupSmsController extends Controller
     public function index()
     {
         $groups = Group::where('user_id', auth()->id())->latest()->get();
-        $senderids = Senderid::where('user_id', auth()->id())->latest()->get();
+        $senderids = Senderid::where('user_id', auth()->id())
+            ->where('status', true)
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get();
 
         return view('users.group-sms.index', compact('senderids', 'groups'));
     }

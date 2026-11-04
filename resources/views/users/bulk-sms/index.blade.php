@@ -28,7 +28,7 @@
                                                     <select name="senderid_id" required class="form-control select-dropdown">
                                                         <option value="">{{ __('Select a sender id') }}</option>
                                                         @foreach ($senderids as $senderid)
-                                                        <option value="{{ $senderid->id }}">{{ $senderid->sender }}</option>
+                                                        <option value="{{ $senderid->id }}" @selected($senderid->is_default)>{{ $senderid->sender }}</option>
                                                         @endforeach
                                                     </select>
                                                     <span></span>

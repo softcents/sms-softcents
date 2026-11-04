@@ -21,7 +21,11 @@ class QuickSmsController extends Controller
 
     public function index()
     {
-        $senderids = Senderid::where('user_id', auth()->id())->latest()->get();
+        $senderids = Senderid::where('user_id', auth()->id())
+            ->where('status', true)
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get();
         return view('users.quick-sms.index', compact('senderids'));
     }
 

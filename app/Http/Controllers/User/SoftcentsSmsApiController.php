@@ -82,10 +82,18 @@ class SoftcentsSmsApiController extends Controller
             ->first();
 
         if (!$sender_id_info) {
-            return response()->json([
-                'status' => 404,
-                'message' => __('Sender id not found or not assigned to your account.'),
-            ], 404);
+            // Fallback to active default sender id assigned to this user
+            $sender_id_info = Senderid::where('user_id', $user->id)
+                ->where('is_default', true)
+                ->where('gateway_id', '!=', 0)
+                ->first() ?: Senderid::where('user_id', $user->id)->where('status', true)->first();
+
+            if (!$sender_id_info) {
+                return response()->json([
+                    'status' => 404,
+                    'message' => __('Sender id not found or not assigned to your account.'),
+                ], 404);
+            }
         }
 
         $gateway_details = Smsgateway::where('id', $sender_id_info->gateway_id)->where('status', 1)->first();

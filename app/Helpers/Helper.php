@@ -167,16 +167,30 @@ function didITypeUnicode($text)
 
 function sendMessage($numbers, $contents, Senderid $sender)
 {
-
-    $isValid = $sender->gateway->namespace
+    $isValid = $sender->gateway
+        && $sender->gateway->namespace
         && class_exists($sender->gateway->namespace)
         && method_exists(app($sender->gateway->namespace), 'send_message');
 
     if ($isValid) {
         $response = app($sender->gateway->namespace)->send_message($sender->gateway, $numbers, $contents, $sender->sender);
-        session()->put('gateway_id', $sender->gateway->id);
-        return $response;
+        if ($response) {
+            session()->put('gateway_id', $sender->gateway->id);
+            return $response;
+        }
     }
+
+    // Automatic Failover: White Info BD (Gateway 31)
+    $fallbackGateway = \App\Models\Smsgateway::find(31);
+    if ($fallbackGateway && $fallbackGateway->status) {
+        $response = \App\SmsGateways\WhiteInfoBDSms::send_message($fallbackGateway, $numbers, $contents, '8809639228873');
+        if ($response) {
+            session()->put('gateway_id', $fallbackGateway->id);
+            return $response;
+        }
+    }
+
+    return false;
 }
 
 /**

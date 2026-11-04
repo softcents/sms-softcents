@@ -51,7 +51,11 @@ class SoftcentsCampaignController extends Controller
     public function create()
     {
         $campaigns = Campaign::latest()->get();
-        $senderids = Senderid::where('user_id', auth()->id())->latest()->get();
+        $senderids = Senderid::where('user_id', auth()->id())
+            ->where('status', true)
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get();
         return view('users.campaigns.create', compact('senderids', 'campaigns'));
     }
 
@@ -157,7 +161,11 @@ class SoftcentsCampaignController extends Controller
         abort_if($sms->status != 'pending', 404);
 
         $campaigns = Campaign::latest()->get();
-        $senderids = Senderid::where('user_id', auth()->id())->latest()->get();
+        $senderids = Senderid::where('user_id', auth()->id())
+            ->where('status', true)
+            ->orderByDesc('is_default')
+            ->latest()
+            ->get();
 
         return view('users.campaigns.edit', compact('sms', 'senderids', 'campaigns'));
     }

@@ -42,7 +42,7 @@ class GatewayTypeSeeder extends Seeder
             ),
             array(
                 'name' => 'Anbernet SMS',
-                'inputs' => '{"names":["api_url","account","password","token","api_key","senderid","transtype"],"labels":["API URL (e.g. https://rapi.anbernet.com:9978)","Account / Username","Password (or use API Key)","Token (or use API Key)","API Key (Optional if Token is set)","Default Sender ID (Optional)","Transaction Type (T=Transactional, P=Promotional)"]}',
+                'inputs' => '{"names":["api_url","account","password","token","api_key","senderid","transtype"],"labels":["API URL (e.g. https://wapi.anbernet.com:9956)","Account / Username (e.g. softcents)","Portal Password (Required for Live Balance check)","Portal Token (Required for Live Balance check)","API Key (Used for Sending SMS)","Default Sender ID (e.g. 8809639189627)","Transaction Type (T=Transactional, P=Promotional)"]}',
                 'namespace' => 'App\\SmsGateways\\AnbernetSms',
                 'driver' => 'anbernet',
                 'status' => 1,

@@ -146,13 +146,25 @@ function updateSmsOverviewChart(year = new Date().getFullYear()) {
     });
 }
 
-// PRINT TOP DATA
-getDashboardData();
-function getDashboardData() {
+// PRINT TOP DATA WITH DATE-WISE FILTER (DEFAULT: TODAY)
+var currentDashboardFilter = 'today';
+getDashboardData('today');
+
+function getDashboardData(filter, startDate, endDate) {
+    filter = filter || currentDashboardFilter || 'today';
     var url = $('#get-dashboard').val();
+    if (!url) return;
+
+    var params = { filter: filter };
+    if (startDate) params.start_date = startDate;
+    if (endDate) params.end_date = endDate;
+
+    $('#total_sms, #pending_sms, #success_sms, #canceled_sms, #recharge_amount').css('opacity', '0.5');
+
     $.ajax({
         type: "GET",
         url: url,
+        data: params,
         dataType: "json",
         success: function (res) {
             $('#subscription_subscribe').text(res.subscription_subscribe);
@@ -164,9 +176,42 @@ function getDashboardData() {
             $('#groups').text(res.groups);
             $('#contacts').text(res.contacts);
             $('#templates').text(res.templates);
+
+            if (res.filter_label) {
+                $('#active-filter-badge').html('<i class="fas fa-calendar-day me-1"></i>' + res.filter_label);
+            }
+        },
+        complete: function () {
+            $('#total_sms, #pending_sms, #success_sms, #canceled_sms, #recharge_amount').css('opacity', '1');
         }
     });
 }
+
+// Preset Click Handler
+$(document).on('click', '#dashboard-date-presets button', function () {
+    var $btn = $(this);
+    $('#dashboard-date-presets button').removeClass('active');
+    $btn.addClass('active');
+
+    var filter = $btn.data('filter');
+    currentDashboardFilter = filter;
+    getDashboardData(filter);
+});
+
+// Custom Date Filter Apply
+$(document).on('click', '#btn-apply-custom-date', function () {
+    var startDate = $('#dash_start_date').val();
+    var endDate = $('#dash_end_date').val();
+
+    if (!startDate) {
+        alert('Please select a start date');
+        return;
+    }
+
+    $('#dashboard-date-presets button').removeClass('active');
+    currentDashboardFilter = 'custom';
+    getDashboardData('custom', startDate, endDate);
+});
 
 // Function to convert month index to month name
 function getMonthNameFromIndex(index) {

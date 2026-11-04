@@ -140,20 +140,25 @@ $(document).on('click', '#btn-trigger-sms-modal', function (e) {
     var validNums = rawNums.split(',').map(function (n) { return n.trim(); }).filter(function (n) { return n.length >= 5; });
     var recipientsCount = Math.max(1, validNums.length);
 
+    // Accurate Character count & Unicode detection
+    var charCount = Array.from(contentText).length;
     var isUnicode = didITypeUnicode(contentText);
-    var charCount = parseInt($('#current').text()) || contentText.length;
-    var parts = parseInt($('#no_of_sms').text()) || 1;
-    if (parts < 1) parts = 1;
+    var charPerSms = isUnicode ? 70 : 160;
+    var charPerSmsLong = isUnicode ? 67 : 153;
+    var effectiveCharPerSms = charCount > charPerSms ? charPerSmsLong : charPerSms;
+    var parts = charCount > 0 ? Math.ceil(charCount / effectiveCharPerSms) : 1;
 
-    var rate = parseFloat($('#the-count').data('rate')) || 0.39;
+    var rate = parseFloat($('#the-count').attr('data-rate')) || parseFloat($('#the-count').data('rate')) || 0.39;
     var unitCost = parts * rate;
     var totalCost = (unitCost * recipientsCount).toFixed(2);
 
     // User Balance check: Old Balance & New Balance
-    var oldBalance = parseFloat($('#the-count').data('balance')) || 0;
+    var userBalanceAttr = $('#the-count').attr('data-balance') || $('#the-count').data('balance');
+    var oldBalance = userBalanceAttr !== undefined && userBalanceAttr !== null && userBalanceAttr !== '' ? parseFloat(userBalanceAttr) : 0;
     var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
 
     var senderText = senderSelect.find('option:selected').text().trim();
+    var charInfo = charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')';
 
     // Populate Compact Modal
     $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
@@ -163,7 +168,7 @@ $(document).on('click', '#btn-trigger-sms-modal', function (e) {
     $('#modal-recipients-count').text(recipientsCount + (recipientsCount > 1 ? ' Numbers' : ' Number'));
     $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
     $('#modal-sms-rate').text('৳' + rate.toFixed(2));
-    $('#modal-char-info').text(charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')');
+    $('#modal-char-info').text(charInfo);
     $('#modal-content-preview').text(contentText);
 
     // Show Small Modal

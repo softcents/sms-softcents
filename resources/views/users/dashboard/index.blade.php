@@ -150,6 +150,7 @@
                                     <th>{{ __('SL') }}.</th>
                                     <th>{{ __('Senderid ID') }}</th>
                                     <th>{{ __('Number') }}</th>
+                                    <th>{{ __('Source') }}</th>
                                     <th>{{ __('Contents') }}</th>
                                     <th>{{ __('Created At') }}</th>
                                     <th>{{ __('Status') }}</th>

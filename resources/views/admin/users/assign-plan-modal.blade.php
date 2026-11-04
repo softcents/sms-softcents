@@ -115,10 +115,13 @@
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="add_balance" value="1" id="check_add_balance">
-                            <label class="form-check-label text-dark fw-medium small" for="check_add_balance">
-                                {{ __('Credit Plan Price to Customer Account Balance') }}
+                            <input class="form-check-input" type="checkbox" name="add_balance" value="1" id="check_add_balance" checked>
+                            <label class="form-check-label text-dark fw-bold small" for="check_add_balance">
+                                <i class="fas fa-coins text-success me-1"></i> {{ __('Credit Plan Price to Customer Account Balance (Recommended)') }}
                             </label>
+                            <div class="text-muted small ps-4">
+                                {{ __('When this package is activated, the plan price (e.g. ৳1,250) will be automatically credited to customer balance.') }}
+                            </div>
                         </div>
                     </div>
 

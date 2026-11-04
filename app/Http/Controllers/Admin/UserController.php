@@ -225,11 +225,16 @@ class UserController extends Controller
                 $duration_in_days = $plan->duration == 'yearly' ? 365 : ($plan->duration == '6_monthly' ? 180 : ($plan->duration == '3_monthly' ? 90 : ($plan->duration == 'monthly' ? 30 : ($plan->duration == '15_days' ? 15 : ($plan->duration == 'weekly' ? 7 : 0)))));
             }
 
+            $initialBalance = $request->filled('balance') ? (float) $request->balance : 0;
+            if (!empty($plan) && (float) $plan->price > 0) {
+                $initialBalance += (float) $plan->price;
+            }
+
             $user = User::create($request->except('image', 'password', 'balance', 'low_blnc_alrt', 'white_label_logo', 'white_label_favicon') + [
                 'masking_rate' => $request->masking_rate ?? ($request->plan_id ? $plan->masking_rate : 0),
                 'non_masking_rate' => $request->non_masking_rate ?? ($request->plan_id ? $plan->non_masking_rate : 0),
                 'will_expire' => $request->plan_id ? now()->addDays($duration_in_days) : NULL,
-                'balance' => $request->balance ?? 0,
+                'balance' => $initialBalance,
                 'password' => Hash::make($request->password),
                 'low_blnc_alrt' => $request->low_blnc_alrt ?? 0,
                 'client_secret' => Str::uuid(),
@@ -263,6 +268,15 @@ class UserController extends Controller
                         'non_masking_rate' => $plan->non_masking_rate,
                         'will_expire' => now()->addDays($duration_in_days),
                     ]);
+
+                    if ((float) $plan->price > 0) {
+                        Transaction::create([
+                            'user_id' => $user->id,
+                            'amount' => $plan->price,
+                            'reason' => "Subscription Purchased: {$plan->title}",
+                            'type' => 'credit',
+                        ]);
+                    }
                 }
             }
 
@@ -383,6 +397,16 @@ class UserController extends Controller
                     'will_expire' => $user->will_expire,
                     'notes' => 'Updated via User Profile Edit',
                 ]);
+
+                if ((float) $plan->price > 0) {
+                    $user->increment('balance', (float) $plan->price);
+                    Transaction::create([
+                        'user_id' => $user->id,
+                        'amount' => $plan->price,
+                        'reason' => "Subscription Purchased: {$plan->title}",
+                        'type' => 'credit',
+                    ]);
+                }
             }
 
             DB::commit();
@@ -639,8 +663,24 @@ class UserController extends Controller
                 'notes' => $request->notes ?: "Plan assigned by Admin ({$admin->name})",
             ]);
 
+            $planPrice = (float) $plan->price;
+            $shouldAddBalance = $request->has('add_balance') ? $request->boolean('add_balance') : true;
+
+            $newBalance = (float) $user->balance;
+            if ($shouldAddBalance && $planPrice > 0) {
+                $newBalance += $planPrice;
+
+                Transaction::create([
+                    'user_id' => $user->id,
+                    'amount' => $planPrice,
+                    'reason' => "Subscription Purchased: {$plan->title}",
+                    'type' => 'credit',
+                ]);
+            }
+
             $updateData = [
                 'plan_id' => $plan->id,
+                'balance' => $newBalance,
                 'allow_api' => $plan->allow_api ?? true,
                 'will_expire' => $willExpire,
             ];
@@ -650,11 +690,8 @@ class UserController extends Controller
                 $updateData['non_masking_rate'] = $nonMaskingRate;
             }
 
-            if ($request->boolean('add_balance', false)) {
-                $updateData['balance'] = (float) $user->balance + (float) $plan->price;
-            }
-
             $user->update($updateData);
+            $user->refresh();
 
             DB::commit();
 

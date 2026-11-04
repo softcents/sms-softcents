@@ -28,9 +28,11 @@
                         <thead>
                             <tr>
                                 <th>{{ __('SL') }}.</th>
-                                <th>{{ __('Senderid ID') }}</th>
+                                <th>{{ __('Sender ID') }}</th>
                                 <th>{{ __('Number') }}</th>
                                 <th>{{ __('Contents') }}</th>
+                                <th class="text-center">{{ __('SMS Count') }}</th>
+                                <th>{{ __('Cost') }}</th>
                                 <th>{{ __('Date & Time') }}</th>
                                 <th>{{ __('Status') }}</th>
                             </tr>

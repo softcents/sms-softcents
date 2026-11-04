@@ -495,3 +495,20 @@
         padding: 14px 12px !important;
     }
 }
+
+/* Two Column Layout for Quick SMS */
+.quick-sms-two-column .order-form-section label,
+.quick-sms-two-column .form-label {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    text-align: left !important;
+    display: block !important;
+    padding: 0 !important;
+    background: transparent !important;
+}
+
+.quick-sms-two-column .form-check-label {
+    display: inline-block !important;
+    margin-bottom: 0 !important;
+}

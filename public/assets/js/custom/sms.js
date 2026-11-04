@@ -320,8 +320,6 @@ $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms
 
     } else if (campaignSelect.length) {
         // CAMPAIGN SMS
-        var rangeInput = $form.find('input[name="range"]');
-        var rangeVal = parseInt(rangeInput.val()) || 0;
         if (!campaignSelect.val()) {
             if (typeof Notify === 'function') {
                 Notify('error', { responseJSON: { message: 'Please select a Campaign recipient list.' } });
@@ -331,19 +329,27 @@ $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms
             campaignSelect.focus();
             return;
         }
-        if (rangeVal <= 0) {
-            if (typeof Notify === 'function') {
-                Notify('error', { responseJSON: { message: 'Please enter a valid SMS range.' } });
-            } else {
-                alert('Please enter a valid SMS range.');
-            }
-            rangeInput.focus();
-            return;
+
+        var selectedOpt = campaignSelect.find('option:selected');
+        var totalAvailable = parseInt(selectedOpt.data('total_numbers')) || 0;
+        var startVal = parseInt($form.find('#range_start, input[name="range_start"]').val()) || 1;
+        var endVal = ($form.find('#range_end, input[name="range_end"]').val() || 'All').trim();
+
+        var recipientsCount = 0;
+        var rangeDesc = '';
+        if (endVal.toLowerCase() === 'all' || endVal === '') {
+            recipientsCount = totalAvailable > 0 ? Math.max(1, totalAvailable - startVal + 1) : 1;
+            rangeDesc = '#' + startVal + ' to All';
+        } else {
+            var endNum = parseInt(endVal) || startVal;
+            recipientsCount = endNum >= startVal ? (endNum - startVal + 1) : endNum;
+            rangeDesc = '#' + startVal + ' to #' + (startVal + recipientsCount - 1);
         }
-        var totalCost = (unitCost * rangeVal).toFixed(2);
+
+        var totalCost = (unitCost * recipientsCount).toFixed(2);
         var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
-        var campName = campaignSelect.find('option:selected').text().trim();
-        renderModal(rangeVal + ' Contacts (' + campName + ')', totalCost, '৳' + newBalance);
+        var campName = selectedOpt.text().trim();
+        renderModal(recipientsCount + ' Contacts (' + campName + ' [' + rangeDesc + '])', totalCost, '৳' + newBalance);
 
     } else {
         // QUICK SMS

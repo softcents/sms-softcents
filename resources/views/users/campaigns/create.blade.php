@@ -52,10 +52,22 @@
                                             </div>
 
                                             <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('SMS Range') }} : </label>
+                                                <label>{{ __('Range Start') }} <span class="text-danger">*</span> : </label>
                                             </div>
                                             <div class="col-sm-9 mt-4">
-                                                <input type="number" name="range" required class="form-control total-range" placeholder="Enter total numbers of sms you want to send.">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-6">
+                                                        <input type="number" name="range_start" id="range_start" required class="form-control" value="1" min="1" placeholder="1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="text" name="range_end" id="range_end" class="form-control" value="All" placeholder="All">
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                                    <small class="text-muted" id="range-preview-text">
+                                                        <i class="fas fa-info-circle me-1"></i>{{ __('Sends from number 1 to All recipients') }}
+                                                    </small>
+                                                </div>
                                             </div>
 
                                             <div class="col-sm-3 text-end mt-4">
@@ -168,13 +180,43 @@
     <script src="{{ asset('assets/js/custom/sms.js') }}?v={{ time() }}"></script>
     <script>
         $(document).ready(function () {
-            // Live trigger confirmation modal for Campaign SMS
+            function calculateCampaignRange() {
+                var selectedOpt = $('select[name="campaign_id"]').find('option:selected');
+                var totalAvailable = parseInt(selectedOpt.data('total_numbers')) || 0;
+                var startVal = parseInt($('#range_start').val()) || 1;
+                var endVal = ($('#range_end').val() || '').trim();
+
+                var count = 0;
+                var desc = '';
+                if (endVal.toLowerCase() === 'all' || endVal === '') {
+                    if (totalAvailable > 0) {
+                        count = Math.max(1, totalAvailable - startVal + 1);
+                        desc = 'Sends to <strong>' + count + '</strong> numbers (From #' + startVal + ' to #' + totalAvailable + ')';
+                    } else {
+                        count = 1;
+                        desc = 'Sends from #' + startVal + ' to <strong>All</strong> available numbers in campaign';
+                    }
+                } else {
+                    var endNum = parseInt(endVal) || startVal;
+                    count = endNum >= startVal ? (endNum - startVal + 1) : endNum;
+                    desc = 'Sends to <strong>' + count + '</strong> numbers (From #' + startVal + ' to #' + (startVal + count - 1) + ')';
+                }
+
+                $('#range-preview-text').html('<i class="fas fa-info-circle me-1"></i>' + desc);
+                return { count: count, desc: desc, start: startVal, end: endVal };
+            }
+
+            // Real-time preview updates
+            $(document).on('input change', '#range_start, #range_end, select[name="campaign_id"]', function () {
+                calculateCampaignRange();
+            });
+
+            // Trigger modal
             $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms-modal', function (e) {
                 e.preventDefault();
 
                 var senderSelect = $('select[name="senderid_id"]');
                 var campaignSelect = $('select[name="campaign_id"]');
-                var rangeInput = $('input[name="range"]');
                 var contentInput = $('#contents');
 
                 // Basic Validations
@@ -198,17 +240,6 @@
                     return;
                 }
 
-                var rangeVal = parseInt(rangeInput.val()) || 0;
-                if (rangeVal <= 0) {
-                    if (typeof Notify === 'function') {
-                        Notify('error', { responseJSON: { message: 'Please enter a valid SMS range.' } });
-                    } else {
-                        alert('Please enter a valid SMS range.');
-                    }
-                    rangeInput.focus();
-                    return;
-                }
-
                 var contentText = (contentInput.val() || '').trim();
                 if (!contentText) {
                     if (typeof Notify === 'function') {
@@ -220,7 +251,8 @@
                     return;
                 }
 
-                var recipientsCount = rangeVal;
+                var rangeInfo = calculateCampaignRange();
+                var recipientsCount = Math.max(1, rangeInfo.count);
 
                 // Accurate Character count & Unicode detection
                 var charCount = Array.from(contentText).length;
@@ -246,13 +278,14 @@
                 var senderText = senderSelect.find('option:selected').text().trim();
                 var campaignText = campaignSelect.find('option:selected').text().trim();
                 var charInfo = charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')';
+                var rangeBadge = rangeInfo.end.toLowerCase() === 'all' ? '#' + rangeInfo.start + ' to All' : '#' + rangeInfo.start + ' to #' + (rangeInfo.start + recipientsCount - 1);
 
                 // Populate Modal Elements
                 $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
                 $('#modal-new-balance').text('৳' + newBalance);
                 $('#modal-total-cost').text(totalCost);
                 $('#modal-sender-id').text(senderText);
-                $('#modal-recipients-count').text(recipientsCount + ' Contacts (' + campaignText + ')');
+                $('#modal-recipients-count').text(recipientsCount + ' Contacts (' + campaignText + ' [' + rangeBadge + '])');
                 $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
                 $('#modal-sms-rate').text('৳' + rate.toFixed(2));
                 $('#modal-char-info').text(charInfo);

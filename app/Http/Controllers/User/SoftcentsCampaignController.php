@@ -66,7 +66,9 @@ class SoftcentsCampaignController extends Controller
             'senderid_id' => 'required|max:20|exists:senderids,id',
             'campaign_id' => 'required|max:20|exists:campaigns,id',
             'contents' => 'required',
-            'range' => 'required|integer|min:1',
+            'range_start' => 'nullable|integer|min:1',
+            'range_end' => 'nullable|string',
+            'range' => 'nullable',
             'schedule_type' => 'required',
             'schedule' => 'nullable',
         ]);
@@ -80,8 +82,34 @@ class SoftcentsCampaignController extends Controller
 
             // For slice sms range.
             $campaing = Campaign::findOrFail($request->campaign_id);
-            $numbers_array = explode(',', $campaing->numbers);
-            $numbers = array_slice($numbers_array, 0, $request->range);
+            $numbers_array = array_values(array_filter(explode(',', (string)$campaing->numbers), function ($n) {
+                return !empty(trim((string)$n));
+            }));
+            $totalAvailable = count($numbers_array);
+
+            $start = max(1, (int)($request->range_start ?: 1));
+            $startIndex = $start - 1;
+
+            $rangeEndVal = trim((string)($request->range_end ?: $request->range ?: 'All'));
+
+            if (strtolower($rangeEndVal) === 'all' || empty($rangeEndVal)) {
+                $numbers = array_slice($numbers_array, $startIndex);
+            } else {
+                $end = (int)$rangeEndVal;
+                if ($end >= $start) {
+                    $count = $end - $start + 1;
+                } else {
+                    $count = max(1, $end);
+                }
+                $numbers = array_slice($numbers_array, $startIndex, $count);
+            }
+
+            if (empty($numbers)) {
+                return response()->json([
+                    'message' => __('No phone numbers found in the selected range.'),
+                ], 422);
+            }
+
             $sliced_numbers = implode(',', $numbers);
 
             $total_sms = wordCountDown($isUnicode, $request->contents);

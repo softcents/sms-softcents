@@ -4,7 +4,11 @@
         <td>{{ optional($message->senderid)->sender }}</td>
         <td>{{ $message->number }}</td>
         <td>{{ Str::limit($message->contents, 25, '...') }}</td>
-        <td>{{ formatted_date($message->created_at) }}</td>
+        <td class="text-nowrap">
+            <span class="fw-semibold text-dark">{{ $message->created_at ? $message->created_at->format('d M, Y') : '-' }}</span>
+            <br>
+            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ $message->created_at ? $message->created_at->format('h:i:s A') : '' }}</small>
+        </td>
         <td>
             @if ($message->status == 'pending')
                 <div class="badge bg-warning">

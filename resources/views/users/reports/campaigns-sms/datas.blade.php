@@ -5,7 +5,11 @@
         <td>{{ optional($campaign->senderid)->sender }}</td>
         <td>{{ $campaign->number }}</td>
         <td>{{ $campaign->contents }}</td>
-        <td>{{ formatted_date($campaign->created_at) }}</td>
+        <td class="text-nowrap">
+            <span class="fw-semibold text-dark">{{ $campaign->created_at ? $campaign->created_at->format('d M, Y') : '-' }}</span>
+            <br>
+            <small class="text-muted"><i class="far fa-clock me-1"></i>{{ $campaign->created_at ? $campaign->created_at->format('h:i:s A') : '' }}</small>
+        </td>
         <td>
             @if ($campaign->status == 'pending')
                 <div class="badge bg-warning">

@@ -31,7 +31,7 @@
                                 <th>{{ __('Senderid ID') }}</th>
                                 <th>{{ __('Number') }}</th>
                                 <th>{{ __('Contents') }}</th>
-                                <th>{{ __('Created At') }}</th>
+                                <th>{{ __('Date & Time') }}</th>
                                 <th>{{ __('Status') }}</th>
                             </tr>
                         </thead>

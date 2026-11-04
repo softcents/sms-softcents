@@ -397,16 +397,6 @@ class UserController extends Controller
                     'will_expire' => $user->will_expire,
                     'notes' => 'Updated via User Profile Edit',
                 ]);
-
-                if ((float) $plan->price > 0) {
-                    $user->increment('balance', (float) $plan->price);
-                    Transaction::create([
-                        'user_id' => $user->id,
-                        'amount' => $plan->price,
-                        'reason' => "Subscription Purchased: {$plan->title}",
-                        'type' => 'credit',
-                    ]);
-                }
             }
 
             DB::commit();
@@ -664,7 +654,7 @@ class UserController extends Controller
             ]);
 
             $planPrice = (float) $plan->price;
-            $shouldAddBalance = $request->has('add_balance') ? $request->boolean('add_balance') : true;
+            $shouldAddBalance = $request->boolean('add_balance', false);
 
             $newBalance = (float) $user->balance;
             if ($shouldAddBalance && $planPrice > 0) {

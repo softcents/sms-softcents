@@ -115,12 +115,12 @@
                             </label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="add_balance" value="1" id="check_add_balance" checked>
+                            <input class="form-check-input" type="checkbox" name="add_balance" value="1" id="check_add_balance">
                             <label class="form-check-label text-dark fw-bold small" for="check_add_balance">
-                                <i class="fas fa-coins text-success me-1"></i> {{ __('Credit Plan Price to Customer Account Balance (Recommended)') }}
+                                <i class="fas fa-coins text-success me-1"></i> {{ __('Credit Plan Price to Customer Account Balance') }}
                             </label>
                             <div class="text-muted small ps-4">
-                                {{ __('When this package is activated, the plan price (e.g. ৳1,250) will be automatically credited to customer balance.') }}
+                                {{ __('Only checked for new users. For old users, leave unchecked unless you want to add new balance.') }}
                             </div>
                         </div>
                     </div>
@@ -162,6 +162,9 @@ $(document).ready(function() {
         $('#plan-target-user-name').text(userName);
         $('#plan-target-user-details').text('@' + username);
         $('#plan-target-user-plan').text('{{ __("Current:") }} ' + currentPlan);
+
+        let isNewUser = (!currentPlan || currentPlan.toLowerCase() === 'none' || currentPlan.trim() === '');
+        $('#check_add_balance').prop('checked', isNewUser);
 
         if (planId) {
             $('#plan_select_id').val(planId).trigger('change');

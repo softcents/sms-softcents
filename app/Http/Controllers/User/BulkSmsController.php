@@ -29,6 +29,32 @@ class BulkSmsController extends Controller
         return view('users.bulk-sms.index', compact('senderids'));
     }
 
+    public function countNumbers(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls,csv,ods|max:10240',
+        ]);
+
+        try {
+            $import = new NumberImport();
+            Excel::import($import, $request->file('file'));
+            $numbers = array_values(array_filter($import->numbers ?? [], function ($n) {
+                return !empty(trim((string)$n));
+            }));
+
+            return response()->json([
+                'success' => true,
+                'count' => count($numbers),
+                'sample' => array_slice($numbers, 0, 3),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        }
+    }
+
     public function store(Request $request)
     {
         $request->validate([

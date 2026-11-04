@@ -55,6 +55,7 @@ Route::group(['as' => 'users.', 'prefix' => 'users', 'middleware' => ['users']],
 
     Route::resource('quick-sms', User\QuickSmsController::class)->only('index', 'store');
     Route::resource('group-sms', User\SoftcentsGroupSmsController::class)->only('index', 'store');
+    Route::post('bulk-sms/count-numbers', [User\BulkSmsController::class, 'countNumbers'])->name('bulk-sms.count-numbers');
     Route::resource('bulk-sms', User\BulkSmsController::class)->only('index', 'store');
 
     Route::resource('senderids', User\SenderIdController::class)->only('index');

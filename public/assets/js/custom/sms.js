@@ -95,6 +95,104 @@ $(document).on('click', '.use-template', function() {
     $('#sms-template-modal').modal('hide');
 });
 
+window.bulkSmsFileCache = window.bulkSmsFileCache || {};
+
+window.parseBulkSmsNumberCount = function (file, callback) {
+    if (!file) {
+        callback(0);
+        return;
+    }
+    var cacheKey = file.name + '_' + file.size + '_' + file.lastModified;
+    if (window.bulkSmsFileCache[cacheKey] !== undefined) {
+        callback(window.bulkSmsFileCache[cacheKey]);
+        return;
+    }
+
+    // 1. If SheetJS is available, parse immediately in browser (supports .xlsx, .xls, .ods, .csv)
+    if (typeof XLSX !== 'undefined') {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            try {
+                var data = new Uint8Array(e.target.result);
+                var workbook = XLSX.read(data, { type: 'array' });
+                var firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                var rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: '' });
+                var validCount = 0;
+                var startIndex = 1;
+                if (rows.length > 0 && rows[0][0]) {
+                    var firstClean = String(rows[0][0]).replace(/[^0-9]/g, '');
+                    if (firstClean.length >= 10 && /^(?:88)?01[3-9]/.test(firstClean)) {
+                        startIndex = 0;
+                    }
+                }
+                for (var i = startIndex; i < rows.length; i++) {
+                    var cellVal = rows[i][0];
+                    if (cellVal !== undefined && cellVal !== null) {
+                        var clean = String(cellVal).replace(/[^0-9]/g, '');
+                        if (clean.length >= 8) {
+                            validCount++;
+                        }
+                    }
+                }
+                var finalCount = Math.max(1, validCount);
+                window.bulkSmsFileCache[cacheKey] = finalCount;
+                callback(finalCount);
+                return;
+            } catch (err) {
+                console.warn('SheetJS parsing failed, falling back to server...', err);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+        return;
+    }
+
+    // 2. If CSV without SheetJS
+    if (file.name.toLowerCase().endsWith('.csv')) {
+        var textReader = new FileReader();
+        textReader.onload = function (e) {
+            var lines = (e.target.result || '').split(/\r\n|\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 5; });
+            var finalCount = Math.max(1, lines.length);
+            window.bulkSmsFileCache[cacheKey] = finalCount;
+            callback(finalCount);
+        };
+        textReader.readAsText(file);
+        return;
+    }
+
+    // 3. Fallback to AJAX route
+    var formData = new FormData();
+    formData.append('file', file);
+    formData.append('_token', $('meta[name="csrf-token"]').attr('content') || $('input[name="_token"]').val() || '');
+
+    $.ajax({
+        url: '/users/bulk-sms/count-numbers',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (res) {
+            var count = (res && res.count) ? parseInt(res.count) : 1;
+            window.bulkSmsFileCache[cacheKey] = count;
+            callback(count);
+        },
+        error: function () {
+            callback(1);
+        }
+    });
+};
+
+// Pre-parse on file input change
+$(document).on('change', 'input[name="file"]', function () {
+    if (this.files && this.files.length > 0) {
+        var file = this.files[0];
+        window.parseBulkSmsNumberCount(file, function (count) {
+            $('#file-status-badge').removeClass('d-none').html(
+                '<small class="text-success fw-bold"><i class="fas fa-check-circle me-1"></i>' + count + (count > 1 ? ' phone numbers detected' : ' phone number detected') + '</small>'
+            );
+        });
+    }
+});
+
 // Confirmation Modal trigger before sending SMS (supports Quick, Group, Bulk, Campaign SMS)
 $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms-modal', function (e) {
     e.preventDefault();
@@ -201,22 +299,24 @@ $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms
         }
         var file = fileInput[0].files[0];
         var fileName = file.name;
+        var $triggerBtn = $(this);
+        var originalBtnHtml = $triggerBtn.html();
 
-        if (fileName.toLowerCase().endsWith('.csv')) {
-            var reader = new FileReader();
-            reader.onload = function (event) {
-                var text = event.target.result || '';
-                var lines = text.split(/\r\n|\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 5; });
-                var count = Math.max(1, lines.length);
-                var totalCost = (unitCost * count).toFixed(2);
-                var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
-                renderModal(count + ' Numbers (' + fileName + ')', totalCost, '৳' + newBalance);
-            };
-            reader.readAsText(file);
-        } else {
-            var estPerContact = unitCost.toFixed(2);
-            renderModal('File: ' + fileName, '৳' + estPerContact + ' / Number', 'Deducted on dispatch');
-        }
+        $triggerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Reading file...');
+
+        window.parseBulkSmsNumberCount(file, function (recipientsCount) {
+            $triggerBtn.prop('disabled', false).html(originalBtnHtml);
+
+            var totalCost = (unitCost * Math.max(1, recipientsCount)).toFixed(2);
+            var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
+
+            renderModal(
+                recipientsCount + (recipientsCount === 1 ? ' Number (' : ' Numbers (') + fileName + ')',
+                totalCost,
+                '৳' + newBalance
+            );
+        });
+        return;
 
     } else if (campaignSelect.length) {
         // CAMPAIGN SMS

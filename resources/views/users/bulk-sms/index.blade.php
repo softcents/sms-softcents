@@ -61,7 +61,8 @@
                                             <div class="col-sm-9 mt-4">
                                                 <div class="row">
                                                     <div class="col-6 align-self-center">
-                                                        <input type="file" name="file" required class="form-control" accept=".csv, .ods, .xlsx, .xls">
+                                                        <input type="file" name="file" id="bulk-file-input" required class="form-control" accept=".csv, .ods, .xlsx, .xls">
+                                                        <div id="file-status-badge" class="mt-1 d-none"></div>
                                                     </div>
                                                     <div class="col-6 align-self-center">
                                                         <a href="{{ route('users.download-numbers-file') }}" class="theme-btn print-btn text-light w-100">
@@ -159,6 +160,7 @@
 @endpush
 
 @push('js')
+    <script src="{{ asset('assets/js/xlsx.full.min.js') }}"></script>
     <script src="{{ asset('assets/js/custom/sms.js') }}?v={{ time() }}"></script>
     <script>
         $(document).ready(function () {
@@ -204,6 +206,10 @@
 
                 var file = fileInput[0].files[0];
                 var fileName = file.name;
+                var $btn = $(this);
+                var originalHtml = $btn.html();
+
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Reading file...');
 
                 // Accurate Character count & Unicode detection
                 var charCount = Array.from(contentText).length;
@@ -227,38 +233,26 @@
                 var senderText = senderSelect.find('option:selected').text().trim();
                 var charInfo = charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')';
 
-                var openModalWithValues = function (recipientsLabel, totalCostText, newBalanceText) {
+                // Parse number count from Excel or CSV file
+                window.parseBulkSmsNumberCount(file, function (recipientsCount) {
+                    $btn.prop('disabled', false).html(originalHtml);
+
+                    var count = Math.max(1, recipientsCount);
+                    var totalCost = (unitCost * count).toFixed(2);
+                    var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
+
                     $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
-                    $('#modal-new-balance').text(newBalanceText);
-                    $('#modal-total-cost').text(totalCostText);
+                    $('#modal-new-balance').text('৳' + newBalance);
+                    $('#modal-total-cost').text(totalCost);
                     $('#modal-sender-id').text(senderText);
-                    $('#modal-recipients-count').text(recipientsLabel);
+                    $('#modal-recipients-count').text(count + (count === 1 ? ' Number (' : ' Numbers (') + fileName + ')');
                     $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
                     $('#modal-sms-rate').text('৳' + rate.toFixed(2));
                     $('#modal-char-info').text(charInfo);
                     $('#modal-content-preview').text(contentText);
 
                     $('#sms-confirm-modal').modal('show');
-                };
-
-                // If file is CSV, parse lines directly in JS
-                if (fileName.toLowerCase().endsWith('.csv')) {
-                    var reader = new FileReader();
-                    reader.onload = function (event) {
-                        var text = event.target.result || '';
-                        var lines = text.split(/\r\n|\n/).map(function (l) { return l.trim(); }).filter(function (l) { return l.length >= 5; });
-                        var count = Math.max(1, lines.length);
-                        var totalCost = (unitCost * count).toFixed(2);
-                        var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
-
-                        openModalWithValues(count + ' Numbers (' + fileName + ')', totalCost, '৳' + newBalance);
-                    };
-                    reader.readAsText(file);
-                } else {
-                    // For Excel / other file formats
-                    var estPerContact = unitCost.toFixed(2);
-                    openModalWithValues('File: ' + fileName, '৳' + estPerContact + ' / Number', 'Deducted on dispatch');
-                }
+                });
             });
 
             // Confirm & Send Button in Modal

@@ -116,33 +116,27 @@ class UserController extends Controller
             ->where('status', 'approved')
             ->sum('price');
 
+        // Strictly calculate revenue and profit from USED SMS charges only (not package deposits)
         $smsRevenue = (float) ($financial->sms_revenue ?? 0);
-        $totalRevenue = $smsRevenue + $subscriptionRevenue;
         $totalCost = (float) ($financial->sms_cost ?? 0);
-        $netProfit = $totalRevenue - $totalCost;
-        $profitMargin = $totalRevenue > 0 ? round(($netProfit / $totalRevenue) * 100, 2) : 0;
-
-        // Specific calculations for amount USED (SMS charges billed) vs its cost & profit
-        $usedRevenue = $smsRevenue;
-        $usedCost = $totalCost;
-        $usedProfit = $usedRevenue - $usedCost;
-        $usedMargin = $usedRevenue > 0 ? round(($usedProfit / $usedRevenue) * 100, 2) : 0;
+        $netProfit = $smsRevenue - $totalCost;
+        $profitMargin = $smsRevenue > 0 ? round(($netProfit / $smsRevenue) * 100, 2) : 0;
 
         $stats = [
             'total_sms' => (int) ($financial->total_sms ?? 0),
             'total_parts' => (int) ($financial->total_parts ?? 0),
             'delivered_sms' => Sms::where('user_id', $user->id)->where('status', 'success')->count(),
             'failed_sms' => Sms::where('user_id', $user->id)->where('status', 'failed')->count(),
-            'total_revenue' => $totalRevenue,
+            'total_revenue' => $smsRevenue,
             'sms_revenue' => $smsRevenue,
             'subscription_revenue' => $subscriptionRevenue,
             'total_cost' => $totalCost,
             'net_profit' => $netProfit,
             'profit_margin' => $profitMargin,
-            'used_revenue' => $usedRevenue,
-            'used_cost' => $usedCost,
-            'used_profit' => $usedProfit,
-            'used_margin' => $usedMargin,
+            'used_revenue' => $smsRevenue,
+            'used_cost' => $totalCost,
+            'used_profit' => $netProfit,
+            'used_margin' => $profitMargin,
             'masking_revenue' => (float) ($financial->masking_revenue ?? 0),
             'masking_cost' => (float) ($financial->masking_cost ?? 0),
             'masking_profit' => ((float) ($financial->masking_revenue ?? 0)) - ((float) ($financial->masking_cost ?? 0)),

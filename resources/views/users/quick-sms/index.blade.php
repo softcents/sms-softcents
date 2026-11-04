@@ -15,7 +15,7 @@
                     <div class="tab-content order-summary-tab mt-1 quick-sms">
                         <div class="tab-pane fade mt-1 show active" id="add-new-user">
                             <div class="order-form-section">
-                                <form action="{{ route('users.quick-sms.store') }}" method="post" class="ajaxform_instant_reload">
+                                <form action="{{ route('users.quick-sms.store') }}" method="post" id="quick-sms-form" class="ajaxform_instant_reload">
                                     @csrf
 
                                     <div class="add-suplier-modal-wrapper">
@@ -99,7 +99,10 @@
                                             <div class="col-lg-12">
                                                 <div class="button-group text-center mt-5">
                                                     <a href="" class="theme-btn border-btn m-2">{{ __('Cancel') }}</a>
-                                                    <button class="theme-btn m-2 submit-btn">{{ __('Send') }}</button>
+                                                    <button type="button" class="theme-btn m-2" id="btn-trigger-sms-modal">
+                                                        <i class="fas fa-paper-plane me-1"></i> {{ __('Send') }}
+                                                    </button>
+                                                    <button type="submit" class="d-none submit-btn" id="real-submit-btn"></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -115,6 +118,7 @@
 @endsection
 
 @push('modal')
+@include('users.components.sms-confirm-modal')
 <div class="modal fade" id="sms-template-modal" tabindex="-1" aria-labelledby="multi-delete-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">

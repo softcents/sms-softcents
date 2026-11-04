@@ -93,4 +93,99 @@ $(document).on('click', '.use-template', function() {
     $('#contents').val(text);
     messageDataCal();
     $('#sms-template-modal').modal('hide');
-})
+});
+
+// Confirmation Modal trigger before sending SMS
+$(document).on('click', '#btn-trigger-sms-modal', function (e) {
+    e.preventDefault();
+
+    var senderSelect = $('select[name="senderid_id"]');
+    var numbersInput = $('#numbers');
+    var contentInput = $('#contents');
+
+    // Basic Validations
+    if (!senderSelect.val()) {
+        if (typeof Notify === 'function') {
+            Notify('error', { responseJSON: { message: 'Please select a Sender ID.' } });
+        } else {
+            alert('Please select a Sender ID.');
+        }
+        senderSelect.focus();
+        return;
+    }
+
+    var rawNums = (numbersInput.val() || '').trim();
+    if (!rawNums) {
+        if (typeof Notify === 'function') {
+            Notify('error', { responseJSON: { message: 'Please enter at least one recipient phone number.' } });
+        } else {
+            alert('Please enter at least one recipient phone number.');
+        }
+        numbersInput.focus();
+        return;
+    }
+
+    var contentText = (contentInput.val() || '').trim();
+    if (!contentText) {
+        if (typeof Notify === 'function') {
+            Notify('error', { responseJSON: { message: 'Please enter message content.' } });
+        } else {
+            alert('Please enter message content.');
+        }
+        contentInput.focus();
+        return;
+    }
+
+    // Calculation
+    var validNums = rawNums.split(',').map(function (n) { return n.trim(); }).filter(function (n) { return n.length >= 5; });
+    var recipientsCount = Math.max(1, validNums.length);
+
+    var isUnicode = didITypeUnicode(contentText);
+    var charCount = parseInt($('#current').text()) || contentText.length;
+    var parts = parseInt($('#no_of_sms').text()) || 1;
+    if (parts < 1) parts = 1;
+
+    var rate = parseFloat($('#the-count').data('rate')) || 0.39;
+    var unitCost = parts * rate;
+    var totalCost = (unitCost * recipientsCount).toFixed(2);
+
+    // User Balance check
+    var currentBalanceText = $('.user-balance-amount, #user_balance').first().text().replace(/[^0-9.]/g, '') || '';
+    var userBalance = parseFloat(currentBalanceText) || 0;
+    var remain = (userBalance - parseFloat(totalCost)).toFixed(2);
+
+    var senderText = senderSelect.find('option:selected').text().trim();
+
+    // Populate Modal
+    $('#modal-sender-id').text(senderText);
+    $('#modal-recipients-count').text(recipientsCount + (recipientsCount > 1 ? ' Numbers' : ' Number'));
+    $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
+    $('#modal-sms-rate').text('৳' + rate.toFixed(2));
+    $('#modal-sms-type').text(isUnicode ? 'Unicode (বাংলা / ইমোজি)' : 'Text (English)');
+    $('#modal-char-count').text(charCount + ' Chars');
+    $('#modal-unit-cost').text(unitCost.toFixed(2));
+    $('#modal-total-cost').text(totalCost);
+    $('#modal-remain-balance').text('৳' + (remain > 0 ? remain : '0.00'));
+
+    $('#modal-num-summary').text(recipientsCount + (recipientsCount > 1 ? ' numbers' : ' number'));
+    $('#modal-numbers-preview').text(validNums.join(', '));
+    $('#modal-content-preview').text(contentText);
+
+    // Show Modal
+    $('#sms-confirm-modal').modal('show');
+});
+
+// Confirm & Send Button in Modal
+$(document).on('click', '#btn-confirm-send-sms', function () {
+    var $btn = $(this);
+    var originalHtml = $btn.html();
+    $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Sending...');
+
+    $('#sms-confirm-modal').modal('hide');
+
+    // Trigger the actual form submission
+    setTimeout(function () {
+        $('#quick-sms-form').find('#real-submit-btn').trigger('click');
+        $btn.prop('disabled', false).html(originalHtml);
+    }, 250);
+});

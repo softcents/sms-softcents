@@ -93,17 +93,30 @@
                 </div>
             </div>
 
-            <!-- Profit from Sale Card -->
+            <!-- Used Amount Card -->
+            <div class="couter-box">
+                <div class="icons" style="background-color: #fef3c7;">
+                    <img src="{{ asset('assets/img/icon/reward.svg') }}" alt="Used">
+                </div>
+                <div class="content-side">
+                    <h5 class="fw-bold" style="color: #d97706;">
+                        {{ currency_format($stats['used_revenue']) }}
+                    </h5>
+                    <p>{{ __('Used Amount') }}</p>
+                </div>
+            </div>
+
+            <!-- Profit from Used Card -->
             <div class="couter-box">
                 <div class="icons" style="background-color: #d1fae5;">
                     <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="Profit">
                 </div>
                 <div class="content-side">
                     <h5 class="text-success fw-bold">
-                        {{ currency_format($stats['net_profit']) }}
+                        {{ currency_format($stats['used_profit']) }}
                     </h5>
                     <p>
-                        {{ __('Profit from Sale') }} (<strong>{{ $stats['profit_margin'] }}%</strong>)
+                        {{ __('Profit from Used') }} (<strong>{{ $stats['used_margin'] }}%</strong>)
                     </p>
                 </div>
             </div>
@@ -114,26 +127,10 @@
                     <img src="{{ asset('assets/img/icon/category.svg') }}" alt="Cost">
                 </div>
                 <div class="content-side">
-                    <h5 class="text-secondary">
+                    <h5 class="text-danger fw-bold">
                         {{ currency_format($stats['total_cost']) }}
                     </h5>
                     <p>{{ __('Gateway Cost') }}</p>
-                </div>
-            </div>
-
-            <!-- Total SMS Activity Card -->
-            <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/user1.png') }}" alt="SMS Sent">
-                </div>
-                <div class="content-side">
-                    <h5>{{ number_format($stats['total_sms']) }}</h5>
-                    <p>
-                        <span class="text-success fw-bold">{{ $stats['delivered_sms'] }}</span> {{ __('Delivered') }}
-                        @if($stats['failed_sms'] > 0)
-                            &bull; <span class="text-danger fw-bold">{{ $stats['failed_sms'] }}</span> {{ __('Failed') }}
-                        @endif
-                    </p>
                 </div>
             </div>
         </div>
@@ -186,13 +183,33 @@
                                         <span><i class="fas fa-shopping-cart text-primary me-1"></i> {{ __('Total Sale') }}:</span>
                                         <strong class="text-primary">{{ currency_format($stats['total_revenue']) }}</strong>
                                     </li>
+                                    <li class="list-group-item" style="background-color: #fffbeb;">
+                                        <span><i class="fas fa-coins text-warning me-1"></i> {{ __('Used Amount') }}:</span>
+                                        <strong style="color: #b45309;">{{ currency_format($stats['used_revenue']) }}</strong>
+                                    </li>
                                     <li class="list-group-item" style="background-color: #f0fdf4;">
-                                        <span><i class="fas fa-hand-holding-usd text-success me-1"></i> {{ __('Profit from Sale') }}:</span>
-                                        <strong class="text-success">{{ currency_format($stats['net_profit']) }} ({{ $stats['profit_margin'] }}%)</strong>
+                                        <span><i class="fas fa-hand-holding-usd text-success me-1"></i> {{ __('Profit from Used') }}:</span>
+                                        <strong class="text-success">{{ currency_format($stats['used_profit']) }} ({{ $stats['used_margin'] }}%)</strong>
                                     </li>
                                     <li class="list-group-item">
-                                        <span><i class="fas fa-wallet text-secondary me-1"></i> {{ __('Total Recharged') }}:</span>
+                                        <span><i class="fas fa-receipt text-danger me-1"></i> {{ __('Gateway Cost') }}:</span>
+                                        <strong class="text-danger">{{ currency_format($stats['total_cost']) }}</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span><i class="fas fa-chart-line text-dark me-1"></i> {{ __('Total Sale Profit') }}:</span>
+                                        <strong class="text-dark">{{ currency_format($stats['net_profit']) }} ({{ $stats['profit_margin'] }}%)</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span><i class="fas fa-wallet text-secondary me-1"></i> {{ __('Current Balance') }}:</span>
+                                        <strong class="text-dark">{{ currency_format($user->balance) }}</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span><i class="fas fa-history text-muted me-1"></i> {{ __('Total Recharged') }}:</span>
                                         <strong class="text-dark">{{ currency_format($stats['total_recharged']) }}</strong>
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span><i class="fas fa-sms text-info me-1"></i> {{ __('Total SMS Sent') }}:</span>
+                                        <strong class="text-dark">{{ number_format($stats['total_sms']) }} ({{ $stats['delivered_sms'] }} {{ __('Delivered') }})</strong>
                                     </li>
                                     <li class="list-group-item">
                                         <span>{{ __('Email') }}:</span>
@@ -349,7 +366,7 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="tab-profit-btn" data-bs-toggle="tab" data-bs-target="#tab-profit" type="button" role="tab" style="color: #198754;">
-                                    <i class="fas fa-chart-line me-1"></i> {{ __('Profit & Sale') }} ({{ currency_format($stats['net_profit']) }})
+                                    <i class="fas fa-chart-line me-1"></i> {{ __('Profit & Sale') }} ({{ currency_format($stats['used_profit']) }})
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -438,9 +455,14 @@
                                     <h5 class="fw-bold mb-0 text-dark">
                                         <i class="fas fa-chart-line text-success me-1"></i> {{ __('Profit & Sale Summary') }}
                                     </h5>
-                                    <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-1">
-                                        {{ __('Profit from Sale') }}: <strong>{{ currency_format($stats['net_profit']) }}</strong> ({{ $stats['profit_margin'] }}%)
-                                    </span>
+                                    <div class="d-flex gap-2">
+                                        <span class="badge bg-warning-subtle text-dark fs-6 border px-3 py-1">
+                                            {{ __('Profit from Used') }}: <strong class="text-success">{{ currency_format($stats['used_profit']) }}</strong> ({{ $stats['used_margin'] }}%)
+                                        </span>
+                                        <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-1">
+                                            {{ __('Total Profit') }}: <strong>{{ currency_format($stats['net_profit']) }}</strong>
+                                        </span>
+                                    </div>
                                 </div>
 
                                 <!-- Highlight Performance Alert Banner -->
@@ -450,12 +472,13 @@
                                             <i class="fas fa-coins"></i>
                                         </div>
                                         <div>
-                                            <h6 class="fw-bold mb-1 text-success">{{ __('Total Sales & Profit Performance') }}</h6>
+                                            <h6 class="fw-bold mb-1 text-success">{{ __('Total Sales & Profit from Used SMS') }}</h6>
                                             <p class="mb-0 text-muted small">
-                                                {{ __('This user has generated a total sale of') }} <strong class="text-primary">{{ currency_format($stats['total_revenue']) }}</strong>, 
-                                                {{ __('with a gateway buying cost of') }} <strong class="text-danger">{{ currency_format($stats['total_cost']) }}</strong>, 
-                                                {{ __('resulting in a total net profit of') }} <strong class="text-success">{{ currency_format($stats['net_profit']) }}</strong> 
-                                                ({{ __('Profit Margin') }}: <span class="badge bg-success">{{ $stats['profit_margin'] }}%</span>).
+                                                {{ __('Total Sale') }}: <strong class="text-primary">{{ currency_format($stats['total_revenue']) }}</strong> &bull; 
+                                                {{ __('Used Amount') }}: <strong style="color: #b45309;">{{ currency_format($stats['used_revenue']) }}</strong> &bull; 
+                                                {{ __('Gateway Cost') }}: <strong class="text-danger">{{ currency_format($stats['used_cost']) }}</strong> &bull; 
+                                                {{ __('Profit from Used') }}: <strong class="text-success">{{ currency_format($stats['used_profit']) }} ({{ $stats['used_margin'] }}%)</strong> &bull; 
+                                                {{ __('Remaining Balance') }}: <strong class="text-dark">{{ currency_format($user->balance) }}</strong>
                                             </p>
                                         </div>
                                     </div>
@@ -467,28 +490,28 @@
                                         <div class="p-3 bg-light rounded border">
                                             <span class="text-muted small text-uppercase fw-bold">{{ __('Total Sale (Revenue)') }}</span>
                                             <h4 class="fw-bold text-primary mt-1 mb-0">{{ currency_format($stats['total_revenue']) }}</h4>
-                                            <small class="text-muted">{{ __('SMS') }}: {{ currency_format($stats['sms_revenue']) }} | {{ __('Plan') }}: {{ currency_format($stats['subscription_revenue']) }}</small>
+                                            <small class="text-muted">{{ __('Plan') }}: {{ currency_format($stats['subscription_revenue']) }} | {{ __('Used') }}: {{ currency_format($stats['used_revenue']) }}</small>
                                         </div>
                                     </div>
                                     <div class="col-sm-6 col-md-3">
                                         <div class="p-3 bg-light rounded border">
-                                            <span class="text-muted small text-uppercase fw-bold">{{ __('Gateway Buying Cost') }}</span>
-                                            <h4 class="fw-bold text-danger mt-1 mb-0">{{ currency_format($stats['total_cost']) }}</h4>
-                                            <small class="text-muted">{{ __('SMS Buying Cost') }}</small>
+                                            <span class="text-muted small text-uppercase fw-bold">{{ __('Used Amount (SMS Usage)') }}</span>
+                                            <h4 class="fw-bold mt-1 mb-0" style="color: #d97706;">{{ currency_format($stats['used_revenue']) }}</h4>
+                                            <small class="text-muted">{{ number_format($stats['total_sms']) }} {{ __('SMS Sent') }}</small>
                                         </div>
                                     </div>
                                     <div class="col-sm-6 col-md-3">
                                         <div class="p-3 rounded border" style="background-color: #ecfdf5; border-color: #a7f3d0 !important;">
-                                            <span class="text-success small text-uppercase fw-bold">{{ __('Profit from Sale') }}</span>
-                                            <h4 class="fw-bold text-success mt-1 mb-0">{{ currency_format($stats['net_profit']) }}</h4>
-                                            <small class="text-success">{{ __('Net Earnings from Sale') }}</small>
+                                            <span class="text-success small text-uppercase fw-bold">{{ __('Profit from Used') }}</span>
+                                            <h4 class="fw-bold text-success mt-1 mb-0">{{ currency_format($stats['used_profit']) }}</h4>
+                                            <small class="text-success">{{ $stats['used_margin'] }}% {{ __('Margin of Used') }}</small>
                                         </div>
                                     </div>
                                     <div class="col-sm-6 col-md-3">
                                         <div class="p-3 bg-light rounded border">
-                                            <span class="text-muted small text-uppercase fw-bold">{{ __('Profit Margin') }}</span>
-                                            <h4 class="fw-bold text-dark mt-1 mb-0">{{ $stats['profit_margin'] }}%</h4>
-                                            <small class="text-muted">{{ __('Profit % of Total Sale') }}</small>
+                                            <span class="text-muted small text-uppercase fw-bold">{{ __('Gateway Cost (Used)') }}</span>
+                                            <h4 class="fw-bold text-danger mt-1 mb-0">{{ currency_format($stats['used_cost']) }}</h4>
+                                            <small class="text-muted">{{ __('Operator Buying Cost') }}</small>
                                         </div>
                                     </div>
                                 </div>
@@ -539,6 +562,16 @@
                                                     @endphp
                                                     <span class="badge {{ $mMargin >= 0 ? 'bg-success' : 'bg-danger' }}">{{ $mMargin }}%</span>
                                                 </td>
+                                            </tr>
+                                            <!-- Subtotal: Total Used SMS -->
+                                            <tr style="background-color: #f8fafc; font-weight: 600;">
+                                                <td class="text-dark">
+                                                    <i class="fas fa-coins text-warning me-1"></i> {{ __('Subtotal: Total Used SMS') }}
+                                                </td>
+                                                <td class="fw-bold" style="color: #b45309;">{{ currency_format($stats['used_revenue']) }}</td>
+                                                <td class="fw-bold text-danger">{{ currency_format($stats['used_cost']) }}</td>
+                                                <td class="fw-bold text-success">{{ currency_format($stats['used_profit']) }}</td>
+                                                <td><span class="badge bg-success">{{ $stats['used_margin'] }}%</span></td>
                                             </tr>
                                             @if($stats['subscription_revenue'] > 0)
                                             <tr>

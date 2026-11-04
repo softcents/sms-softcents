@@ -122,6 +122,12 @@ class UserController extends Controller
         $netProfit = $totalRevenue - $totalCost;
         $profitMargin = $totalRevenue > 0 ? round(($netProfit / $totalRevenue) * 100, 2) : 0;
 
+        // Specific calculations for amount USED (SMS charges billed) vs its cost & profit
+        $usedRevenue = $smsRevenue;
+        $usedCost = $totalCost;
+        $usedProfit = $usedRevenue - $usedCost;
+        $usedMargin = $usedRevenue > 0 ? round(($usedProfit / $usedRevenue) * 100, 2) : 0;
+
         $stats = [
             'total_sms' => (int) ($financial->total_sms ?? 0),
             'total_parts' => (int) ($financial->total_parts ?? 0),
@@ -133,6 +139,10 @@ class UserController extends Controller
             'total_cost' => $totalCost,
             'net_profit' => $netProfit,
             'profit_margin' => $profitMargin,
+            'used_revenue' => $usedRevenue,
+            'used_cost' => $usedCost,
+            'used_profit' => $usedProfit,
+            'used_margin' => $usedMargin,
             'masking_revenue' => (float) ($financial->masking_revenue ?? 0),
             'masking_cost' => (float) ($financial->masking_cost ?? 0),
             'masking_profit' => ((float) ($financial->masking_revenue ?? 0)) - ((float) ($financial->masking_cost ?? 0)),

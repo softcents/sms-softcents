@@ -37,18 +37,41 @@ class SoftcentsGroupSmsController extends Controller
             'senderid_id' => 'required|string|max:20|exists:senderids,id',
             'group_id' => 'required|string|max:20|exists:groups,id',
             'contents' => 'required',
+            'range_start' => 'nullable|integer|min:1',
+            'range_end' => 'nullable|string',
             'schedule_type' => 'required',
             'schedule' => 'nullable',
         ]);
 
-        $numbers = Contact::where('group_id', $request->group_id)->get()->pluck('number')->toArray();
+        $rawNumbers = Contact::where('group_id', $request->group_id)->pluck('number')->toArray();
+        $start = max(1, (int)($request->range_start ?: 1));
+        $startIndex = $start - 1;
+        $rangeEndVal = trim((string)($request->range_end ?: 'All'));
+
+        if (strtolower($rangeEndVal) === 'all' || empty($rangeEndVal)) {
+            $numbers = array_slice($rawNumbers, $startIndex);
+        } else {
+            $end = (int)$rangeEndVal;
+            if ($end >= $start) {
+                $count = $end - $start + 1;
+            } else {
+                $count = max(1, $end);
+            }
+            $numbers = array_slice($rawNumbers, $startIndex, $count);
+        }
+
+        if (empty($numbers)) {
+            return response()->json([
+                'message' => __('No contacts found in the selected range.'),
+            ], 422);
+        }
+
         $request->merge(['numbers' => implode(',', $numbers)]);
 
         $user = auth()->user();
         $isUnicode = didITypeUnicode($request->contents);
         $total_sms = wordCountDown($isUnicode, $request->contents);
 
-        $numbers_arr = Contact::where('group_id', $request->group_id)->get()->pluck('number')->toArray();
         $sender_id_info = Senderid::where('user_id', $user->id)->where('gateway_id','!=',0)->findOrFail($request->senderid_id);
         $gateway_details = Smsgateway::where('id',$sender_id_info->gateway_id)->where('status',1)->first();
 
@@ -58,8 +81,7 @@ class SoftcentsGroupSmsController extends Controller
             ], 406);
         }
 
-        $request->input('numbers', $numbers_arr);
-        $grand_total_sms = count($numbers_arr) * $total_sms; // Total sms count
+        $grand_total_sms = count($numbers) * $total_sms; // Total sms count
         $total_charges = calculateCharge($grand_total_sms, $sender_id_info, $user);
 
         if ($total_charges <= $user->balance) {
@@ -80,7 +102,7 @@ class SoftcentsGroupSmsController extends Controller
                         $api_key = $params['api_key'] ?? $params['key'] ?? '';
                         $client_id = $params['clientid'] ?? '';
 
-                        foreach ($numbers_arr as $number) {
+                        foreach ($numbers as $number) {
                             dispatch(new \App\Jobs\SendSmsJob(
                                 $number,
                                 $request->contents,
@@ -95,7 +117,7 @@ class SoftcentsGroupSmsController extends Controller
                         }
                         session()->put('gateway_id', $gateway_details->id);
                     } else {
-                        $response = sendMessage($request->numbers, $request->contents, $sender_id_info);
+                        $response = sendMessage($numbers, $request->contents, $sender_id_info);
 
                         if (!$response) {
                             return response()->json(__('Please enter a valid phone number or contact with admin!'), 406);

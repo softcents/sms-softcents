@@ -74,6 +74,25 @@
                                             </div>
 
                                             <div class="col-sm-3 text-end mt-4">
+                                                <label>{{ __('Range Start') }} <span class="text-danger">*</span> : </label>
+                                            </div>
+                                            <div class="col-sm-9 mt-4">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-6">
+                                                        <input type="number" name="range_start" id="range_start" required class="form-control" value="1" min="1" placeholder="1">
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="text" name="range_end" id="range_end" class="form-control" value="All" placeholder="All">
+                                                    </div>
+                                                </div>
+                                                <div class="d-flex justify-content-between align-items-center mt-1">
+                                                    <small class="text-muted" id="range-preview-text">
+                                                        <i class="fas fa-info-circle me-1"></i>{{ __('Sends from number 1 to All numbers in the file') }}
+                                                    </small>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-3 text-end mt-4">
                                                 <label>{{ __('Select SMS Type :') }} </label>
                                             </div>
                                             <div class="col-sm-9 mt-4">
@@ -164,6 +183,49 @@
     <script src="{{ asset('assets/js/custom/sms.js') }}?v={{ time() }}"></script>
     <script>
         $(document).ready(function () {
+            window.lastTotalFileNumbers = 0;
+
+            function calculateBulkRange(totalAvailable) {
+                totalAvailable = totalAvailable || window.lastTotalFileNumbers || 0;
+                var startVal = parseInt($('#range_start').val()) || 1;
+                var endVal = ($('#range_end').val() || '').trim();
+
+                var count = 0;
+                var desc = '';
+                if (endVal.toLowerCase() === 'all' || endVal === '') {
+                    if (totalAvailable > 0) {
+                        count = Math.max(1, totalAvailable - startVal + 1);
+                        desc = 'Sends to <strong>' + count + '</strong> numbers (From #' + startVal + ' to #' + totalAvailable + ')';
+                    } else {
+                        count = 1;
+                        desc = 'Sends from #' + startVal + ' to <strong>All</strong> numbers in the file';
+                    }
+                } else {
+                    var endNum = parseInt(endVal) || startVal;
+                    count = endNum >= startVal ? (endNum - startVal + 1) : endNum;
+                    desc = 'Sends to <strong>' + count + '</strong> numbers (From #' + startVal + ' to #' + (startVal + count - 1) + ')';
+                }
+
+                $('#range-preview-text').html('<i class="fas fa-info-circle me-1"></i>' + desc);
+                return { count: count, desc: desc, start: startVal, end: endVal };
+            }
+
+            // Real-time preview updates
+            $(document).on('input change', '#range_start, #range_end', function () {
+                calculateBulkRange();
+            });
+
+            // On file select
+            $(document).on('change', 'input[name="file"]', function () {
+                if (this.files && this.files.length > 0) {
+                    var file = this.files[0];
+                    window.parseBulkSmsNumberCount(file, function (totalCount) {
+                        window.lastTotalFileNumbers = totalCount;
+                        calculateBulkRange(totalCount);
+                    });
+                }
+            });
+
             // Live trigger confirmation modal for Bulk SMS
             $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms-modal', function (e) {
                 e.preventDefault();
@@ -234,18 +296,22 @@
                 var charInfo = charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')';
 
                 // Parse number count from Excel or CSV file
-                window.parseBulkSmsNumberCount(file, function (recipientsCount) {
+                window.parseBulkSmsNumberCount(file, function (totalFileCount) {
                     $btn.prop('disabled', false).html(originalHtml);
+                    window.lastTotalFileNumbers = totalFileCount;
 
-                    var count = Math.max(1, recipientsCount);
+                    var rangeInfo = calculateBulkRange(totalFileCount);
+                    var count = Math.max(1, rangeInfo.count);
                     var totalCost = (unitCost * count).toFixed(2);
                     var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
+
+                    var rangeBadge = rangeInfo.end.toLowerCase() === 'all' ? '#' + rangeInfo.start + ' to All' : '#' + rangeInfo.start + ' to #' + (rangeInfo.start + count - 1);
 
                     $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
                     $('#modal-new-balance').text('৳' + newBalance);
                     $('#modal-total-cost').text(totalCost);
                     $('#modal-sender-id').text(senderText);
-                    $('#modal-recipients-count').text(count + (count === 1 ? ' Number (' : ' Numbers (') + fileName + ')');
+                    $('#modal-recipients-count').text(count + (count === 1 ? ' Number (' : ' Numbers (') + fileName + ' [' + rangeBadge + '])');
                     $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
                     $('#modal-sms-rate').text('৳' + rate.toFixed(2));
                     $('#modal-char-info').text(charInfo);

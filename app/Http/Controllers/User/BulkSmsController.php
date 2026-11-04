@@ -62,13 +62,41 @@ class BulkSmsController extends Controller
             'senderid_id' => 'required|string|max:20|exists:senderids,id',
             'file' => 'required|file|mimes:xlsx,xls,csv,ods|max:10240',
             'contents' => 'required',
+            'range_start' => 'nullable|integer|min:1',
+            'range_end' => 'nullable|string',
             'schedule_type' => 'required',
             'schedule' => 'nullable',
         ]);
 
         $import = new NumberImport();
         Excel::import($import, $request->file('file'));
-        $numbers = $import->numbers;
+        $rawNumbers = array_values(array_filter($import->numbers ?? [], function ($n) {
+            return !empty(trim((string)$n));
+        }));
+
+        $start = max(1, (int)($request->range_start ?: 1));
+        $startIndex = $start - 1;
+        $rangeEndVal = trim((string)($request->range_end ?: 'All'));
+
+        if (strtolower($rangeEndVal) === 'all' || empty($rangeEndVal)) {
+            $numbers = array_slice($rawNumbers, $startIndex);
+        } else {
+            $end = (int)$rangeEndVal;
+            if ($end >= $start) {
+                $count = $end - $start + 1;
+            } else {
+                $count = max(1, $end);
+            }
+            $numbers = array_slice($rawNumbers, $startIndex, $count);
+        }
+
+        if (empty($numbers)) {
+            return response()->json([
+                'message' => __('No phone numbers found in the selected range.'),
+            ], 422);
+        }
+
+        $request->merge(['numbers' => implode(',', $numbers)]);
 
         $user = auth()->user();
         $isUnicode = didITypeUnicode($request->contents);

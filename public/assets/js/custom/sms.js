@@ -281,10 +281,26 @@ $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms
         }
         var selectedOpt = groupSelect.find('option:selected');
         var contactsCount = parseInt(selectedOpt.data('contacts')) || 0;
-        var totalCost = (unitCost * Math.max(1, contactsCount)).toFixed(2);
+        var startVal = parseInt($form.find('#range_start, input[name="range_start"]').val()) || 1;
+        var endVal = ($form.find('#range_end, input[name="range_end"]').val() || 'All').trim();
+
+        var recipientsCount = contactsCount;
+        var rangeDesc = '';
+        if ($form.find('#range_start, input[name="range_start"]').length) {
+            if (endVal.toLowerCase() === 'all' || endVal === '') {
+                recipientsCount = contactsCount > 0 ? Math.max(1, contactsCount - startVal + 1) : 1;
+                rangeDesc = ' [#' + startVal + ' to All]';
+            } else {
+                var endNum = parseInt(endVal) || startVal;
+                recipientsCount = endNum >= startVal ? (endNum - startVal + 1) : endNum;
+                rangeDesc = ' [#' + startVal + ' to #' + (startVal + recipientsCount - 1) + ']';
+            }
+        }
+
+        var totalCost = (unitCost * Math.max(1, recipientsCount)).toFixed(2);
         var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
         var groupName = selectedOpt.text().split('(')[0].trim();
-        renderModal(contactsCount + (contactsCount === 1 ? ' Contact (' : ' Contacts (') + groupName + ')', totalCost, '৳' + newBalance);
+        renderModal(recipientsCount + (recipientsCount === 1 ? ' Contact (' : ' Contacts (') + groupName + rangeDesc + ')', totalCost, '৳' + newBalance);
 
     } else if (fileInput.length) {
         // BULK SMS
@@ -304,14 +320,30 @@ $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms
 
         $triggerBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Reading file...');
 
-        window.parseBulkSmsNumberCount(file, function (recipientsCount) {
+        window.parseBulkSmsNumberCount(file, function (totalFileNumbers) {
             $triggerBtn.prop('disabled', false).html(originalBtnHtml);
+
+            var startVal = parseInt($form.find('#range_start, input[name="range_start"]').val()) || 1;
+            var endVal = ($form.find('#range_end, input[name="range_end"]').val() || 'All').trim();
+            var recipientsCount = totalFileNumbers;
+            var rangeDesc = '';
+
+            if ($form.find('#range_start, input[name="range_start"]').length) {
+                if (endVal.toLowerCase() === 'all' || endVal === '') {
+                    recipientsCount = totalFileNumbers > 0 ? Math.max(1, totalFileNumbers - startVal + 1) : 1;
+                    rangeDesc = ' [#' + startVal + ' to All]';
+                } else {
+                    var endNum = parseInt(endVal) || startVal;
+                    recipientsCount = endNum >= startVal ? (endNum - startVal + 1) : endNum;
+                    rangeDesc = ' [#' + startVal + ' to #' + (startVal + recipientsCount - 1) + ']';
+                }
+            }
 
             var totalCost = (unitCost * Math.max(1, recipientsCount)).toFixed(2);
             var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
 
             renderModal(
-                recipientsCount + (recipientsCount === 1 ? ' Number (' : ' Numbers (') + fileName + ')',
+                recipientsCount + (recipientsCount === 1 ? ' Number (' : ' Numbers (') + fileName + rangeDesc + ')',
                 totalCost,
                 '৳' + newBalance
             );

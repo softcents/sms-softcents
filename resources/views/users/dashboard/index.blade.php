@@ -140,9 +140,12 @@
 
         <div class="row gpt-dashboard-chart">
             <div class="col-xxl-8 col-xl-7 col-lg-7 mb-30">
-                <div class="cards  dashboard-card new-card border-0 p-0">
-                    <div class="card-header subscription-header">
-                        <h4>{{ __('Sms history statistics') }}</h4>
+                <div class="cards dashboard-card new-card border-0 p-0">
+                    <div class="card-header subscription-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="mb-0">{{ __('Sms history statistics') }}</h4>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-normal py-1 px-2" id="chart-history-period" style="font-size: 11px;">{{ __('Today') }}</span>
+                        </div>
                         <div class="gpt-up-down-arrow position-relative">
                             <select class="form-control sms-statistics">
                                 @for ($i = date('Y'); $i >= 2022; $i--)
@@ -159,8 +162,11 @@
             </div>
             <div class="col-xxl-4 col-xl-5 col-lg-5 mb-30">
                 <div class="cards sms-report new-card border-0 p-0">
-                    <div class="card-header overview-header">
-                        <h4>{{ __('SMS Report') }}</h4>
+                    <div class="card-header overview-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="mb-0">{{ __('SMS Report') }}</h4>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-normal py-1 px-2" id="chart-overview-period" style="font-size: 11px;">{{ __('Today') }}</span>
+                        </div>
                         <div class="gpt-up-down-arrow position-relative">
                             <select class="form-control overview-year">
                                 @for ($i = date('Y'); $i >= 2022; $i--)
@@ -178,8 +184,11 @@
 
             <div class="col-xxl-12 mb-30">
                 <div class="cards new-card border-0 p-0">
-                    <div class="card-header users-header">
-                        <h4>{{ __('Recent Messages') }}</h4>
+                    <div class="card-header users-header d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                            <h4 class="mb-0">{{ __('Recent Messages') }}</h4>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-normal py-1 px-2" id="table-period-badge" style="font-size: 11px;">{{ __('Today') }}</span>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="table-responsive border-1 rounded-3 rounded-image">
@@ -195,7 +204,7 @@
                                     <th>{{ __('Status') }}</th>
                                 </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="recent-messages-tbody">
                                     @include('users.dashboard.message-datas')
                                 </tbody>
                             </table>

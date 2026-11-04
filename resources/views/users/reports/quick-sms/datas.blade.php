@@ -3,7 +3,34 @@
         <td>{{ $loop->iteration }}</td>
         <td>{{ optional($message->senderid)->sender ?? 'System' }}</td>
         <td>{{ $message->number }}</td>
-        <td>{{ Str::limit($message->contents, 30, '...') }}</td>
+        <td>
+            <div class="d-flex align-items-center gap-2">
+                <span class="view-full-sms-content text-primary" role="button"
+                    data-content="{{ $message->contents }}"
+                    data-sender="{{ optional($message->senderid)->sender ?? 'System' }}"
+                    data-number="{{ $message->number }}"
+                    data-time="{{ $message->created_at ? $message->created_at->format('d M, Y h:i:s A') : '-' }}"
+                    data-parts="{{ $message->total_sms ?? 1 }}"
+                    data-charge="{{ currency_format($message->charge) }}"
+                    data-unicode="{{ $message->is_unicode ? 1 : 0 }}"
+                    title="{{ __('Click to view full content') }}"
+                    style="cursor: pointer; text-decoration: underline;">
+                    {{ Str::limit($message->contents, 30, '...') }}
+                </span>
+                <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 view-full-sms-content"
+                    data-content="{{ $message->contents }}"
+                    data-sender="{{ optional($message->senderid)->sender ?? 'System' }}"
+                    data-number="{{ $message->number }}"
+                    data-time="{{ $message->created_at ? $message->created_at->format('d M, Y h:i:s A') : '-' }}"
+                    data-parts="{{ $message->total_sms ?? 1 }}"
+                    data-charge="{{ currency_format($message->charge) }}"
+                    data-unicode="{{ $message->is_unicode ? 1 : 0 }}"
+                    title="{{ __('View full message') }}"
+                    style="font-size: 11px;">
+                    <i class="far fa-eye"></i>
+                </button>
+            </div>
+        </td>
         <td class="text-center">
             <span class="badge bg-secondary">{{ $message->total_sms ?? 1 }} {{ __('SMS') }}</span>
         </td>

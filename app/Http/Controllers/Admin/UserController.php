@@ -622,6 +622,7 @@ class UserController extends Controller
 
         $plan = Plan::findOrFail($request->plan_id);
         $admin = auth()->user();
+        $adminName = $admin ? $admin->name : 'Admin';
 
         // Calculate validity
         $days = (int) $request->duration_days;
@@ -640,6 +641,90 @@ class UserController extends Controller
 
         DB::beginTransaction();
         try {
+            $planPrice = (float) $plan->price;
+            $shouldAddBalance = $request->boolean('add_balance', false);
+            $newBalance = (float) $user->balance;
+
+            // Check if user already has an active subscription for the SAME plan
+            $existingActiveSub = PlanSubscribe::where('user_id', $user->id)
+                ->where('plan_id', $plan->id)
+                ->where('status', 'approved')
+                ->where(function ($q) {
+                    $q->whereNull('will_expire')->orWhere('will_expire', '>=', now()->toDateString());
+                })
+                ->latest()
+                ->first();
+
+            if ($existingActiveSub) {
+                // RENEW: Do not create duplicate active package! Extend expiration from current expiry date
+                $baseDate = ($existingActiveSub->will_expire && \Carbon\Carbon::parse($existingActiveSub->will_expire)->isFuture())
+                    ? \Carbon\Carbon::parse($existingActiveSub->will_expire)
+                    : now();
+                $willExpire = $baseDate->copy()->addDays($days);
+
+                $existingActiveSub->update([
+                    'will_expire' => $willExpire,
+                    'notes' => ($existingActiveSub->notes ? $existingActiveSub->notes . " | " : "") . "Renewed on " . now()->format('d M Y') . " by " . $adminName,
+                ]);
+
+                if ($shouldAddBalance && $planPrice > 0) {
+                    $newBalance += $planPrice;
+                    Transaction::create([
+                        'user_id' => $user->id,
+                        'amount' => $planPrice,
+                        'reason' => "Subscription Renewed: {$plan->title}",
+                        'type' => 'credit',
+                    ]);
+                }
+
+                $updateData = [
+                    'plan_id' => $plan->id,
+                    'balance' => $newBalance,
+                    'allow_api' => $plan->allow_api ?? true,
+                    'will_expire' => $willExpire,
+                ];
+
+                if ($request->boolean('update_rates', true)) {
+                    $updateData['masking_rate'] = $maskingRate;
+                    $updateData['non_masking_rate'] = $nonMaskingRate;
+                }
+
+                $user->update($updateData);
+                $user->refresh();
+
+                DB::commit();
+
+                $message = __("Package ':plan' renewed successfully for :user! Expiration extended until :date.", [
+                    'plan' => $plan->title,
+                    'user' => $user->name,
+                    'date' => $willExpire->format('d M Y'),
+                ]);
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json([
+                        'success' => true,
+                        'is_renewed' => true,
+                        'message' => $message,
+                        'user_id' => $user->id,
+                        'plan_id' => $plan->id,
+                        'plan_title' => $plan->title,
+                        'masking_rate' => $user->masking_rate,
+                        'non_masking_rate' => $user->non_masking_rate,
+                        'will_expire' => $willExpire->format('d M Y'),
+                        'balance' => $user->balance,
+                        'formatted_balance' => currency_format($user->balance),
+                    ]);
+                }
+
+                return back()->with('success', $message);
+            }
+
+            // If user has a DIFFERENT previous approved plan, mark old plan as expired so only one plan is active
+            PlanSubscribe::where('user_id', $user->id)
+                ->where('plan_id', '!=', $plan->id)
+                ->where('status', 'approved')
+                ->update(['status' => 'expired']);
+
             $subscribe = PlanSubscribe::create([
                 'plan_data' => $plan->toArray(),
                 'status' => 'approved',
@@ -650,13 +735,9 @@ class UserController extends Controller
                 'masking_rate' => $maskingRate,
                 'non_masking_rate' => $nonMaskingRate,
                 'will_expire' => $willExpire,
-                'notes' => $request->notes ?: "Plan assigned by Admin ({$admin->name})",
+                'notes' => $request->notes ?: "Plan assigned by Admin ({$adminName})",
             ]);
 
-            $planPrice = (float) $plan->price;
-            $shouldAddBalance = $request->boolean('add_balance', false);
-
-            $newBalance = (float) $user->balance;
             if ($shouldAddBalance && $planPrice > 0) {
                 $newBalance += $planPrice;
 

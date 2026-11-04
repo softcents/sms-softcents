@@ -96,6 +96,15 @@
                         </div>
                     </div>
 
+                    <!-- Renewal Alert Notice -->
+                    <div id="plan-renewal-notice" class="alert alert-info py-2 px-3 mb-3 small d-flex align-items-center gap-2" style="display: none; border-radius: 8px;">
+                        <i class="fas fa-sync-alt text-info fs-5"></i>
+                        <div>
+                            <strong>{{ __('Package Renewal Mode') }}:</strong>
+                            <span>{{ __('User already has this package active. Submitting will renew and extend their expiration date without creating a duplicate subscription.') }}</span>
+                        </div>
+                    </div>
+
                     <!-- Custom Validity / Duration -->
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted text-uppercase mb-1">{{ __('Validity Days') }}</label>
@@ -165,9 +174,12 @@ $(document).ready(function() {
 
         let isNewUser = (!currentPlan || currentPlan.toLowerCase() === 'none' || currentPlan.trim() === '');
         $('#check_add_balance').prop('checked', isNewUser);
+        $('#modal-assign-plan').data('current-plan-id', planId);
 
         if (planId) {
             $('#plan_select_id').val(planId).trigger('change');
+        } else {
+            $('#plan_select_id').val('').trigger('change');
         }
 
         let modal = new bootstrap.Modal(document.getElementById('modal-assign-plan'));
@@ -180,6 +192,9 @@ $(document).ready(function() {
         $('#plan-user-select-wrap').show();
         $('#plan-user-info-card').hide();
         $('#plan-details-preview').hide();
+        $('#plan-renewal-notice').hide();
+        $('#modal-assign-plan').removeData('current-plan-id');
+        $('#btn-submit-plan-label').text('{{ __("Assign Plan Now") }}');
     });
 
     // Handle user selection from dropdown
@@ -210,9 +225,21 @@ $(document).ready(function() {
             $('#preview-plan-masking').text('৳' + masking.toFixed(3));
             $('#preview-plan-nonmasking').text('৳' + nonmasking.toFixed(3));
 
+            let currentPlanId = $('#modal-assign-plan').data('current-plan-id');
+            let selectedPlanId = opt.val();
+            if (currentPlanId && parseInt(currentPlanId) === parseInt(selectedPlanId)) {
+                $('#plan-renewal-notice').slideDown(200);
+                $('#btn-submit-plan-label').text('{{ __("Renew Package Now") }}');
+            } else {
+                $('#plan-renewal-notice').slideUp(200);
+                $('#btn-submit-plan-label').text('{{ __("Assign Plan Now") }}');
+            }
+
             $('#plan-details-preview').slideDown(200);
         } else {
             $('#plan-details-preview').slideUp(200);
+            $('#plan-renewal-notice').slideUp(200);
+            $('#btn-submit-plan-label').text('{{ __("Assign Plan Now") }}');
         }
     });
 

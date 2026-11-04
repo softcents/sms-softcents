@@ -10,7 +10,7 @@
 <link rel="stylesheet" href="{{ asset('assets/css/lity.css') }}">
 <!-- Style -->
 <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
-<link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
+<link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}?v={{ file_exists(public_path('assets/css/custom.css')) ? filemtime(public_path('assets/css/custom.css')) : time() }}">
 <!-- Toaster -->
 <link rel="stylesheet" href="{{ asset('assets/css/toastr.min.css') }}">
 

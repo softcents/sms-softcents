@@ -8,8 +8,8 @@
     <div class="erp-table-section">
         <div class="container-fluid">
             <div class="card shadow-sm">
-                <div class="card-body">
-                    <div class="table-header mb-4">
+                <div class="card-body p-3 p-sm-4">
+                    <div class="table-header mb-3 mb-sm-4">
                         <h4>{{ __('Send Bulk SMS') }}</h4>
                     </div>
                     <div class="tab-content order-summary-tab mt-1 quick-sms">
@@ -20,10 +20,10 @@
 
                                     <div class="add-suplier-modal-wrapper">
                                         <div class="row">
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Sender ID') }} : </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Sender ID') }} : </label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="senderid_id" required class="form-control select-dropdown">
                                                         <option value="">{{ __('Select a sender id') }}</option>
@@ -35,10 +35,10 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Select SMS schedule :') }} </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Select SMS schedule :') }} </label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="schedule_type" required="" class="form-control select-dropdown timer-option">
                                                         <option value="sendnow">{{ __('Send Now') }}</option>
@@ -48,41 +48,47 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-sm-3 mt-4 text-end d-none schedule-sms">
-                                                <label>{{ __('Schedule SMS :') }} </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 d-none schedule-sms align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Schedule SMS :') }} </label>
                                             </div>
-                                            <div class="col-lg-9 mt-4 d-none schedule-sms">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4 d-none schedule-sms">
                                                 <input type="datetime-local" name="schedule" required class="form-control">
                                             </div>
 
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Upload file (.csv/.ods/.xlsx/.xls)') }}</label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Upload file (.csv/.ods/.xlsx/.xls)') }}</label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
-                                                <div class="row">
-                                                    <div class="col-6 align-self-center">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                                <div class="row g-2 align-items-center">
+                                                    <div class="col-12 col-md-7">
                                                         <input type="file" name="file" id="bulk-file-input" required class="form-control" accept=".csv, .ods, .xlsx, .xls">
                                                         <div id="file-status-badge" class="mt-1 d-none"></div>
                                                     </div>
-                                                    <div class="col-6 align-self-center">
-                                                        <a href="{{ route('users.download-numbers-file') }}" class="theme-btn print-btn text-light w-100">
-                                                            <img src="{{ asset('assets/images/icons/download-excel.svg') }}" alt="">
-                                                            {{ __('Download Example File') }}
+                                                    <div class="col-12 col-md-5">
+                                                        <a href="{{ route('users.download-numbers-file') }}" class="theme-btn print-btn text-light w-100 d-inline-flex align-items-center justify-content-center text-decoration-none" style="min-width: unset; padding: 9px 12px;">
+                                                            <img src="{{ asset('assets/images/icons/download-excel.svg') }}" alt="" class="me-2" style="height: 18px; width: 18px;">
+                                                            <span>{{ __('Download Example File') }}</span>
                                                         </a>
                                                     </div>
                                                 </div>
                                             </div>
 
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Range Start') }} <span class="text-danger">*</span> : </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Range Start') }} <span class="text-danger">*</span> : </label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
                                                 <div class="row g-2 align-items-center">
                                                     <div class="col-6">
-                                                        <input type="number" name="range_start" id="range_start" required class="form-control" value="1" min="1" placeholder="1">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-muted small px-2">{{ __('Start') }}</span>
+                                                            <input type="number" name="range_start" id="range_start" required class="form-control" value="1" min="1" placeholder="1">
+                                                        </div>
                                                     </div>
                                                     <div class="col-6">
-                                                        <input type="text" name="range_end" id="range_end" class="form-control" value="All" placeholder="All">
+                                                        <div class="input-group">
+                                                            <span class="input-group-text bg-light text-muted small px-2">{{ __('End') }}</span>
+                                                            <input type="text" name="range_end" id="range_end" class="form-control" value="All" placeholder="All">
+                                                        </div>
                                                     </div>
                                                 </div>
                                                 <div class="d-flex justify-content-between align-items-center mt-1">
@@ -92,11 +98,11 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Select SMS Type :') }} </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Select SMS Type :') }} </label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
-                                                <div class="d-flex">
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                                <div class="d-flex gap-3">
                                                     <div class="form-check">
                                                         <input class="form-check-input text" type="radio" name="is_unicode_test" id="text">
                                                         <label class="form-check-label" for="text">
@@ -112,24 +118,29 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-sm-3 text-end mt-4">
-                                                <label>{{ __('Message Content') }} : </label>
+                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4">
+                                                <label class="form-label mb-0 fw-bold">{{ __('Message Content') }} : </label>
                                             </div>
-                                            <div class="col-sm-9 mt-4">
-                                                <textarea name="contents" id="contents" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
-                                                <div id="the-count" class="pull-right mt-1" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}" data-balance="{{ (float)auth()->user()->balance }}">
-                                                    <span id="current">{{ __('0') }}</span> <span class="ps-4">{{ __('Characters') }}</span> <span class="text-primary fw-bold
-                                                    ">|</span>
-                                                    <span id="no_of_sms"> {{ __('0') }} </span> {{ __('SMS') }} <span class="text-primary fw-bold">|</span>
-                                                    <span class="text-danger"><span id="char_per_sms"> {{ __('160') }} </span> {{ __('Char per sms') }}</span>
-                                                    <a id="sms-templates" data-url="{{ route('users.get-templates') }}" class="badge bg-primary" href="javascript:void(0)">{{ __('Insert SMS Template') }}</a>
+                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                                <textarea name="contents" id="contents" rows="4" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
+                                                <div id="the-count" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}" data-balance="{{ (float)auth()->user()->balance }}">
+                                                    <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">
+                                                        <span><strong id="current" class="text-dark">0</strong> {{ __('Characters') }}</span>
+                                                        <span class="text-primary fw-bold">|</span>
+                                                        <span><strong id="no_of_sms" class="text-dark">0</strong> {{ __('SMS') }}</span>
+                                                        <span class="text-primary fw-bold">|</span>
+                                                        <span class="text-danger"><strong id="char_per_sms">160</strong> {{ __('Char per sms') }}</span>
+                                                    </div>
+                                                    <a id="sms-templates" data-url="{{ route('users.get-templates') }}" class="badge bg-primary text-decoration-none py-1 px-2" href="javascript:void(0)">
+                                                        <i class="fas fa-file-alt me-1"></i>{{ __('Insert SMS Template') }}
+                                                    </a>
                                                 </div>
                                             </div>
 
-                                            <div class="col-lg-12">
-                                                <div class="button-group text-center mt-5">
-                                                    <a href="" class="theme-btn border-btn m-2">{{ __('Cancel') }}</a>
-                                                    <button type="button" class="theme-btn m-2" id="btn-trigger-sms-modal">
+                                            <div class="col-12">
+                                                <div class="button-group text-center mt-4 mt-sm-5 d-flex flex-column flex-sm-row justify-content-center align-items-center gap-2">
+                                                    <a href="" class="theme-btn border-btn m-1" style="min-width: 140px;">{{ __('Cancel') }}</a>
+                                                    <button type="button" class="theme-btn m-1" id="btn-trigger-sms-modal" style="min-width: 140px;">
                                                         <i class="fas fa-paper-plane me-1"></i> {{ __('Send') }}
                                                     </button>
                                                     <button type="submit" class="d-none submit-btn" id="real-submit-btn"></button>

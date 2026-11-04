@@ -434,3 +434,64 @@
     background-color: #fff;
     padding: 16px;
 }
+
+/* ==========================================================================
+   Mobile Responsiveness for SMS Forms (Bulk SMS, Group SMS, Quick SMS, etc.)
+   ========================================================================== */
+#the-count {
+    position: relative;
+    float: none !important;
+}
+
+#the-count #current {
+    position: static !important;
+    display: inline !important;
+    padding-right: 0 !important;
+    background: transparent !important;
+}
+
+@media (max-width: 575.98px) {
+    .quick-sms .order-form-section .row > [class*="col-sm-3"],
+    .quick-sms .order-form-section .row > [class*="col-md-3"] {
+        text-align: left !important;
+        margin-top: 14px !important;
+        margin-bottom: 4px !important;
+    }
+
+    .quick-sms .order-form-section .row > [class*="col-sm-9"],
+    .quick-sms .order-form-section .row > [class*="col-md-9"] {
+        margin-top: 2px !important;
+    }
+
+    .quick-sms .order-form-section .button-group {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+        margin-top: 24px !important;
+        width: 100% !important;
+    }
+
+    .quick-sms .order-form-section .button-group .theme-btn {
+        min-width: 100% !important;
+        width: 100% !important;
+        margin: 4px 0 !important;
+    }
+
+    .quick-sms .print-btn {
+        min-width: unset !important;
+        width: 100% !important;
+    }
+
+    #the-count {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-size: 12px !important;
+    }
+
+    .erp-table-section .card-body {
+        padding: 14px 12px !important;
+    }
+}

@@ -1,5 +1,5 @@
 <div class="modal fade" id="sms-confirm-modal" tabindex="-1" aria-labelledby="smsConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 460px;">
+    <div class="modal-dialog modal-dialog-centered mx-auto" style="max-width: 460px; width: calc(100% - 24px);">
         <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
             {{-- Modal Header --}}
             <div class="modal-header bg-light py-2 px-3 border-bottom">

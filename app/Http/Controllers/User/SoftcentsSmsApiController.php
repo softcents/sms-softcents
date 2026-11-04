@@ -66,7 +66,20 @@ class SoftcentsSmsApiController extends Controller
             'senderId' => 'required|string',
         ]);
 
-        $sender_id_info = Senderid::where(['user_id' => $user->id, 'sender' => $request->senderId])->where('gateway_id', '!=', 0)->first();
+        $reqSender = trim((string) $request->senderId);
+        $senderCandidates = [$reqSender];
+
+        // Support both 880XXXXXXXXXX and 0XXXXXXXXXX virtual sender IDs
+        if (preg_match('/^880\d+$/', $reqSender)) {
+            $senderCandidates[] = substr($reqSender, 2);
+        } elseif (preg_match('/^0\d+$/', $reqSender)) {
+            $senderCandidates[] = '88' . $reqSender;
+        }
+
+        $sender_id_info = Senderid::where('user_id', $user->id)
+            ->whereIn('sender', $senderCandidates)
+            ->where('gateway_id', '!=', 0)
+            ->first();
 
         if (!$sender_id_info) {
             return response()->json([

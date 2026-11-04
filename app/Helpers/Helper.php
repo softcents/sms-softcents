@@ -230,7 +230,7 @@ function makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $res
             'number' => $number,
             'created_at' => now(),
             'updated_at' => now(),
-            'smsgateway_id' => session('gateway_id'),
+            'smsgateway_id' => session('gateway_id') ?: ($sender_id_info->gateway_id ?? null),
             'charge' => $charge,
         ];
     }
@@ -254,7 +254,7 @@ function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms)
             'ip_address' => $request->ip(),
             'is_unicode' => $isUnicode ?? 0,
             'senderid_id' => $sender_id_info->id,
-            'smsgateway_id' => session('gateway_id'),
+            'smsgateway_id' => session('gateway_id') ?: ($sender_id_info->gateway_id ?? null),
             'charge' => $charge,
             'status' => 'success',
             'operator' => class_exists(\App\Services\ReportAnalyticsService::class) ? \App\Services\ReportAnalyticsService::detectOperator($number) : null,

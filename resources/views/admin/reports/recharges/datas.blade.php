@@ -3,8 +3,10 @@
         <td>{{ $loop->iteration }}</td>
         <td>
             @if($recharge->user)
-                <div class="fw-bold text-dark">{{ $recharge->user->name }}</div>
-                <div class="text-primary font-monospace small"><i class="fas fa-at text-muted me-0"></i><span>{{ $recharge->user->username ?: ('user' . $recharge->user->id) }}</span></div>
+                <a href="{{ route('admin.users.show', $recharge->user->id) }}" class="text-decoration-none" title="{{ __('View User Details') }}">
+                    <div class="fw-bold text-dark hover-primary">{{ $recharge->user->name }}</div>
+                    <div class="text-primary font-monospace small"><i class="fas fa-at text-muted me-0"></i><span>{{ $recharge->user->username ?: ('user' . $recharge->user->id) }}</span></div>
+                </a>
                 @if(!empty($recharge->user->phone))
                     <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ $recharge->user->phone }}</small>
                 @endif

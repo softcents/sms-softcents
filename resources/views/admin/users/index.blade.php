@@ -88,8 +88,33 @@
     </div>
 @endsection
 
+@push('css')
+<style>
+    tr.clickable-user-row td {
+        transition: background-color 0.15s ease;
+    }
+    tr.clickable-user-row:hover td {
+        background-color: #f1f5f9 !important;
+    }
+</style>
+@endpush
+
 @push('modal')
     @include('admin.users.recharge-modal')
     @include('admin.users.assign-plan-modal')
     @include('admin.components.multi-delete-modal')
+@endpush
+
+@push('js')
+<script>
+    $(document).on('click', 'tr.clickable-user-row td', function(e) {
+        if ($(e.target).closest('input, button, .dropdown, .print-d-none, .btn').length > 0) {
+            return;
+        }
+        let url = $(this).closest('tr').data('href');
+        if (url) {
+            window.location.href = url;
+        }
+    });
+</script>
 @endpush

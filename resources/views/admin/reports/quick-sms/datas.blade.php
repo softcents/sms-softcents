@@ -19,9 +19,15 @@
         {{-- 1. User Name --}}
         <td>
             <div class="d-flex flex-column">
-                <span class="fw-semibold text-dark">{{ $user->name ?? 'N/A' }}</span>
-                @if($user && $user->username)
-                    <small class="text-muted">@<span>{{ $user->username }}</span></small>
+                @if($user)
+                    <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none" title="{{ __('View Customer Details') }}">
+                        <span class="fw-semibold text-dark hover-primary">{{ $user->name }}</span>
+                        @if($user->username)
+                            <br><small class="text-primary font-monospace">@<span>{{ $user->username }}</span></small>
+                        @endif
+                    </a>
+                @else
+                    <span class="fw-semibold text-muted">N/A</span>
                 @endif
             </div>
         </td>

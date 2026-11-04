@@ -1,11 +1,16 @@
 @forelse($users as $user)
-    <tr>
+    <tr class="user-row clickable-user-row" data-href="{{ route('admin.users.show', $user->id) }}" style="cursor: pointer;">
         @can('users-delete')
             <td class="checkbox text-start">
                 <input type="checkbox" name="ids[]" class="checkbox-item" value="{{ $user->id }}" data-url="{{ route('admin.users.delete-all') }}">
             </td>
         @endcan
-        <td>{{ ($users instanceof \Illuminate\Pagination\LengthAwarePaginator ? $users->firstItem() + $loop->index : $loop->index + 1) }} <i class="{{ request('id') == $user->id ? 'fas fa-bell text-red' : '' }}"></i></td>
+        <td>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none text-dark fw-semibold">
+                {{ ($users instanceof \Illuminate\Pagination\LengthAwarePaginator ? $users->firstItem() + $loop->index : $loop->index + 1) }}
+            </a>
+            <i class="{{ request('id') == $user->id ? 'fas fa-bell text-red' : '' }}"></i>
+        </td>
         <td>
             <a href="{{ route('admin.users.show', $user->id) }}" title="{{ __('View User Details') }}">
                 <img height="45" width="45" class="rounded-circle border-1 shadow-sm" src="{{ asset($user->image ?? 'assets/images/profile/avatar.jpg') }}" alt="{{ $user->name }}">
@@ -20,21 +25,39 @@
                 <small><i class="fas fa-at"></i> {{ $user->username }}</small>
             </a>
         </td>
-        <td>{{ $user->phone }}</td>
-        <td>{{ $user->email }}</td>
+        <td>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none text-dark">
+                {{ $user->phone ?: '—' }}
+            </a>
+        </td>
+        <td>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none text-dark">
+                {{ $user->email }}
+            </a>
+        </td>
         @if (request('users', 'user') != 'admin')
         <td class="user-plan-cell-{{ $user->id }}">
-            @if ($user->role == 'user' && $user->plan)
-                <span class="badge bg-info text-dark">{{ $user->plan->title }}</span>
-            @else
-                <span class="badge bg-secondary">{{ strtoupper($user->role) }}</span>
-            @endif
-            @if ($user->parent)
-                <br><small class="text-muted"><i class="fas fa-level-up-alt"></i> {{ $user->parent->name }}</small>
-            @endif
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none">
+                @if ($user->role == 'user' && $user->plan)
+                    <span class="badge bg-info text-dark">{{ $user->plan->title }}</span>
+                @else
+                    <span class="badge bg-secondary">{{ strtoupper($user->role) }}</span>
+                @endif
+                @if ($user->parent)
+                    <br><small class="text-muted"><i class="fas fa-level-up-alt"></i> {{ $user->parent->name }}</small>
+                @endif
+            </a>
         </td>
-        <td class="fw-bold user-balance-cell-{{ $user->id }} {{ $user->low_blnc_alrt >= $user->balance ? 'text-danger' : 'text-success' }}">{{ currency_format($user->balance) }}</td>
-        <td>{{ formatted_date($user->created_at) }}</td>
+        <td class="user-balance-cell-{{ $user->id }}">
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none fw-bold {{ $user->low_blnc_alrt >= $user->balance ? 'text-danger' : 'text-success' }}">
+                {{ currency_format($user->balance) }}
+            </a>
+        </td>
+        <td>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none text-dark">
+                {{ formatted_date($user->created_at) }}
+            </a>
+        </td>
         @endif
         <td class="print-d-none">
             <div class="d-flex align-items-center justify-content-center gap-2">

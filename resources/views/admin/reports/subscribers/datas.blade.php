@@ -4,8 +4,10 @@
         <td><span class="font-monospace text-dark">{{ $subscriber->invoice_no }}</span></td>
         <td>
             @if($subscriber->user)
-                <div class="fw-bold text-dark">{{ $subscriber->user->name }}</div>
-                <div class="text-primary font-monospace small"><i class="fas fa-at text-muted me-0"></i><span>{{ $subscriber->user->username ?: ('user' . $subscriber->user->id) }}</span></div>
+                <a href="{{ route('admin.users.show', $subscriber->user->id) }}" class="text-decoration-none" title="{{ __('View Customer Details') }}">
+                    <div class="fw-bold text-dark hover-primary">{{ $subscriber->user->name }}</div>
+                    <div class="text-primary font-monospace small"><i class="fas fa-at text-muted me-0"></i><span>{{ $subscriber->user->username ?: ('user' . $subscriber->user->id) }}</span></div>
+                </a>
                 @if(!empty($subscriber->user->phone))
                     <small class="text-muted"><i class="fas fa-phone-alt me-1"></i>{{ $subscriber->user->phone }}</small>
                 @endif

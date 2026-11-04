@@ -1,11 +1,11 @@
-@foreach($users as $user)
+@forelse($users as $user)
     <tr>
         @can('users-delete')
             <td class="checkbox text-start">
                 <input type="checkbox" name="ids[]" class="checkbox-item" value="{{ $user->id }}" data-url="{{ route('admin.users.delete-all') }}">
             </td>
         @endcan
-        <td>{{ $loop->index + 1 }} <i class="{{ request('id') == $user->id ? 'fas fa-bell text-red' : '' }}"></i></td>
+        <td>{{ ($users instanceof \Illuminate\Pagination\LengthAwarePaginator ? $users->firstItem() + $loop->index : $loop->index + 1) }} <i class="{{ request('id') == $user->id ? 'fas fa-bell text-red' : '' }}"></i></td>
         <td><img height="45" width="45" class="rounded-circle border-1" src="{{ asset($user->image ?? 'assets/images/profile/avatar.jpg') }}" alt=""></td>
         <td>
             <strong>{{ $user->name }}</strong>
@@ -117,4 +117,10 @@
             </div>
         </td>
     </tr>
-@endforeach
+@empty
+    <tr>
+        <td colspan="10" class="text-center py-4 text-muted">
+            <i class="fas fa-search me-1"></i> {{ __('No users found') }}
+        </td>
+    </tr>
+@endforelse

@@ -57,20 +57,58 @@ $(document).on('click', '.confirm-action', function (event) {
 
 /** filter all from start */
 
-$(".searchInput").on("input", function (e) {
-    const searchText = $(".searchInput").val();
-    const url = $(this).attr("action");
-    $.ajax({
-        url: url,
-        type: "GET",
-        data: {search: searchText},
-        success: function (response) {
-            console.log(response)
-            $(".searchResults").html(response.data);
-        }
-    });
+let searchAjaxTimeout = null;
+$(document).on("input", ".searchInput", function (e) {
+    clearTimeout(searchAjaxTimeout);
+    const $input = $(this);
+    const $form = $input.closest("form");
+    const targetUrl = ($form.length && $form.attr("action")) ? $form.attr("action") : window.location.pathname;
+
+    let requestData;
+    if ($form.length) {
+        requestData = $form.serialize();
+    } else {
+        requestData = { search: $input.val() };
+    }
+
+    searchAjaxTimeout = setTimeout(function () {
+        $.ajax({
+            url: targetUrl,
+            type: "GET",
+            data: requestData,
+            success: function (response) {
+                if (response && response.data !== undefined) {
+                    $(".searchResults").html(response.data);
+                }
+                if ($input.val().trim() !== '') {
+                    $('.pagination').closest('nav').hide();
+                } else {
+                    $('.pagination').closest('nav').show();
+                }
+            }
+        });
+    }, 300);
 });
 
+// Prevent form POST submission on search inputs if form is incorrectly set to POST
+$(document).on("submit", "form:has(.searchInput)", function (e) {
+    const $form = $(this);
+    if (($form.attr("method") || "").toLowerCase() === "post") {
+        e.preventDefault();
+        const targetUrl = $form.attr("action") || window.location.pathname;
+        const urlObj = new URL(targetUrl, window.location.origin);
+        const formData = new FormData(this);
+        formData.delete('_token');
+        formData.forEach((value, key) => {
+            if (value !== '') {
+                urlObj.searchParams.set(key, value);
+            } else {
+                urlObj.searchParams.delete(key);
+            }
+        });
+        window.location.href = urlObj.toString();
+    }
+});
 
 /** filter all from  end */
 

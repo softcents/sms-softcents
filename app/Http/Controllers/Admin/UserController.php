@@ -40,18 +40,20 @@ class UserController extends Controller
         $users = User::where('role', '!=', 'superadmin')
                     ->with(['plan:id,title', 'parent:id,name,username'])
                     ->where('role', $role)
-                    ->when($request->has('search'), function ($q) use ($request) {
-                        $q->where(function ($query) use ($request) {
-                            $query->where('name', 'like', '%' . $request->search . '%')
-                                ->orWhere('username', 'like', '%' . $request->search . '%')
-                                ->orWhere('email', 'like', '%' . $request->search . '%')
-                                ->orWhere('role', 'like', '%' . $request->search . '%')
-                                ->orWhere('balance', 'like', '%' . $request->search . '%')
-                                ->orWhere('address', 'like', '%' . $request->search . '%')
-                                ->orWhere('phone', 'like', '%' . $request->search . '%');
+                    ->when($request->filled('search'), function ($q) use ($request) {
+                        $term = trim($request->search);
+                        $likeOperator = DB::connection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+                        $q->where(function ($query) use ($term, $likeOperator) {
+                            $query->where('name', $likeOperator, '%' . $term . '%')
+                                ->orWhere('username', $likeOperator, '%' . $term . '%')
+                                ->orWhere('email', $likeOperator, '%' . $term . '%')
+                                ->orWhere('role', $likeOperator, '%' . $term . '%')
+                                ->orWhere('balance', $likeOperator, '%' . $term . '%')
+                                ->orWhere('address', $likeOperator, '%' . $term . '%')
+                                ->orWhere('phone', $likeOperator, '%' . $term . '%');
                         });
                     })
-                    ->when(request('low_balance'), function($query) {
+                    ->when($request->filled('low_balance'), function($query) {
                         $query->where('balance', '<=', DB::raw('low_blnc_alrt'));
                     })
                     ->latest();
@@ -66,8 +68,7 @@ class UserController extends Controller
             ]);
         }
 
-        $users = $users->paginate(10);
-        $users->appends(['users' => $role, 'low_balance' => 'low_balance']);
+        $users = $users->paginate(10)->withQueryString();
 
         $allRechargeableUsers = User::where('role', '!=', 'superadmin')
             ->select('id', 'name', 'username', 'role', 'balance', 'phone')

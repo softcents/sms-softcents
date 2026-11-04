@@ -14,11 +14,13 @@
                         @include('admin.users.buttons')
                     </div>
                     <div class="table-top-form">
-
-                        <form action="{{ route('admin.users.index') }}" method="post">
-                            @csrf
+                        <form action="{{ route('admin.users.index') }}" method="get">
+                            <input type="hidden" name="users" value="{{ request('users', 'user') }}">
+                            @if (request()->filled('low_balance'))
+                                <input type="hidden" name="low_balance" value="{{ request('low_balance') }}">
+                            @endif
                             <div class="table-search">
-                                <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search') }}..." value="{{ request('search') }}">
+                                <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search') }}..." value="{{ request('search') }}" autocomplete="off">
                             </div>
                         </form>
                     </div>

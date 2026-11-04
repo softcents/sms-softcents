@@ -30,6 +30,8 @@
                                 <th>{{ __('SL') }}.</th>
                                 <th>{{ __('Senderid ID') }}</th>
                                 <th>{{ __('Number') }}</th>
+                                <th>{{ __('SMS Count') }}</th>
+                                <th>{{ __('Cost') }}</th>
                                 <th>{{ __('Contents') }}</th>
                                 <th>{{ __('Date & Time') }}</th>
                                 <th>{{ __('Status') }}</th>
@@ -49,3 +51,51 @@
         </div>
     </div>
 @endsection
+
+@push('modal')
+@include('users.components.sms-report-content-modal')
+@endpush
+
+@push('js')
+<script>
+    $(document).on('click', '.view-full-sms-content', function() {
+        let $row = $(this).closest('tr');
+        let content = $row.find('.sms-content-template').html() || $(this).data('content') || '';
+        let sender = $(this).data('sender') || '-';
+        let number = $(this).data('number') || '-';
+        let time = $(this).data('time') || '-';
+        let parts = $(this).data('parts') || '1 SMS';
+        let charge = $(this).data('charge') || '0.00৳';
+        let oldBalance = $(this).data('old-balance') || '৳0.00';
+        let newBalance = $(this).data('new-balance') || '৳0.00';
+        let charsType = $(this).data('chars-type') || '0 Chars';
+
+        $('#report-modal-old-balance').text(oldBalance);
+        $('#report-modal-cost').text(charge);
+        $('#report-modal-new-balance').text(newBalance);
+
+        $('#report-modal-chars-type').text(charsType);
+        $('#report-modal-parts').text(parts);
+        $('#report-modal-sender').text(sender);
+        $('#report-modal-number').text(number);
+        $('#report-modal-time').text(time);
+
+        $('#reportModalBody').text(content);
+        $('#copy-btn-text').text("{{ __('Copy') }}");
+
+        $('#smsContentModal').modal('show');
+    });
+
+    $(document).on('click', '#btn-copy-sms-content', function() {
+        let content = $('#reportModalBody').text();
+        if (navigator.clipboard) {
+            navigator.clipboard.writeText(content).then(function() {
+                $('#copy-btn-text').text("{{ __('Copied!') }}");
+                setTimeout(function() {
+                    $('#copy-btn-text').text("{{ __('Copy') }}");
+                }, 2000);
+            });
+        }
+    });
+</script>
+@endpush

@@ -15,7 +15,7 @@
                     <div class="tab-content order-summary-tab mt-1 quick-sms">
                         <div class="tab-pane fade mt-1 show active" id="add-new-user">
                             <div class="order-form-section">
-                                <form action="{{ route('users.campaigns.store') }}" method="post" class="ajaxform_instant_reload">
+                                <form action="{{ route('users.campaigns.store') }}" method="post" id="campaign-sms-form" class="ajaxform_instant_reload">
                                     @csrf
 
                                     <div class="add-suplier-modal-wrapper">
@@ -103,7 +103,7 @@
                                             </div>
                                             <div class="col-sm-9 mt-4">
                                                 <textarea name="contents" id="contents" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
-                                                <div id="the-count" class="pull-right mt-1">
+                                                <div id="the-count" class="pull-right mt-1" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}" data-balance="{{ (float)auth()->user()->balance }}">
                                                     <span id="current">{{ __('0') }}</span> <span class="ps-4">{{ __('Characters') }}</span> <span class="text-primary fw-bold
                                                     ">|</span>
                                                     <span id="no_of_sms"> {{ __('0') }} </span> {{ __('SMS') }} <span class="text-primary fw-bold">|</span>
@@ -115,7 +115,10 @@
                                             <div class="col-lg-12">
                                                 <div class="button-group text-center mt-5">
                                                     <a href="" class="theme-btn border-btn m-2">{{ __('Cancel') }}</a>
-                                                    <button class="theme-btn m-2 submit-btn">{{ __('Save') }}</button>
+                                                    <button type="button" class="theme-btn m-2" id="btn-trigger-sms-modal">
+                                                        <i class="fas fa-paper-plane me-1"></i> {{ __('Send') }}
+                                                    </button>
+                                                    <button type="submit" class="d-none submit-btn" id="real-submit-btn"></button>
                                                 </div>
                                             </div>
                                         </div>
@@ -131,6 +134,7 @@
 @endsection
 
 @push('modal')
+@include('users.components.sms-confirm-modal')
 <div class="modal fade" id="sms-template-modal" tabindex="-1" aria-labelledby="multi-delete-modal-label" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -161,5 +165,117 @@
 @endpush
 
 @push('js')
-    <script src="{{ asset('assets/js/custom/sms.js') }}"></script>
+    <script src="{{ asset('assets/js/custom/sms.js') }}?v={{ time() }}"></script>
+    <script>
+        $(document).ready(function () {
+            // Live trigger confirmation modal for Campaign SMS
+            $(document).off('click', '#btn-trigger-sms-modal').on('click', '#btn-trigger-sms-modal', function (e) {
+                e.preventDefault();
+
+                var senderSelect = $('select[name="senderid_id"]');
+                var campaignSelect = $('select[name="campaign_id"]');
+                var rangeInput = $('input[name="range"]');
+                var contentInput = $('#contents');
+
+                // Basic Validations
+                if (!senderSelect.val()) {
+                    if (typeof Notify === 'function') {
+                        Notify('error', { responseJSON: { message: 'Please select a Sender ID.' } });
+                    } else {
+                        alert('Please select a Sender ID.');
+                    }
+                    senderSelect.focus();
+                    return;
+                }
+
+                if (!campaignSelect.val()) {
+                    if (typeof Notify === 'function') {
+                        Notify('error', { responseJSON: { message: 'Please select a Campaign recipient list.' } });
+                    } else {
+                        alert('Please select a Campaign recipient list.');
+                    }
+                    campaignSelect.focus();
+                    return;
+                }
+
+                var rangeVal = parseInt(rangeInput.val()) || 0;
+                if (rangeVal <= 0) {
+                    if (typeof Notify === 'function') {
+                        Notify('error', { responseJSON: { message: 'Please enter a valid SMS range.' } });
+                    } else {
+                        alert('Please enter a valid SMS range.');
+                    }
+                    rangeInput.focus();
+                    return;
+                }
+
+                var contentText = (contentInput.val() || '').trim();
+                if (!contentText) {
+                    if (typeof Notify === 'function') {
+                        Notify('error', { responseJSON: { message: 'Please enter message content.' } });
+                    } else {
+                        alert('Please enter message content.');
+                    }
+                    contentInput.focus();
+                    return;
+                }
+
+                var recipientsCount = rangeVal;
+
+                // Accurate Character count & Unicode detection
+                var charCount = Array.from(contentText).length;
+                var isUnicode = /[^\u0000-\u007F]/.test(contentText);
+                var charPerSms = isUnicode ? 70 : 160;
+                var charPerSmsLong = isUnicode ? 67 : 153;
+                var effectiveCharPerSms = charCount > charPerSms ? charPerSmsLong : charPerSms;
+                var parts = charCount > 0 ? Math.ceil(charCount / effectiveCharPerSms) : 1;
+
+                // Rate & Cost
+                var rate = parseFloat($('#the-count').attr('data-rate')) || 0.39;
+                var unitCost = parts * rate;
+                var totalCost = (unitCost * recipientsCount).toFixed(2);
+
+                // User Balance
+                var userBalanceAttr = $('#the-count').attr('data-balance');
+                var oldBalance = userBalanceAttr !== undefined && userBalanceAttr !== null && userBalanceAttr !== '' 
+                    ? parseFloat(userBalanceAttr) 
+                    : parseFloat("{{ (float)auth()->user()->balance }}");
+                if (isNaN(oldBalance)) oldBalance = 0;
+                var newBalance = Math.max(0, oldBalance - parseFloat(totalCost)).toFixed(2);
+
+                var senderText = senderSelect.find('option:selected').text().trim();
+                var campaignText = campaignSelect.find('option:selected').text().trim();
+                var charInfo = charCount + ' Chars (' + (isUnicode ? 'বাংলা / Unicode' : 'Text / English') + ')';
+
+                // Populate Modal Elements
+                $('#modal-old-balance').text('৳' + oldBalance.toFixed(2));
+                $('#modal-new-balance').text('৳' + newBalance);
+                $('#modal-total-cost').text(totalCost);
+                $('#modal-sender-id').text(senderText);
+                $('#modal-recipients-count').text(recipientsCount + ' Contacts (' + campaignText + ')');
+                $('#modal-sms-parts').text(parts + (parts > 1 ? ' Parts' : ' Part'));
+                $('#modal-sms-rate').text('৳' + rate.toFixed(2));
+                $('#modal-char-info').text(charInfo);
+                $('#modal-content-preview').text(contentText);
+
+                // Show Modal
+                $('#sms-confirm-modal').modal('show');
+            });
+
+            // Confirm & Send Button in Modal
+            $(document).off('click', '#btn-confirm-send-sms').on('click', '#btn-confirm-send-sms', function () {
+                var $btn = $(this);
+                var originalHtml = $btn.html();
+                $btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Sending...');
+
+                $('#sms-confirm-modal').modal('hide');
+
+                // Trigger the real form submit
+                setTimeout(function () {
+                    $('#campaign-sms-form').find('#real-submit-btn').trigger('click');
+                    $btn.prop('disabled', false).html(originalHtml);
+                }, 200);
+            });
+        });
+    </script>
 @endpush

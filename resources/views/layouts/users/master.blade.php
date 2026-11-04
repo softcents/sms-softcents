@@ -22,16 +22,14 @@
         $banner = \App\Services\ImpersonationService::getBannerInfo();
     @endphp
     @if ($banner)
-    <div class="impersonation-notification-bar" style="background: linear-gradient(90deg, #991b1b, #dc2626); color: #ffffff; padding: 6px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.12); z-index: 99999; position: relative; font-size: 13px;">
-        <div class="d-flex align-items-center flex-wrap gap-1">
-            <span class="badge bg-white text-danger fw-bold me-1" style="font-size: 10.5px; padding: 3px 6px;">
-                <i class="fas fa-user-secret me-1"></i>{{ $banner['impersonator_role_label'] }} Mode
-            </span>
-            <span>{{ __('Viewing as') }}: <strong class="text-white text-decoration-underline">{{ auth()->user()->name }}</strong> ({{ '@' . (auth()->user()->username ?? auth()->user()->phone ?? auth()->user()->email) }})</span>
-            <span class="badge bg-dark-subtle text-white-50 border border-light-subtle d-none d-md-inline" style="font-size: 10.5px;">{{ __('By') }}: {{ $banner['impersonator']->name }}</span>
+    <div style="background: linear-gradient(90deg, #dc3545, #b02a37); color: #ffffff; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.15); z-index: 99999; position: relative;">
+        <div style="font-size: 14px; font-weight: 500;">
+            <i class="fas fa-user-secret me-2" style="font-size: 16px;"></i>
+            {{ __('You are currently logged in as :role', ['role' => $banner['current_role_label']]) }}: <strong style="text-decoration: underline;">{{ auth()->user()->name }}</strong> ({{ '@' . (auth()->user()->username ?? auth()->user()->phone ?? auth()->user()->email) }})
+            <span class="badge bg-light text-dark ms-2"><i class="fas fa-link me-1"></i>{{ __('Logged in by') }}: {{ $banner['impersonator_role_label'] }} ({{ $banner['impersonator']->name }})</span>
         </div>
-        <a href="{{ $banner['switch_back_url'] }}" class="btn btn-sm btn-light fw-bold shadow-sm py-1 px-3" style="color: #b91c1c; font-size: 12px; border-radius: 6px; white-space: nowrap;">
-            <i class="fas fa-sign-out-alt me-1"></i> {{ __('Return to Admin') }}
+        <a href="{{ $banner['switch_back_url'] }}" class="btn btn-sm btn-light fw-bold shadow-sm" style="color: #dc3545; font-size: 13px; border-radius: 6px; padding: 6px 18px;">
+            <i class="fas fa-sign-out-alt me-1"></i> {{ __('Switch Back to ') . $banner['impersonator_role_label'] }}
         </a>
     </div>
     @endif

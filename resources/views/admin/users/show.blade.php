@@ -182,6 +182,14 @@
                                 @endif
 
                                 <ul class="list-group text-start">
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: #eff6ff;">
+                                        <span><i class="fas fa-tags text-primary me-1"></i> {{ __('Tariff (Non-Masking)') }}:</span>
+                                        <strong class="text-primary font-monospace" id="profile-nm-rate">৳{{ number_format((float)($user->non_masking_rate ?? 0.39), 2) }}</strong>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center" style="background-color: #eff6ff;">
+                                        <span><i class="fas fa-tags text-primary me-1"></i> {{ __('Tariff (Masking)') }}:</span>
+                                        <strong class="text-primary font-monospace" id="profile-m-rate">৳{{ number_format((float)($user->masking_rate ?? 0.75), 2) }}</strong>
+                                    </li>
                                     <li class="list-group-item" style="background-color: #fffbeb;">
                                         <span><i class="fas fa-coins text-warning me-1"></i> {{ __('Used Amount') }}:</span>
                                         <strong style="color: #b45309;">{{ currency_format($stats['sms_revenue']) }}</strong>
@@ -323,15 +331,16 @@
                                     <i class="fas fa-wallet me-1"></i> {{ __('Recharge Balance') }}
                                 </button>
 
-                                @if($user->role == 'user')
-                                <button type="button" class="theme-btn print-btn text-white btn-open-assign-plan-modal active" style="background-color: #0d6efd; border-color: #0d6efd;"
+                                @if(in_array($user->role, ['user', 'sp', 'ssp']))
+                                <button type="button" class="theme-btn print-btn text-white btn-open-tariff-modal active" style="background-color: #0d6efd; border-color: #0d6efd;"
                                     data-id="{{ $user->id }}"
                                     data-name="{{ $user->name }}"
                                     data-username="{{ $user->username }}"
-                                    data-plan="{{ $user->plan ? $user->plan->title : 'None' }}"
-                                    data-plan-id="{{ $user->plan_id ?? '' }}"
-                                    title="{{ __('Assign or Change Plan') }}">
-                                    <i class="fas fa-layer-group me-1"></i> {{ __('Assign Plan') }}
+                                    data-role="{{ strtoupper($user->role) }}"
+                                    data-non-masking="{{ (float)($user->non_masking_rate ?? 0.39) }}"
+                                    data-masking="{{ (float)($user->masking_rate ?? 0.75) }}"
+                                    title="{{ __('Set User Tariff (SMS Rates)') }}">
+                                    <i class="fas fa-tags me-1"></i> {{ __('Set Tariff') }}
                                 </button>
                                 @endif
 
@@ -726,7 +735,7 @@
 
 @push('modal')
     @include('admin.users.recharge-modal')
-    @include('admin.users.assign-plan-modal')
+    @include('admin.users.tariff-modal')
 @endpush
 
 @push('js')

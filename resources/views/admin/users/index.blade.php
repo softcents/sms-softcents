@@ -43,7 +43,7 @@
                                 <th>{{ __('Phone') }}</th>
                                 <th>{{ __('E-mail') }}</th>
                                 @if (request('users', 'user') != 'admin')
-                                <th>{{ request('users') == 'user' ? __('Plan / Parent') : __('Role / Parent') }}</th>
+                                <th>{{ request('users') == 'user' ? __('Tariff / Rates') : __('Role / Parent') }}</th>
                                 <th>{{ __('Balance') }}</th>
                                 <th>{{ __('Created At') }}</th>
                                 @endif
@@ -101,7 +101,7 @@
 
 @push('modal')
     @include('admin.users.recharge-modal')
-    @include('admin.users.assign-plan-modal')
+    @include('admin.users.tariff-modal')
     @include('admin.components.multi-delete-modal')
 @endpush
 

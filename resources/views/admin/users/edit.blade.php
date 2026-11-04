@@ -96,16 +96,12 @@
 
                                             @if ($user->role == 'user' || request('users') == 'user')
                                             <div class="col-lg-6 mt-2">
-                                                <label>{{ __('Plans') }}</label>
-                                                <div class="blade-up-down-arrow position-relative">
-                                                    <select name="plan_id" class="select-2 form-control w-100" >
-                                                        <option value=""> {{__('Select a plan')}}</option>
-                                                        @foreach ($plans as $plan)
-                                                        <option @selected($user->plan_id == $plan->id) value="{{ $plan->id }}"> {{ $plan->title }} </option>
-                                                        @endforeach
-                                                    </select>
-                                                    <span></span>
-                                                </div>
+                                                <label>{{ __('Non-Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                <input type="number" step="0.0001" min="0" name="non_masking_rate" value="{{ $user->non_masking_rate ?? 0.39 }}" class="form-control" required placeholder="0.3900">
+                                            </div>
+                                            <div class="col-lg-6 mt-2">
+                                                <label>{{ __('Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                                                <input type="number" step="0.0001" min="0" name="masking_rate" value="{{ $user->masking_rate ?? 0.75 }}" class="form-control" required placeholder="0.7500">
                                             </div>
 
                                             <div class="col-lg-6 mt-2">

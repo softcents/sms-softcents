@@ -23,7 +23,8 @@ class DashboardController extends Controller
 
     public function getDashboardData()
     {
-        $data['subscription_subscribe'] = PlanSubscribe::whereStatus('approved')->where('user_id', auth()->id())->count();
+        $user = auth()->user();
+        $data['subscription_subscribe'] = '৳' . number_format((float)($user->non_masking_rate ?? 0.39), 2) . ' / ৳' . number_format((float)($user->masking_rate ?? 0.75), 2);
         $data['recharge_amount'] = currency_format(Recharge::where('user_id', auth()->id())->whereStatus('approved')->sum('amount'));
         $data['total_sms'] = Sms::where('user_id', auth()->id())->count();
         $data['pending_sms'] = Sms::where('user_id', auth()->id())->where('status', 'pending')->count();

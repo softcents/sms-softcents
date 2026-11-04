@@ -225,9 +225,9 @@ class UserController extends Controller
             }
 
             $user = User::create($request->except('image', 'password', 'balance', 'low_blnc_alrt', 'white_label_logo', 'white_label_favicon') + [
-                'masking_rate' => $request->masking_rate ?? ($request->plan_id ? $plan->masking_rate : 0),
-                'non_masking_rate' => $request->non_masking_rate ?? ($request->plan_id ? $plan->non_masking_rate : 0),
-                'will_expire' => $request->plan_id ? now()->addDays($duration_in_days) : NULL,
+                'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : 0.75,
+                'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : 0.39,
+                'will_expire' => now()->addYears(10),
                 'balance' => $initialBalance,
                 'password' => Hash::make($request->password),
                 'low_blnc_alrt' => $request->low_blnc_alrt ?? 0,
@@ -369,9 +369,8 @@ class UserController extends Controller
             }
 
             $user->update($request->except('image', 'password', 'white_label_logo', 'white_label_favicon') + [
-                'masking_rate' => $request->masking_rate ?? ($plan->masking_rate ?? $user->masking_rate),
-                'non_masking_rate' => $request->non_masking_rate ?? ($plan->non_masking_rate ?? $user->non_masking_rate),
-                'will_expire' => $duration_in_days ? now()->addDays($duration_in_days) : $user->will_expire,
+                'masking_rate' => $request->filled('masking_rate') ? (float)$request->masking_rate : $user->masking_rate,
+                'non_masking_rate' => $request->filled('non_masking_rate') ? (float)$request->non_masking_rate : $user->non_masking_rate,
                 'image' => $request->image ? $this->upload($request, 'image', $user->image) : $user->image,
                 'white_label_logo' => $request->white_label_logo ? $this->upload($request, 'white_label_logo', $user->white_label_logo) : $user->white_label_logo,
                 'white_label_favicon' => $request->white_label_favicon ? $this->upload($request, 'white_label_favicon', $user->white_label_favicon) : $user->white_label_favicon,
@@ -792,5 +791,46 @@ class UserController extends Controller
             }
             return back()->with('error', __('Failed to assign plan: ') . $e->getMessage());
         }
+    }
+
+    /**
+     * Update user tariff rates (Masking & Non-Masking)
+     */
+    public function updateTariff(Request $request, ?User $user = null)
+    {
+        $userId = $user ? $user->id : $request->user_id;
+
+        $request->validate([
+            'user_id' => $user ? 'nullable' : 'required|exists:users,id',
+            'non_masking_rate' => 'required|numeric|min:0',
+            'masking_rate' => 'required|numeric|min:0',
+        ]);
+
+        $targetUser = $user ?: User::findOrFail($userId);
+
+        $targetUser->update([
+            'non_masking_rate' => (float) $request->non_masking_rate,
+            'masking_rate' => (float) $request->masking_rate,
+        ]);
+
+        $message = __('Tariff updated for :user — Non-Masking: ৳:nm | Masking: ৳:m', [
+            'user' => $targetUser->name,
+            'nm' => number_format($targetUser->non_masking_rate, 2),
+            'm' => number_format($targetUser->masking_rate, 2),
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'user_id' => $targetUser->id,
+                'non_masking_rate' => (float) $targetUser->non_masking_rate,
+                'masking_rate' => (float) $targetUser->masking_rate,
+                'formatted_non_masking' => '৳' . number_format($targetUser->non_masking_rate, 2),
+                'formatted_masking' => '৳' . number_format($targetUser->masking_rate, 2),
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 }

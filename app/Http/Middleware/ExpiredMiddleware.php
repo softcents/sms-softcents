@@ -10,15 +10,15 @@ class ExpiredMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * Pure Tariff Model: As long as the user's account is active, they can send SMS.
+     * Balances are validated and deducted per SMS charge in respective controllers.
      */
     public function handle($request, Closure $next)
     {
-        if (!auth()->user()->will_expire ||  auth()->user()->will_expire < now()) {
+        if (auth()->check() && auth()->user()->status !== 'active') {
             return $request->wantsJson()
-                ? response()->json(__('Your plan has been expired, please subscribe a new plan.'), 406)
-                : back()->with('error', __('Your plan has been expired, please subscribe a new plan.'));
+                ? response()->json(__('Your account is not active, please contact support.'), 403)
+                : back()->with('error', __('Your account is not active, please contact support.'));
         }
 
         return $next($request);

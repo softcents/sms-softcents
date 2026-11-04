@@ -36,15 +36,18 @@
             </a>
         </td>
         @if (request('users', 'user') != 'admin')
-        <td class="user-plan-cell-{{ $user->id }}">
+        <td class="user-tariff-cell-{{ $user->id }}">
             <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none">
-                @if ($user->role == 'user' && $user->plan)
-                    <span class="badge bg-info text-dark">{{ $user->plan->title }}</span>
-                @else
-                    <span class="badge bg-secondary">{{ strtoupper($user->role) }}</span>
-                @endif
+                <div class="d-flex flex-column gap-1">
+                    <span class="badge bg-light text-dark border badge-nm" style="font-size: 11px;">
+                        NM: ৳{{ number_format((float)($user->non_masking_rate ?? 0.39), 2) }}
+                    </span>
+                    <span class="badge bg-light text-dark border badge-m" style="font-size: 11px;">
+                        M: ৳{{ number_format((float)($user->masking_rate ?? 0.75), 2) }}
+                    </span>
+                </div>
                 @if ($user->parent)
-                    <br><small class="text-muted"><i class="fas fa-level-up-alt"></i> {{ $user->parent->name }}</small>
+                    <small class="text-muted"><i class="fas fa-level-up-alt"></i> {{ $user->parent->name }}</small>
                 @endif
             </a>
         </td>
@@ -73,18 +76,17 @@
                     style="font-size: 12px; font-weight: 500; white-space: nowrap;">
                     <i class="fas fa-wallet me-1"></i> {{ __('Recharge') }}
                 </button>
-                @if ($user->role == 'user')
-                <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center py-1 px-2 btn-open-assign-plan-modal"
+                <button type="button" class="btn btn-sm btn-outline-info d-inline-flex align-items-center py-1 px-2 btn-open-tariff-modal"
                     data-id="{{ $user->id }}"
                     data-name="{{ $user->name }}"
                     data-username="{{ $user->username }}"
-                    data-plan="{{ $user->plan ? $user->plan->title : 'None' }}"
-                    data-plan-id="{{ $user->plan_id ?? '' }}"
-                    title="{{ __('Assign / Change Plan') }}"
+                    data-role="{{ strtoupper($user->role) }}"
+                    data-non-masking="{{ (float)($user->non_masking_rate ?? 0.39) }}"
+                    data-masking="{{ (float)($user->masking_rate ?? 0.75) }}"
+                    title="{{ __('Set User Tariff (SMS Rates)') }}"
                     style="font-size: 12px; font-weight: 500; white-space: nowrap;">
-                    <i class="fas fa-layer-group me-1"></i> {{ __('Plan') }}
+                    <i class="fas fa-tags me-1"></i> {{ __('Tariff') }}
                 </button>
-                @endif
                 <a href="{{ route('admin.users.login-as', $user->id) }}" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center py-1 px-2" title="{{ __('Login As ') . strtoupper($user->role) }}" style="font-size: 12px; font-weight: 500; white-space: nowrap;">
                     <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login As') }}
                 </a>
@@ -113,19 +115,18 @@
                                 {{ __('Recharge / Adjust Balance') }}
                             </a>
                         </li>
-                        @if ($user->role == 'user')
                         <li>
-                            <a href="javascript:void(0)" class="btn-open-assign-plan-modal"
+                            <a href="javascript:void(0)" class="btn-open-tariff-modal"
                                 data-id="{{ $user->id }}"
                                 data-name="{{ $user->name }}"
                                 data-username="{{ $user->username }}"
-                                data-plan="{{ $user->plan ? $user->plan->title : 'None' }}"
-                                data-plan-id="{{ $user->plan_id ?? '' }}">
-                                <i class="fal fa-layer-group text-info"></i>
-                                {{ __('Assign / Change Plan') }}
+                                data-role="{{ strtoupper($user->role) }}"
+                                data-non-masking="{{ (float)($user->non_masking_rate ?? 0.39) }}"
+                                data-masking="{{ (float)($user->masking_rate ?? 0.75) }}">
+                                <i class="fal fa-tags text-info"></i>
+                                {{ __('Set Tariff (SMS Rates)') }}
                             </a>
                         </li>
-                        @endif
                         <li>
                             <a href="{{ route('admin.users.login-as', $user->id) }}">
                                 <i class="fal fa-sign-in-alt text-primary"></i>

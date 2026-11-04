@@ -18,11 +18,11 @@
             </div>
             <div class="couter-box">
                 <div class="icons bg-green2-light">
-                    <img src="{{ asset('assets/img/icon/subscription.svg') }}" alt="">
+                    <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="">
                 </div>
                 <div class="content-side">
                     <h5 id="subscription_subscribe"></h5>
-                    <p>{{ __('Plan Subscribed') }}</p>
+                    <p>{{ __('Tariff Rate (NM / M)') }}</p>
                 </div>
             </div>
             <div class="couter-box">

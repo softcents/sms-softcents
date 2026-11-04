@@ -12,6 +12,8 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::get('users/{user}/login-as', [ADMIN\UserController::class, 'loginAs'])->name('users.login-as');
     Route::post('users/recharge', [ADMIN\UserController::class, 'recharge'])->name('users.recharge');
     Route::post('users/{user}/recharge', [ADMIN\UserController::class, 'recharge'])->name('users.recharge.user');
+    Route::post('users/tariff', [ADMIN\UserController::class, 'updateTariff'])->name('users.tariff.update');
+    Route::post('users/{user}/tariff', [ADMIN\UserController::class, 'updateTariff'])->name('users.tariff.update.user');
     Route::post('users/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan');
     Route::post('users/{user}/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan.user');
     Route::resource('users', ADMIN\UserController::class);

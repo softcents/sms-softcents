@@ -82,16 +82,7 @@
                     <span class="sidebar-icon">
                         <svg xmlns="http://www.w3.org/2000/svg" height="16" width="16" viewBox="0 0 512 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2023 Fonticons, Inc.--><path d="M12.4 148l232.9 105.7c6.8 3.1 14.5 3.1 21.3 0l232.9-105.7c16.6-7.5 16.6-32.5 0-40L266.7 2.3a25.6 25.6 0 0 0 -21.3 0L12.4 108c-16.6 7.5-16.6 32.5 0 40zm487.2 88.3l-58.1-26.3-161.6 73.3c-7.6 3.4-15.6 5.2-23.9 5.2s-16.3-1.7-23.9-5.2L70.5 210l-58.1 26.3c-16.6 7.5-16.6 32.5 0 40l232.9 105.6c6.8 3.1 14.5 3.1 21.3 0L499.6 276.3c16.6-7.5 16.6-32.5 0-40zm0 127.8l-57.9-26.2-161.9 73.4c-7.6 3.4-15.6 5.2-23.9 5.2s-16.3-1.7-23.9-5.2L70.3 337.9 12.4 364.1c-16.6 7.5-16.6 32.5 0 40l232.9 105.6c6.8 3.1 14.5 3.1 21.3 0L499.6 404.1c16.6-7.5 16.6-32.5 0-40z"/></svg>
                     </span>
-                    {{ __('Rate Plans') }}
-                </a>
-            </li>
-
-            <li class="{{ Request::routeIs('users.subscribers.index') ? 'active' : ''}}">
-                <a href="{{ route('users.subscribers.index') }}" class="active">
-                    <span class="sidebar-icon">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--!Font Awesome Free 6.5.1 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M107.3 36.7a16 16 0 0 0 -22.6 0l-80 96C-5.4 142.7 1.8 160 16 160h48v304a16 16 0 0 0 16 16h32a16 16 0 0 0 16-16V160h48c14.2 0 21.4-17.2 11.3-27.3zM400 416h-16V304a16 16 0 0 0 -16-16h-48a16 16 0 0 0 -14.3 8.8l-16 32A16 16 0 0 0 304 352h16v64h-16a16 16 0 0 0 -16 16v32a16 16 0 0 0 16 16h96a16 16 0 0 0 16-16v-32a16 16 0 0 0 -16-16zM330.2 34.9a79 79 0 0 0 -55 54.2c-14.3 51.1 21.2 97.8 68.8 102.5a84.1 84.1 0 0 1 -20.9 12.9c-7.6 3.4-10.8 12.5-8.2 20.3l9.9 20c2.9 8.6 12.5 13.5 20.9 9.9 58-24.8 86.3-61.6 86.3-132V112c0-51.2-48.4-91.3-101.9-77.1zM352 132a20 20 0 1 1 20-20 20 20 0 0 1 -20 20z"/></svg>
-                    </span>
-                    {{ __('Subscription Orders') }}
+                    {{ __('My Tariff & Rates') }}
                 </a>
             </li>
 

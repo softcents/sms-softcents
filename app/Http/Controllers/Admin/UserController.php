@@ -13,6 +13,8 @@ use Illuminate\Support\Str;
 use App\Helpers\HasUploader;
 use Illuminate\Http\Request;
 use App\Models\PlanSubscribe;
+use App\Models\Sms;
+use App\Models\SenderIp;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
@@ -77,6 +79,63 @@ class UserController extends Controller
             ->get();
 
         return view('admin.users.index', compact('users', 'allRechargeableUsers', 'allPlans'));
+    }
+
+    public function show($id)
+    {
+        $user = User::with([
+            'plan',
+            'parent:id,name,username,role',
+            'senderIps' => function ($q) {
+                $q->latest();
+            }
+        ])->findOrFail($id);
+
+        $senderids = Senderid::where('user_id', $user->id)
+            ->with('gateway:id,name,status')
+            ->latest()
+            ->get();
+
+        $stats = [
+            'total_sms' => Sms::where('user_id', $user->id)->count(),
+            'delivered_sms' => Sms::where('user_id', $user->id)->where('status', 'success')->count(),
+            'failed_sms' => Sms::where('user_id', $user->id)->where('status', 'failed')->count(),
+            'total_cost' => (float) Sms::where('user_id', $user->id)->sum('charge'),
+            'total_recharged' => (float) Recharge::where('user_id', $user->id)->where('status', 'approved')->sum('amount'),
+            'total_subscriptions' => PlanSubscribe::where('user_id', $user->id)->count(),
+        ];
+
+        $recentSms = Sms::where('user_id', $user->id)
+            ->with(['senderid:id,sender', 'smsgateway:id,name'])
+            ->latest()
+            ->take(10)
+            ->get();
+
+        $recentRecharges = Recharge::where('user_id', $user->id)
+            ->with('gateway:id,name')
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentSubscriptions = PlanSubscribe::where('user_id', $user->id)
+            ->with(['plan:id,title,price', 'gateway:id,name'])
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $allPlans = Plan::where('status', 1)->latest()->get();
+        $allRechargeableUsers = collect([$user]);
+
+        return view('admin.users.show', compact(
+            'user',
+            'senderids',
+            'stats',
+            'recentSms',
+            'recentRecharges',
+            'recentSubscriptions',
+            'allPlans',
+            'allRechargeableUsers'
+        ));
     }
 
     public function create()

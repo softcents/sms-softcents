@@ -6,11 +6,19 @@
             </td>
         @endcan
         <td>{{ ($users instanceof \Illuminate\Pagination\LengthAwarePaginator ? $users->firstItem() + $loop->index : $loop->index + 1) }} <i class="{{ request('id') == $user->id ? 'fas fa-bell text-red' : '' }}"></i></td>
-        <td><img height="45" width="45" class="rounded-circle border-1" src="{{ asset($user->image ?? 'assets/images/profile/avatar.jpg') }}" alt=""></td>
         <td>
-            <strong>{{ $user->name }}</strong>
+            <a href="{{ route('admin.users.show', $user->id) }}" title="{{ __('View User Details') }}">
+                <img height="45" width="45" class="rounded-circle border-1 shadow-sm" src="{{ asset($user->image ?? 'assets/images/profile/avatar.jpg') }}" alt="{{ $user->name }}">
+            </a>
+        </td>
+        <td>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-dark fw-bold text-decoration-none hover-primary" title="{{ __('View Details') }}">
+                {{ $user->name }}
+            </a>
             <br>
-            <small class="text-muted"><i class="fas fa-at"></i> {{ $user->username }}</small>
+            <a href="{{ route('admin.users.show', $user->id) }}" class="text-decoration-none text-muted">
+                <small><i class="fas fa-at"></i> {{ $user->username }}</small>
+            </a>
         </td>
         <td>{{ $user->phone }}</td>
         <td>{{ $user->email }}</td>
@@ -63,6 +71,12 @@
                         <i class="far fa-ellipsis-v"></i>
                     </button>
                     <ul class="dropdown-menu">
+                        <li>
+                            <a href="{{ route('admin.users.show', $user->id) }}">
+                                <i class="fal fa-eye text-primary"></i>
+                                {{ __('View Details') }}
+                            </a>
+                        </li>
                         @if (in_array($user->role, ['user', 'sp', 'ssp']))
                         <li>
                             <a href="javascript:void(0)" class="btn-open-recharge-modal"

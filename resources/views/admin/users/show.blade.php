@@ -65,8 +65,8 @@
 <div class="erp-state-overview-section">
     <div class="container-fluid">
 
-        <!-- Top Native Counter Cards (gpt-dashboard-card grid-4) -->
-        <div class="gpt-dashboard-card grid-4 mb-30">
+        <!-- Top Native Counter Cards (gpt-dashboard-card grid-5) -->
+        <div class="gpt-dashboard-card grid-5 mb-30">
             <!-- Balance Card -->
             <div class="couter-box">
                 <div class="icons">
@@ -80,29 +80,51 @@
                 </div>
             </div>
 
-            <!-- Assigned Plan Card -->
+            <!-- Net Profit Card -->
             <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/subscription.svg') }}" alt="Plan">
+                <div class="icons" style="background-color: #d1fae5;">
+                    <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="Profit">
                 </div>
                 <div class="content-side">
-                    <h5 class="text-truncate" style="max-width: 190px;" title="{{ $user->plan->title ?? __('No Plan') }}">
-                        {{ $user->plan->title ?? __('No Active Plan') }}
+                    <h5 class="text-success fw-bold">
+                        {{ currency_format($stats['net_profit']) }}
                     </h5>
                     <p>
-                        @if($user->will_expire)
-                            {{ __('Expires') }}: {{ formatted_date($user->will_expire) }}
-                        @else
-                            {{ __('Assigned Plan') }}
-                        @endif
+                        {{ __('Net Profit') }} (<strong>{{ $stats['profit_margin'] }}%</strong>)
                     </p>
+                </div>
+            </div>
+
+            <!-- Total Revenue Card -->
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/banner.svg') }}" alt="Revenue">
+                </div>
+                <div class="content-side">
+                    <h5 class="text-primary fw-bold">
+                        {{ currency_format($stats['total_revenue']) }}
+                    </h5>
+                    <p>{{ __('Total Revenue') }}</p>
+                </div>
+            </div>
+
+            <!-- Gateway Cost Card -->
+            <div class="couter-box">
+                <div class="icons">
+                    <img src="{{ asset('assets/img/icon/category.svg') }}" alt="Cost">
+                </div>
+                <div class="content-side">
+                    <h5 class="text-secondary">
+                        {{ currency_format($stats['total_cost']) }}
+                    </h5>
+                    <p>{{ __('Gateway Cost') }}</p>
                 </div>
             </div>
 
             <!-- Total SMS Activity Card -->
             <div class="couter-box">
                 <div class="icons">
-                    <img src="{{ asset('assets/img/icon/banner.svg') }}" alt="SMS Sent">
+                    <img src="{{ asset('assets/img/icon/user1.png') }}" alt="SMS Sent">
                 </div>
                 <div class="content-side">
                     <h5>{{ number_format($stats['total_sms']) }}</h5>
@@ -112,19 +134,6 @@
                             &bull; <span class="text-danger fw-bold">{{ $stats['failed_sms'] }}</span> {{ __('Failed') }}
                         @endif
                     </p>
-                </div>
-            </div>
-
-            <!-- SMS Rates Card -->
-            <div class="couter-box">
-                <div class="icons">
-                    <img src="{{ asset('assets/img/icon/reward.svg') }}" alt="Rate">
-                </div>
-                <div class="content-side">
-                    <h5>
-                        ৳{{ number_format((float)($user->non_masking_rate ?? 0.39), 2) }} <span class="text-muted" style="font-size: 14px;">/</span> ৳{{ number_format((float)($user->masking_rate ?? 0.75), 2) }}
-                    </h5>
-                    <p>{{ __('NM Rate / Masking Rate') }}</p>
                 </div>
             </div>
         </div>
@@ -327,6 +336,11 @@
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="tab-profit-btn" data-bs-toggle="tab" data-bs-target="#tab-profit" type="button" role="tab" style="color: #198754;">
+                                    <i class="fas fa-chart-line me-1"></i> {{ __('Profit & Finance') }} ({{ currency_format($stats['net_profit']) }})
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="tab-sms-btn" data-bs-toggle="tab" data-bs-target="#tab-sms" type="button" role="tab">
                                     <i class="fas fa-sms me-1"></i> {{ __('Recent SMS') }} ({{ $stats['total_sms'] }})
                                 </button>
@@ -406,7 +420,141 @@
                                 </div>
                             </div>
 
-                            <!-- TAB 2: Recent SMS Activity -->
+                            <!-- TAB 2: Profit & Financial Breakdown -->
+                            <div class="tab-pane fade" id="tab-profit" role="tabpanel">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h5 class="fw-bold mb-0 text-dark">
+                                        <i class="fas fa-chart-line text-success me-1"></i> {{ __('Profit & Financial Summary') }}
+                                    </h5>
+                                    <span class="badge bg-success-subtle text-success fs-6 border border-success px-3 py-1">
+                                        {{ __('Net Profit') }}: <strong>{{ currency_format($stats['net_profit']) }}</strong>
+                                    </span>
+                                </div>
+
+                                <!-- 4 Financial Summary Boxes -->
+                                <div class="row g-3 mb-4">
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="p-3 bg-light rounded border">
+                                            <span class="text-muted small text-uppercase">{{ __('Total Revenue') }}</span>
+                                            <h4 class="fw-bold text-primary mt-1 mb-0">{{ currency_format($stats['total_revenue']) }}</h4>
+                                            <small class="text-muted">{{ __('Billed & Subscribed') }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="p-3 bg-light rounded border">
+                                            <span class="text-muted small text-uppercase">{{ __('Gateway Cost') }}</span>
+                                            <h4 class="fw-bold text-danger mt-1 mb-0">{{ currency_format($stats['total_cost']) }}</h4>
+                                            <small class="text-muted">{{ __('SMS Buying Cost') }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="p-3 rounded border" style="background-color: #ecfdf5; border-color: #a7f3d0 !important;">
+                                            <span class="text-success small text-uppercase fw-bold">{{ __('Net Profit') }}</span>
+                                            <h4 class="fw-bold text-success mt-1 mb-0">{{ currency_format($stats['net_profit']) }}</h4>
+                                            <small class="text-success">{{ __('Total Platform Gain') }}</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6 col-md-3">
+                                        <div class="p-3 bg-light rounded border">
+                                            <span class="text-muted small text-uppercase">{{ __('Profit Margin') }}</span>
+                                            <h4 class="fw-bold text-dark mt-1 mb-0">{{ $stats['profit_margin'] }}%</h4>
+                                            <small class="text-muted">{{ __('ROI on this user') }}</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Breakdown Table -->
+                                <div class="responsive-table">
+                                    <table class="table table-bordered">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th>{{ __('Revenue & Cost Category') }}</th>
+                                                <th>{{ __('Billed to User (Revenue)') }}</th>
+                                                <th>{{ __('Gateway Buying Cost') }}</th>
+                                                <th>{{ __('Net Profit / (Loss)') }}</th>
+                                                <th>{{ __('Margin') }}</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>
+                                                    <strong class="text-dark">{{ __('Non-Masking SMS') }}</strong>
+                                                    <br><small class="text-muted">{{ __('User Rate') }}: ৳{{ number_format((float)($user->non_masking_rate ?? 0.39), 2) }}</small>
+                                                </td>
+                                                <td class="fw-bold text-dark">{{ currency_format($stats['non_masking_revenue']) }}</td>
+                                                <td class="text-danger">{{ currency_format($stats['non_masking_cost']) }}</td>
+                                                <td class="fw-bold {{ $stats['non_masking_profit'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                                    {{ currency_format($stats['non_masking_profit']) }}
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $nmMargin = $stats['non_masking_revenue'] > 0 ? round(($stats['non_masking_profit'] / $stats['non_masking_revenue']) * 100, 1) : 0;
+                                                    @endphp
+                                                    <span class="badge {{ $nmMargin >= 0 ? 'bg-success' : 'bg-danger' }}">{{ $nmMargin }}%</span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <strong class="text-dark">{{ __('Masking SMS') }}</strong>
+                                                    <br><small class="text-muted">{{ __('User Rate') }}: ৳{{ number_format((float)($user->masking_rate ?? 0.75), 2) }}</small>
+                                                </td>
+                                                <td class="fw-bold text-dark">{{ currency_format($stats['masking_revenue']) }}</td>
+                                                <td class="text-danger">{{ currency_format($stats['masking_cost']) }}</td>
+                                                <td class="fw-bold {{ $stats['masking_profit'] >= 0 ? 'text-success' : 'text-danger' }}">
+                                                    {{ currency_format($stats['masking_profit']) }}
+                                                </td>
+                                                <td>
+                                                    @php
+                                                        $mMargin = $stats['masking_revenue'] > 0 ? round(($stats['masking_profit'] / $stats['masking_revenue']) * 100, 1) : 0;
+                                                    @endphp
+                                                    <span class="badge {{ $mMargin >= 0 ? 'bg-success' : 'bg-danger' }}">{{ $mMargin }}%</span>
+                                                </td>
+                                            </tr>
+                                            @if($stats['subscription_revenue'] > 0)
+                                            <tr>
+                                                <td>
+                                                    <strong class="text-dark">{{ __('Plan Subscriptions') }}</strong>
+                                                    <br><small class="text-muted">{{ __('Package purchase revenue') }}</small>
+                                                </td>
+                                                <td class="fw-bold text-dark">{{ currency_format($stats['subscription_revenue']) }}</td>
+                                                <td class="text-muted">৳0.00</td>
+                                                <td class="fw-bold text-success">{{ currency_format($stats['subscription_revenue']) }}</td>
+                                                <td><span class="badge bg-success">100%</span></td>
+                                            </tr>
+                                            @endif
+                                            <tr class="table-light fw-bold" style="font-size: 15px;">
+                                                <td>{{ __('Total All-Time Platform Net Profit') }}</td>
+                                                <td class="text-primary">{{ currency_format($stats['total_revenue']) }}</td>
+                                                <td class="text-danger">{{ currency_format($stats['total_cost']) }}</td>
+                                                <td class="text-success">{{ currency_format($stats['net_profit']) }}</td>
+                                                <td><span class="badge bg-success fs-6">{{ $stats['profit_margin'] }}%</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Wallet & Recharge Correlation -->
+                                <div class="row mt-3 g-3">
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded border text-center">
+                                            <span class="text-muted small">{{ __('Total Recharges Approved') }}</span>
+                                            <h5 class="fw-bold text-dark mt-1 mb-0">{{ currency_format($stats['total_recharged']) }}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded border text-center">
+                                            <span class="text-muted small">{{ __('Total Consumed in SMS') }}</span>
+                                            <h5 class="fw-bold text-danger mt-1 mb-0">{{ currency_format($stats['sms_revenue']) }}</h5>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="p-3 bg-light rounded border text-center">
+                                            <span class="text-muted small">{{ __('Remaining Wallet Balance') }}</span>
+                                            <h5 class="fw-bold text-success mt-1 mb-0">{{ currency_format($user->balance) }}</h5>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="tab-pane fade" id="tab-sms" role="tabpanel">
                                 <div class="responsive-table">
                                     <table class="table" id="datatable">

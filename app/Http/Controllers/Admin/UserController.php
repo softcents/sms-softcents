@@ -96,11 +96,49 @@ class UserController extends Controller
             ->latest()
             ->get();
 
+        // Calculate Profit & Loss specifically for this user
+        $costSql = \App\Services\ProfitLossService::getCostSqlExpression('superadmin');
+        $financial = Sms::where('sms.user_id', $user->id)
+            ->leftJoin('senderids as s', 'sms.senderid_id', '=', 's.id')
+            ->leftJoin('smsgateways as gw', 'sms.smsgateway_id', '=', 'gw.id')
+            ->selectRaw("
+                COUNT(*) as total_sms,
+                COALESCE(SUM(sms.total_sms), COUNT(*)) as total_parts,
+                COALESCE(SUM(sms.charge), 0) as sms_revenue,
+                COALESCE(SUM({$costSql}), 0) as sms_cost,
+                SUM(CASE WHEN s.type LIKE '%Masking%' AND s.type NOT LIKE '%Non%' THEN sms.charge ELSE 0 END) as masking_revenue,
+                SUM(CASE WHEN s.type LIKE '%Masking%' AND s.type NOT LIKE '%Non%' THEN {$costSql} ELSE 0 END) as masking_cost,
+                SUM(CASE WHEN s.type NOT LIKE '%Masking%' OR s.type LIKE '%Non%' THEN sms.charge ELSE 0 END) as non_masking_revenue,
+                SUM(CASE WHEN s.type NOT LIKE '%Masking%' OR s.type LIKE '%Non%' THEN {$costSql} ELSE 0 END) as non_masking_cost
+            ")->first();
+
+        $subscriptionRevenue = (float) PlanSubscribe::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->sum('price');
+
+        $smsRevenue = (float) ($financial->sms_revenue ?? 0);
+        $totalRevenue = $smsRevenue + $subscriptionRevenue;
+        $totalCost = (float) ($financial->sms_cost ?? 0);
+        $netProfit = $totalRevenue - $totalCost;
+        $profitMargin = $totalRevenue > 0 ? round(($netProfit / $totalRevenue) * 100, 2) : 0;
+
         $stats = [
-            'total_sms' => Sms::where('user_id', $user->id)->count(),
+            'total_sms' => (int) ($financial->total_sms ?? 0),
+            'total_parts' => (int) ($financial->total_parts ?? 0),
             'delivered_sms' => Sms::where('user_id', $user->id)->where('status', 'success')->count(),
             'failed_sms' => Sms::where('user_id', $user->id)->where('status', 'failed')->count(),
-            'total_cost' => (float) Sms::where('user_id', $user->id)->sum('charge'),
+            'total_revenue' => $totalRevenue,
+            'sms_revenue' => $smsRevenue,
+            'subscription_revenue' => $subscriptionRevenue,
+            'total_cost' => $totalCost,
+            'net_profit' => $netProfit,
+            'profit_margin' => $profitMargin,
+            'masking_revenue' => (float) ($financial->masking_revenue ?? 0),
+            'masking_cost' => (float) ($financial->masking_cost ?? 0),
+            'masking_profit' => ((float) ($financial->masking_revenue ?? 0)) - ((float) ($financial->masking_cost ?? 0)),
+            'non_masking_revenue' => (float) ($financial->non_masking_revenue ?? 0),
+            'non_masking_cost' => (float) ($financial->non_masking_cost ?? 0),
+            'non_masking_profit' => ((float) ($financial->non_masking_revenue ?? 0)) - ((float) ($financial->non_masking_cost ?? 0)),
             'total_recharged' => (float) Recharge::where('user_id', $user->id)->where('status', 'approved')->sum('amount'),
             'total_subscriptions' => PlanSubscribe::where('user_id', $user->id)->count(),
         ];

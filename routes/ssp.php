@@ -20,6 +20,10 @@ Route::group(['as' => 'ssp.', 'prefix' => 'ssp', 'middleware' => ['auth', 'ssp']
     Route::post('/customers/{customer}/recharge', [SSP\CustomerController::class, 'recharge'])->name('customers.recharge');
     Route::get('/customers/{customer}/login-as', [SSP\CustomerController::class, 'loginAs'])->name('customers.login-as');
 
+    // Tariff Management
+    Route::get('/tariffs', [SSP\TariffController::class, 'index'])->name('tariffs.index');
+    Route::put('/tariffs/{user}', [SSP\TariffController::class, 'update'])->name('tariffs.update');
+
     // White Label Settings
     Route::get('/white-label', [SSP\WhiteLabelController::class, 'index'])->name('white-label.index');
     Route::post('/white-label', [SSP\WhiteLabelController::class, 'update'])->name('white-label.update');

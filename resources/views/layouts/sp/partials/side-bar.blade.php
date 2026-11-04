@@ -36,6 +36,13 @@
                 </ul>
             </li>
 
+            <li class="{{ Route::is('sp.tariffs.*') ? 'active' : '' }}">
+                <a href="{{ route('sp.tariffs.index') }}">
+                    <span class="sidebar-icon"><i class="fas fa-tags"></i></span>
+                    {{ __('Tariff Management') }}
+                </a>
+            </li>
+
             <li class="dropdown {{ Route::is('sp.recharges.*', 'sp.my-recharge*') ? 'active' : '' }}">
                 <a href="#">
                     <span class="sidebar-icon"><i class="fas fa-money-bill-wave"></i></span>

@@ -7,8 +7,8 @@
 @section('main_content')
     <div class="container-fluid">
         {{-- Date-wise Filter Bar (Default: Today) --}}
-        <div class="card shadow-sm border-0 rounded-3 mt-3 mb-3">
-            <div class="card-body py-2 px-3">
+        <div class="dashboard-filter-bar shadow-sm border-0 rounded-3 mt-2 mb-3 bg-white" style="min-height: auto !important; height: auto !important;">
+            <div class="py-2 px-3">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                     {{-- Left Title & Active Date Badge --}}
                     <div class="d-flex align-items-center gap-2 flex-wrap">

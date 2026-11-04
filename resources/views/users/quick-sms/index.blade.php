@@ -59,7 +59,7 @@
                                                 <label>{{ __('Enter Numbers') }} : </label>
                                             </div>
                                             <div class="col-sm-9 mt-4">
-                                                <textarea name="numbers" class="form-control" placeholder="{{ __('Please start with country code and separated by comma. Ex: 880186545, 880186545') }}"></textarea>
+                                                <textarea name="numbers" id="numbers" class="form-control" placeholder="{{ __('Please start with country code and separated by comma. Ex: 880186545, 880186545') }}"></textarea>
                                             </div>
 
                                             <div class="col-sm-3 text-end mt-4">
@@ -87,12 +87,12 @@
                                             </div>
                                             <div class="col-sm-9 mt-4">
                                                 <textarea name="contents" id="contents" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
-                                                <div id="the-count" class="pull-right mt-1">
-                                                    <span id="current">{{ __('0') }}</span> <span class="ps-4">{{ __('Characters') }}</span> <span class="text-primary fw-bold
-                                                    ">|</span>
-                                                    <span id="no_of_sms"> {{ __('0') }} </span> {{ __('SMS') }} <span class="text-primary fw-bold">|</span>
-                                                    <span class="text-danger"><span id="char_per_sms"> {{ __('160') }} </span> {{ __('Char per sms') }}</span>
-                                                    <a id="sms-templates" data-url="{{ route('users.get-templates') }}" class="badge bg-primary" href="javascript:void(0)">{{ __('Insert SMS Template') }}</a>
+                                                <div id="the-count" class="pull-right mt-1" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}">
+                                                    <span id="current">{{ __('0') }}</span> <span class="ps-1">{{ __('Characters') }}</span> <span class="text-primary fw-bold">|</span>
+                                                    <span id="no_of_sms" class="fw-bold text-dark"> {{ __('0') }} </span> {{ __('SMS') }} <span class="text-primary fw-bold">|</span>
+                                                    <span class="text-danger"><span id="char_per_sms"> {{ __('160') }} </span> {{ __('Char per sms') }}</span> <span class="text-primary fw-bold">|</span>
+                                                    <span class="badge bg-danger ms-1" style="font-size: 13px;">{{ __('Estimated Cost:') }} ৳<span id="est_cost">0.00</span></span>
+                                                    <a id="sms-templates" data-url="{{ route('users.get-templates') }}" class="badge bg-primary ms-2" href="javascript:void(0)">{{ __('Insert SMS Template') }}</a>
                                                 </div>
                                             </div>
 

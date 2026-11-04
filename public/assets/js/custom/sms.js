@@ -8,12 +8,12 @@ var charPerSms = 160;
 var charPerSmsForLong = 153;
 var current;
 
-$('#contents').on('input', function () {
+$('#contents, #numbers').on('input', function () {
     messageDataCal();
 });
 
 function messageDataCal() {
-    var textContent = $('#contents').val();
+    var textContent = $('#contents').val() || '';
     var isUnicode = didITypeUnicode(textContent);
 
     var countArr = [];
@@ -41,8 +41,16 @@ function messageDataCal() {
     var charPerSmsDisplay = characterCount > charPerSms ? charPerSmsForLong : charPerSms;
     $('#char_per_sms').text(charPerSmsDisplay);
 
-    noOfSms = Math.ceil(characterCount / charPerSmsDisplay);
+    noOfSms = characterCount > 0 ? Math.ceil(characterCount / charPerSmsDisplay) : 0;
     $('#no_of_sms').text(noOfSms);
+
+    // Live Estimated Cost calculation
+    var rate = parseFloat($('#the-count').data('rate')) || 0.39;
+    var rawNums = $('#numbers').val() || '';
+    var validNums = rawNums.split(',').map(function (n) { return n.trim(); }).filter(function (n) { return n.length >= 5; });
+    var recipients = Math.max(1, validNums.length);
+    var estCost = (noOfSms * rate * recipients).toFixed(2);
+    $('#est_cost').text(estCost);
 }
 
 function setCountAndAttr(isUnicode) {

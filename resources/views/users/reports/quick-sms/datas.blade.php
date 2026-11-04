@@ -23,11 +23,23 @@
         <td>{{ optional($message->senderid)->sender ?? 'System' }}</td>
         <td>{{ $message->number }}</td>
         <td>
+            @if(strtolower($message->source ?? 'web') === 'api')
+                <span class="badge bg-info text-dark fw-semibold" style="font-size: 11px; padding: 4px 8px; border-radius: 4px;">
+                    <i class="fas fa-code me-1"></i>{{ __('API') }}
+                </span>
+            @else
+                <span class="badge bg-primary text-white fw-semibold" style="font-size: 11px; padding: 4px 8px; border-radius: 4px;">
+                    <i class="fas fa-globe me-1"></i>{{ __('Web') }}
+                </span>
+            @endif
+        </td>
+        <td>
             <div class="d-flex align-items-center gap-2">
                 <template class="sms-content-template">{{ $content }}</template>
                 <span class="view-full-sms-content text-primary" role="button"
                     data-sender="{{ optional($message->senderid)->sender ?? 'System' }}"
                     data-number="{{ $message->number }}"
+                    data-source="{{ ucfirst(strtolower($message->source ?? 'web')) }}"
                     data-time="{{ $message->created_at ? $message->created_at->format('d M, Y h:i:s A') : '-' }}"
                     data-parts="{{ $totalSms }} {{ __('SMS') }}"
                     data-charge="{{ $chargeFmt }}"
@@ -41,6 +53,7 @@
                 <button type="button" class="btn btn-sm btn-outline-primary py-0 px-1 view-full-sms-content"
                     data-sender="{{ optional($message->senderid)->sender ?? 'System' }}"
                     data-number="{{ $message->number }}"
+                    data-source="{{ ucfirst(strtolower($message->source ?? 'web')) }}"
                     data-time="{{ $message->created_at ? $message->created_at->format('d M, Y h:i:s A') : '-' }}"
                     data-parts="{{ $totalSms }} {{ __('SMS') }}"
                     data-charge="{{ $chargeFmt }}"

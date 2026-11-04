@@ -252,10 +252,16 @@ function makeCampaignSms($campaign_sms, $sender_id_info, $user, $total_sms, $res
     return $message_details;
 }
 
-function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms)
+function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms, $source = null)
 {
     $rate = getEffectiveSmsRate($sender_id_info, $user);
     $charge = $rate * $total_sms;
+
+    if (!$source) {
+        $source = ($request->is('api/*') || $request->routeIs('*api*') || $request->has('api_key') || $request->has('apikey') || str_contains($request->path(), 'send-message')) 
+            ? 'api' 
+            : 'web';
+    }
 
     $message_details = [];
     foreach (explode(',', $request->numbers) as $key => $number) {
@@ -271,6 +277,7 @@ function makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms)
             'smsgateway_id' => session('gateway_id') ?: ($sender_id_info->gateway_id ?? null),
             'charge' => $charge,
             'status' => 'success',
+            'source' => $source,
             'operator' => class_exists(\App\Services\ReportAnalyticsService::class) ? \App\Services\ReportAnalyticsService::detectOperator($number) : null,
             'gateway_response_code' => '200 (Success)',
         ];

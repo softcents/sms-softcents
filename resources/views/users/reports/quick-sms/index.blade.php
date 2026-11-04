@@ -13,10 +13,17 @@
                         <h4>{{ __('SMS Histories') }}</h4>
                     </div>
                     <div class="table-top-form">
-                        <form action="{{ route('users.reports.quick-sms') }}" method="post">
+                        <form action="{{ route('users.reports.quick-sms') }}" method="post" class="d-flex align-items-center flex-wrap gap-2">
                             @csrf
                             <div class="table-search">
                                 <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search') }}..." value="{{ request('search') }}">
+                            </div>
+                            <div>
+                                <select name="source" class="form-select form-select-sm" style="height: 38px; border-radius: 6px;" onchange="$(this).closest('form').submit()">
+                                    <option value="">{{ __('All Sources (Web & API)') }}</option>
+                                    <option value="web" @selected(request('source') == 'web')>{{ __('Web') }}</option>
+                                    <option value="api" @selected(request('source') == 'api')>{{ __('API') }}</option>
+                                </select>
                             </div>
                         </form>
                     </div>
@@ -30,6 +37,7 @@
                                 <th>{{ __('SL') }}.</th>
                                 <th>{{ __('Sender ID') }}</th>
                                 <th>{{ __('Number') }}</th>
+                                <th>{{ __('Source') }}</th>
                                 <th>{{ __('Contents') }}</th>
                                 <th class="text-center">{{ __('SMS Count') }}</th>
                                 <th>{{ __('Cost') }}</th>
@@ -64,6 +72,7 @@
         let content = $row.find('.sms-content-template').html() || $(this).data('content') || '';
         let sender = $(this).data('sender') || '-';
         let number = $(this).data('number') || '-';
+        let source = $(this).data('source') || 'Web';
         let time = $(this).data('time') || '-';
         let parts = $(this).data('parts') || '1 SMS';
         let charge = $(this).data('charge') || '0.00৳';
@@ -79,6 +88,11 @@
         $('#report-modal-parts').text(parts);
         $('#report-modal-sender').text(sender);
         $('#report-modal-number').text(number);
+        if (source.toLowerCase() === 'api') {
+            $('#report-modal-source').removeClass('bg-primary text-white').addClass('bg-info text-dark').html('<i class="fas fa-code me-1"></i>API');
+        } else {
+            $('#report-modal-source').removeClass('bg-info text-dark').addClass('bg-primary text-white').html('<i class="fas fa-globe me-1"></i>Web');
+        }
         $('#report-modal-time').text(time);
 
         $('#reportModalBody').text(content);

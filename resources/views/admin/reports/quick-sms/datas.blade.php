@@ -134,7 +134,7 @@
 
         {{-- 17. API User --}}
         <td>
-            @if($user && $user->allow_api)
+            @if(strtolower($message->source ?? '') === 'api')
                 <span class="badge bg-info text-dark">API ({{ $user->username ?? 'User' }})</span>
             @else
                 <span class="badge bg-light text-dark border">Web Portal</span>

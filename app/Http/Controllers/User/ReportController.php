@@ -16,12 +16,16 @@ class ReportController extends Controller
     {
         $messages = Sms::with('senderid')
             ->where('user_id', auth()->id())
+            ->when($request->filled('source'), function ($q) use ($request) {
+                $q->where('source', strtolower($request->source));
+            })
             ->when($request->has('search'), function ($q) use ($request) {
                 $q->where(function ($query) use ($request) {
                     $query->where('number', 'like', '%' . $request->search . '%')
                         ->orWhere('charge', 'like', '%' . $request->search . '%')
                         ->orWhere('ip_address', 'like', '%' . $request->search . '%')
                         ->orWhere('contents', 'like', '%' . $request->search . '%')
+                        ->orWhere('source', 'like', '%' . $request->search . '%')
                         ->orWhere('notes', 'like', '%' . $request->search . '%')
                         ->orWhere('status', 'like', '%' . $request->search . '%')
                         ->orWhereHas('senderid', function ($q) use ($request) {
@@ -38,7 +42,7 @@ class ReportController extends Controller
             ]);
         }
 
-        $messages = $messages->paginate(10);
+        $messages = $messages->paginate(10)->appends($request->all());
         return view('users.reports.quick-sms.index', compact('messages'));
     }
 

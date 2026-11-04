@@ -102,7 +102,7 @@ class QuickSmsController extends Controller
 
                 }
 
-                $message_details = makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms);
+                $message_details = makeSms($request, $sender_id_info, $isUnicode, $user, $total_sms, 'web');
                 foreach (array_chunk($message_details, 1000) as $chunk) {
                     Sms::insert($chunk);
                 }

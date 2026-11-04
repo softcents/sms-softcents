@@ -33,6 +33,7 @@ class Sms extends Model
         'schedule',
         'notes',
         'status',
+        'source',
         'gateway_txnid',
         'gateway_response_code',
         'mno_txnid',

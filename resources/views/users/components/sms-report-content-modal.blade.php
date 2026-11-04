@@ -46,6 +46,10 @@
                         <span class="badge bg-warning text-dark" id="report-modal-parts">1 SMS</span>
                     </div>
                     <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
+                        <span class="text-muted small"><i class="fas fa-network-wired text-primary me-1"></i> {{ __('Source / Channel') }}</span>
+                        <span id="report-modal-source" class="badge bg-primary text-white">Web</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-1 border-bottom">
                         <span class="text-muted small"><i class="fas fa-id-badge text-info me-1"></i> {{ __('Sender ID') }}</span>
                         <span class="font-monospace fw-semibold text-dark small" id="report-modal-sender">-</span>
                     </div>

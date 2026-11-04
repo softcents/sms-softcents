@@ -391,9 +391,7 @@
 .card {
     border: 0;
     border-top: 3px solid #4876FF;
-    /* height: 100vh; */
-    min-height: 100vh;
-
+    min-height: auto !important;
 }
 
 .delete-selected {
@@ -450,31 +448,60 @@
     background: transparent !important;
 }
 
-@media (max-width: 575.98px) {
+.erp-table-section {
+    min-height: auto !important;
+}
+
+.quick-sms .order-form-section label,
+.quick-sms .form-label {
+    position: static !important;
+    left: auto !important;
+    top: auto !important;
+    display: inline-block !important;
+    padding: 0 !important;
+    background: transparent !important;
+    font-weight: 600 !important;
+    font-size: 14px !important;
+}
+
+.quick-sms select,
+.quick-sms input,
+.quick-sms textarea,
+.quick-sms .gpt-up-down-arrow {
+    max-width: 100% !important;
+}
+
+@media (max-width: 767.98px) {
     .quick-sms .order-form-section .row > [class*="col-sm-3"],
     .quick-sms .order-form-section .row > [class*="col-md-3"] {
         text-align: left !important;
         margin-top: 14px !important;
         margin-bottom: 4px !important;
+        width: 100% !important;
     }
 
     .quick-sms .order-form-section .row > [class*="col-sm-9"],
     .quick-sms .order-form-section .row > [class*="col-md-9"] {
         margin-top: 2px !important;
+        width: 100% !important;
     }
 
     .quick-sms .order-form-section .button-group {
         display: flex !important;
-        flex-direction: column !important;
+        flex-direction: row !important;
         gap: 8px !important;
-        margin-top: 24px !important;
+        margin-top: 20px !important;
         width: 100% !important;
     }
 
     .quick-sms .order-form-section .button-group .theme-btn {
-        min-width: 100% !important;
-        width: 100% !important;
-        margin: 4px 0 !important;
+        flex: 1 !important;
+        min-width: unset !important;
+        width: 50% !important;
+        margin: 0 !important;
+        padding: 10px 14px !important;
+        font-size: 13.5px !important;
+        text-align: center !important;
     }
 
     .quick-sms .print-btn {
@@ -488,10 +515,10 @@
         justify-content: space-between !important;
         align-items: center !important;
         gap: 8px !important;
-        font-size: 12px !important;
+        font-size: 12.5px !important;
     }
 
     .erp-table-section .card-body {
-        padding: 14px 12px !important;
+        padding: 16px 14px !important;
     }
 }

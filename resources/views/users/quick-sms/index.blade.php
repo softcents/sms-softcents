@@ -20,10 +20,10 @@
 
                                     <div class="add-suplier-modal-wrapper">
                                         <div class="row">
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4 align-self-md-center">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Sender ID') }} : </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4">
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="senderid_id" required class="form-control select-dropdown">
                                                         <option value="">{{ __('Select a sender id') }}</option>
@@ -35,10 +35,10 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4 align-self-md-center">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Select SMS schedule :') }} </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4">
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="schedule_type" required="" class="form-control select-dropdown timer-option">
                                                         <option value="sendnow">{{ __('Send Now') }}</option>
@@ -48,24 +48,24 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 d-none schedule-sms align-self-sm-center">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4 d-none schedule-sms align-self-md-center">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Schedule SMS :') }} </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4 d-none schedule-sms">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4 d-none schedule-sms">
                                                 <input type="datetime-local" name="schedule" required class="form-control">
                                             </div>
 
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Enter Numbers') }} : </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4">
                                                 <textarea name="numbers" id="numbers" rows="3" class="form-control" placeholder="{{ __('Please start with country code and separated by comma. Ex: 880186545, 880186545') }}"></textarea>
                                             </div>
 
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4 align-self-sm-center">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4 align-self-md-center">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Select SMS Type :') }} </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4">
                                                 <div class="d-flex gap-3">
                                                     <div class="form-check">
                                                         <input class="form-check-input text" type="radio" name="is_unicode_test" id="text">
@@ -82,10 +82,10 @@
                                                 </div>
                                             </div>
 
-                                            <div class="col-12 col-sm-3 text-start text-sm-end mt-3 mt-sm-4">
+                                            <div class="col-12 col-md-3 text-start text-md-end mt-2 mt-md-4">
                                                 <label class="form-label mb-0 fw-bold">{{ __('Message Content') }} : </label>
                                             </div>
-                                            <div class="col-12 col-sm-9 mt-1 mt-sm-4">
+                                            <div class="col-12 col-md-9 mt-1 mt-md-4">
                                                 <textarea name="contents" id="contents" rows="4" class="form-control" placeholder="{{ __('Enter your message content here') }}."></textarea>
                                                 <div id="the-count" class="d-flex flex-wrap align-items-center justify-content-between gap-2 mt-2" data-rate="{{ auth()->user()->non_masking_rate ?? 0.39 }}" data-balance="{{ (float)auth()->user()->balance }}">
                                                     <div class="d-flex flex-wrap align-items-center gap-2 small text-muted">

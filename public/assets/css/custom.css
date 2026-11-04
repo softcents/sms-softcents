@@ -635,3 +635,42 @@
         font-size: 10.5px !important;
     }
 }
+
+/* ========================================================
+   ENTERPRISE SAAS MODERN HEADER & NAVIGATION
+   ======================================================== */
+.main-header-section {
+    padding: 8px 16px !important;
+    background: #ffffff !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+}
+.modern-header-wallet {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    transition: all 0.2s ease !important;
+}
+.modern-header-wallet:hover {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05) !important;
+}
+.hover-bg-light:hover {
+    background-color: #f1f5f9 !important;
+}
+.impersonation-notification-bar {
+    transition: all 0.2s ease;
+}
+@media (max-width: 575.98px) {
+    .main-header-section {
+        padding: 6px 10px !important;
+    }
+    .modern-header-wallet {
+        padding: 2px 6px !important;
+        gap: 6px !important;
+    }
+    .modern-header-wallet .wallet-amount {
+        font-size: 12px !important;
+    }
+}
+

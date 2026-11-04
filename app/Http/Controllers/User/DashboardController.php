@@ -19,15 +19,41 @@ class DashboardController extends Controller
      */
     public function index()
     {
+        $userId = auth()->id();
+        $user = auth()->user();
         $todayStr = now()->format('Y-m-d');
+
         $messages = Sms::with('senderid:id,sender')
-            ->where('user_id', auth()->id())
+            ->where('user_id', $userId)
             ->whereDate('created_at', $todayStr)
             ->latest()
             ->limit(15)
             ->get();
 
-        return view("users.dashboard.index", compact('messages'));
+        if ($messages->isEmpty()) {
+            $messages = Sms::with('senderid:id,sender')
+                ->where('user_id', $userId)
+                ->latest()
+                ->limit(10)
+                ->get();
+        }
+
+        $smsToday = Sms::where('user_id', $userId)->whereDate('created_at', $todayStr);
+        $rechargeToday = Recharge::where('user_id', $userId)->whereStatus('approved')->whereDate('created_at', $todayStr);
+
+        $stats = [
+            'subscription_subscribe' => '৳' . number_format((float)($user->non_masking_rate ?? 0.39), 2) . ' / ৳' . number_format((float)($user->masking_rate ?? 0.75), 2),
+            'recharge_amount' => currency_format((clone $rechargeToday)->sum('amount')),
+            'total_sms' => (clone $smsToday)->count(),
+            'pending_sms' => (clone $smsToday)->where('status', 'pending')->count(),
+            'success_sms' => (clone $smsToday)->where('status', 'success')->count(),
+            'canceled_sms' => (clone $smsToday)->where('status', 'canceled')->count(),
+            'groups' => Group::where('user_id', $userId)->count(),
+            'contacts' => Contact::where('user_id', $userId)->count(),
+            'templates' => Template::where('user_id', $userId)->count(),
+        ];
+
+        return view("users.dashboard.index", compact('messages', 'stats'));
     }
 
     public function getDashboardData(Request $request)
@@ -223,8 +249,11 @@ class DashboardController extends Controller
             'total' => $data['total_sms'],
         ];
 
-        // Recent Messages Table (Filtered by Date Range)
+        // Recent Messages Table (Filtered by Date Range, fallback to latest if none)
         $messages = (clone $smsQuery)->with('senderid:id,sender')->latest()->limit(15)->get();
+        if ($messages->isEmpty()) {
+            $messages = Sms::where('user_id', $userId)->with('senderid:id,sender')->latest()->limit(10)->get();
+        }
         $data['messages_html'] = view('users.dashboard.message-datas', compact('messages'))->render();
 
         return response()->json($data);

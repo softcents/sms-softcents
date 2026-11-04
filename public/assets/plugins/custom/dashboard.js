@@ -202,13 +202,8 @@ function getDashboardData(filter, startDate, endDate) {
             $('#canceled_sms').text(res.canceled_sms);
 
             // Customer count & label
-            if (filter === 'all_time') {
-                $('#customers').text(res.customers);
-                $('#customers-label').text('Total Customers');
-            } else {
-                $('#customers').text(res.customers + (res.total_customers_all_time ? ' (' + res.total_customers_all_time + ')' : ''));
-                $('#customers-label').text('New Customers (' + (res.filter_label ? res.filter_label.split(' ')[0] : 'Period') + ')');
-            }
+            $('#customers').text(res.customers);
+            $('#customers-label').text('Total Customers');
 
             // 2. Active Filter Badges
             if (res.filter_label) {

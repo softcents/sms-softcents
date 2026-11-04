@@ -51,7 +51,7 @@
                     <img src="{{ asset('assets/img/icon/banner.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="recharge_amount"></h5>
+                    <h5 id="recharge_amount">{{ $stats['recharge_amount'] ?? '৳0.00' }}</h5>
                     <p>{{ __('Recharge Amount') }}</p>
                 </div>
             </div>
@@ -60,7 +60,7 @@
                     <img src="{{ asset('assets/img/icon/user1.png') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="subcribers"></h5>
+                    <h5 id="subcribers">{{ $stats['subcribers'] ?? 0 }}</h5>
                     <p>{{ __('Plan Subscribes') }}</p>
                 </div>
             </div>
@@ -69,7 +69,7 @@
                     <img src="{{ asset('assets/img/icon/user.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="customers"></h5>
+                    <h5 id="customers">{{ $stats['customers'] ?? 0 }}</h5>
                     <p id="customers-label">{{ __('Total Customers') }}</p>
                 </div>
             </div>
@@ -78,7 +78,7 @@
                     <img src="{{ asset('assets/img/icon/subscription.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="plans"></h5>
+                    <h5 id="plans">{{ $stats['plans'] ?? 0 }}</h5>
                     <p>{{ __('Total Plans') }}</p>
                 </div>
             </div>
@@ -87,7 +87,7 @@
                     <img src="{{ asset('assets/img/icon/category.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="api_gateways"></h5>
+                    <h5 id="api_gateways">{{ $stats['api_gateways'] ?? 0 }}</h5>
                     <p>{{ __('Api Gateways') }}</p>
                 </div>
             </div>
@@ -96,7 +96,7 @@
                     <img src="{{ asset('assets/img/icon/crown-king.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="andriod_gateways"></h5>
+                    <h5 id="andriod_gateways">{{ $stats['andriod_gateways'] ?? 0 }}</h5>
                     <p>{{ __('Andriod Gateways') }}</p>
                 </div>
             </div>
@@ -105,7 +105,7 @@
                     <img src="{{ asset('assets/img/icon/subscription.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="total_sms"></h5>
+                    <h5 id="total_sms">{{ $stats['total_sms'] ?? 0 }}</h5>
                     <p>{{ __('Total Sms') }}</p>
                 </div>
             </div>
@@ -114,7 +114,7 @@
                     <img src="{{ asset('assets/img/icon/support-faq.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="pending_sms"></h5>
+                    <h5 id="pending_sms">{{ $stats['pending_sms'] ?? 0 }}</h5>
                     <p>{{ __('Pending Sms') }}</p>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                     <img src="{{ asset('assets/img/icon/suggestions.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="success_sms"></h5>
+                    <h5 id="success_sms">{{ $stats['success_sms'] ?? 0 }}</h5>
                     <p>{{ __('Success Sms') }}</p>
                 </div>
             </div>
@@ -132,7 +132,7 @@
                     <img src="{{ asset('assets/img/icon/reward.svg') }}" alt="">
                 </div>
                 <div class="content-side">
-                    <h5 id="canceled_sms"></h5>
+                    <h5 id="canceled_sms">{{ $stats['canceled_sms'] ?? 0 }}</h5>
                     <p>{{ __('Failed Sms') }}</p>
                 </div>
             </div>

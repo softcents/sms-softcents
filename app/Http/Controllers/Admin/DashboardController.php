@@ -22,12 +22,27 @@ class DashboardController extends Controller
     public function index()
     {
         $todayStr = now()->format('Y-m-d');
-        $users = User::whereRole('user')->whereDate('created_at', $todayStr)->latest()->take(10)->get();
-        if ($users->isEmpty()) {
-            $users = User::whereRole('user')->latest()->take(5)->get();
-        }
+        // Always pass latest users so table is never empty on initial render
+        $users = User::whereRole('user')->with('plan')->latest()->take(10)->get();
         $activeGateways = Smsgateway::where('status', 1)->get();
-        return view('admin.dashboard.index', compact('users', 'activeGateways'));
+
+        $smsToday = Sms::whereDate('created_at', $todayStr);
+        $rechargeToday = Recharge::whereStatus('approved')->whereDate('created_at', $todayStr);
+
+        $stats = [
+            'customers' => User::whereRole('user')->count(),
+            'plans' => Plan::count(),
+            'subcribers' => PlanSubscribe::whereStatus('approved')->count(),
+            'api_gateways' => Smsgateway::count(),
+            'andriod_gateways' => Smsgateway::count(),
+            'recharge_amount' => currency_format((clone $rechargeToday)->sum('amount')),
+            'total_sms' => (clone $smsToday)->count(),
+            'pending_sms' => (clone $smsToday)->where('status', 'pending')->count(),
+            'success_sms' => (clone $smsToday)->where('status', 'success')->count(),
+            'canceled_sms' => (clone $smsToday)->where('status', 'canceled')->count(),
+        ];
+
+        return view('admin.dashboard.index', compact('users', 'activeGateways', 'stats'));
     }
 
     public function getDashboardData(Request $request)
@@ -38,7 +53,6 @@ class DashboardController extends Controller
 
         $smsQuery = Sms::query();
         $rechargeQuery = Recharge::whereStatus('approved');
-        $subQuery = PlanSubscribe::whereStatus('approved');
         $customerQuery = User::whereRole('user');
 
         $isPgSql = \DB::connection()->getDriverName() === 'pgsql';
@@ -52,7 +66,6 @@ class DashboardController extends Controller
         if ($filter === 'today') {
             $smsQuery->whereDate('created_at', $todayStr);
             $rechargeQuery->whereDate('created_at', $todayStr);
-            $subQuery->whereDate('created_at', $todayStr);
             $customerQuery->whereDate('created_at', $todayStr);
             $dateLabel = __('Today') . ' (' . now()->format('d M Y') . ')';
             $chartMode = 'hourly';
@@ -60,7 +73,6 @@ class DashboardController extends Controller
             $yesterdayStr = now()->subDay()->format('Y-m-d');
             $smsQuery->whereDate('created_at', $yesterdayStr);
             $rechargeQuery->whereDate('created_at', $yesterdayStr);
-            $subQuery->whereDate('created_at', $yesterdayStr);
             $customerQuery->whereDate('created_at', $yesterdayStr);
             $dateLabel = __('Yesterday') . ' (' . now()->subDay()->format('d M Y') . ')';
             $chartMode = 'hourly';
@@ -68,7 +80,6 @@ class DashboardController extends Controller
             $from = now()->subDays(6)->startOfDay();
             $smsQuery->where('created_at', '>=', $from);
             $rechargeQuery->where('created_at', '>=', $from);
-            $subQuery->where('created_at', '>=', $from);
             $customerQuery->where('created_at', '>=', $from);
             $dateLabel = __('Last 7 Days');
             $chartMode = '7_days';
@@ -76,7 +87,6 @@ class DashboardController extends Controller
             $from = now()->startOfMonth();
             $smsQuery->where('created_at', '>=', $from);
             $rechargeQuery->where('created_at', '>=', $from);
-            $subQuery->where('created_at', '>=', $from);
             $customerQuery->where('created_at', '>=', $from);
             $dateLabel = __('This Month') . ' (' . now()->format('F Y') . ')';
             $chartMode = 'this_month';
@@ -85,7 +95,6 @@ class DashboardController extends Controller
             $to = now()->subMonth()->endOfMonth();
             $smsQuery->whereBetween('created_at', [$from, $to]);
             $rechargeQuery->whereBetween('created_at', [$from, $to]);
-            $subQuery->whereBetween('created_at', [$from, $to]);
             $customerQuery->whereBetween('created_at', [$from, $to]);
             $dateLabel = __('Last Month') . ' (' . now()->subMonth()->format('F Y') . ')';
             $chartMode = 'last_month';
@@ -93,7 +102,6 @@ class DashboardController extends Controller
             $from = now()->startOfYear();
             $smsQuery->where('created_at', '>=', $from);
             $rechargeQuery->where('created_at', '>=', $from);
-            $subQuery->where('created_at', '>=', $from);
             $customerQuery->where('created_at', '>=', $from);
             $dateLabel = __('This Year') . ' (' . now()->format('Y') . ')';
             $chartMode = 'monthly';
@@ -102,7 +110,6 @@ class DashboardController extends Controller
             $end = $endDate ? Carbon::parse($endDate)->endOfDay() : $start->copy()->endOfDay();
             $smsQuery->whereBetween('created_at', [$start, $end]);
             $rechargeQuery->whereBetween('created_at', [$start, $end]);
-            $subQuery->whereBetween('created_at', [$start, $end]);
             $customerQuery->whereBetween('created_at', [$start, $end]);
             $dateLabel = $start->format('d M Y') . ($endDate && $endDate != $startDate ? ' - ' . Carbon::parse($endDate)->format('d M Y') : '');
 
@@ -120,22 +127,21 @@ class DashboardController extends Controller
         } else {
             $smsQuery->whereDate('created_at', $todayStr);
             $rechargeQuery->whereDate('created_at', $todayStr);
-            $subQuery->whereDate('created_at', $todayStr);
             $customerQuery->whereDate('created_at', $todayStr);
             $dateLabel = __('Today') . ' (' . now()->format('d M Y') . ')';
             $chartMode = 'hourly';
         }
 
-        // Top Counters
+        // Master platform assets: Always show actual platform totals so cards are never blank/empty!
         $data['filter_label'] = $dateLabel;
-        $data['customers'] = $filter === 'all_time' ? User::where('role', 'user')->count() : (clone $customerQuery)->count();
-        $data['total_customers_all_time'] = User::where('role', 'user')->count();
+        $data['customers'] = User::where('role', 'user')->count();
         $data['plans'] = Plan::count();
-        $data['subcribers'] = (clone $subQuery)->count();
+        $data['subcribers'] = PlanSubscribe::whereStatus('approved')->count();
         $data['api_gateways'] = Smsgateway::count();
         $data['andriod_gateways'] = Smsgateway::count();
-        $data['recharge_amount'] = currency_format((clone $rechargeQuery)->sum('amount'));
 
+        // Date-wise Activity Cards
+        $data['recharge_amount'] = currency_format((clone $rechargeQuery)->sum('amount'));
         $data['total_sms'] = (clone $smsQuery)->count();
         $data['pending_sms'] = (clone $smsQuery)->where('status', 'pending')->count();
         $data['success_sms'] = (clone $smsQuery)->where('status', 'success')->count();
@@ -242,9 +248,11 @@ class DashboardController extends Controller
             'total' => $data['total_sms'],
         ];
 
-        // Registered Customers Table
+        // Registered Customers Table:
+        // If there are customers in the filtered period, show them.
+        // If none registered in that period (e.g. today), show latest registered customers so the table is never blank!
         $users = (clone $customerQuery)->with('plan')->latest()->limit(10)->get();
-        if ($users->isEmpty() && $filter === 'all_time') {
+        if ($users->isEmpty()) {
             $users = User::whereRole('user')->with('plan')->latest()->limit(10)->get();
         }
         $data['customers_html'] = view('admin.dashboard.customer-datas', compact('users'))->render();

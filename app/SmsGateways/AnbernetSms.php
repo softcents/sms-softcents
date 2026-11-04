@@ -37,6 +37,9 @@ class AnbernetSms
         $apiKey    = trim((string) ($config['api_key'] ?? $config['apikey'] ?? $config['key'] ?? ''));
         $transtype = trim((string) ($config['transtype'] ?? 'T')) ?: 'T';
         $senderId  = trim((string) ($senderid ?: ($config['senderid'] ?? $config['sender_id'] ?? '')));
+        if (preg_match('/^0\d+$/', $senderId)) {
+            $senderId = '88' . $senderId;
+        }
 
         $payload = [
             'account'    => $account,
@@ -155,6 +158,9 @@ class AnbernetSms
         $params = is_array($gateway->params) ? $gateway->params : (json_decode($gateway->params, true) ?: []);
 
         $callerId = trim((string) ($sender_name ?: ($params['senderid'] ?? $params['sender_id'] ?? '')));
+        if (preg_match('/^0\d+$/', $callerId)) {
+            $callerId = '88' . $callerId;
+        }
         if ($callerId === '') {
             Log::error('AnbernetSms::send_message - Missing sender ID');
             return false;

@@ -10,12 +10,16 @@
         @endcan
         <td>{{ $loop->iteration + ($senderids instanceof \Illuminate\Pagination\LengthAwarePaginator ? ($senderids->currentPage() - 1) * $senderids->perPage() : 0) }}</td>
         <td>
-            <div class="fw-bold">{{ optional($senderid->user)->name ?? 'N/A' }}</div>
-            @if(optional($senderid->user)->username)
-                <small class="text-primary font-monospace">@<span>{{ $senderid->user->username }}</span></small>
+            @if($senderid->user)
+                <div class="fw-bold">{{ $senderid->user->name }}</div>
+                @if($senderid->user->username)
+                    <small class="text-primary font-monospace">@<span>{{ $senderid->user->username }}</span></small>
+                @endif
+            @else
+                <span class="badge bg-light text-secondary border px-2 py-1" style="border-radius: 6px;"><i class="fas fa-inbox me-1"></i>{{ __('Unused') }}</span>
             @endif
         </td>
-        <td>{{ optional($senderid->user)->phone ?? 'N/A' }}</td>
+        <td>{{ optional($senderid->user)->phone ?? '-' }}</td>
         <td>
             <div class="d-flex align-items-center gap-1 flex-wrap">
                 <span class="fw-bold text-dark font-monospace" style="font-size: 13.5px;">{{ $senderid->sender }}</span>
@@ -23,9 +27,13 @@
                     <a href="javascript:void(0)" class="badge bg-info text-white text-decoration-none btn-view-assigned-users shadow-sm" data-sender="{{ $senderid->sender }}" title="{{ __('Given to :count users. Click to view all.', ['count' => $assignedCount]) }}" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; cursor: pointer;">
                         <i class="fas fa-users me-1"></i> {{ $assignedCount }} {{ __('Users') }}
                     </a>
+                @elseif($assignedCount == 1)
+                    <span class="badge bg-light text-dark border" style="font-size: 11px; padding: 3px 6px; border-radius: 12px;" title="{{ __('Given to 1 user') }}">
+                        <i class="fas fa-user me-1"></i> 1 User
+                    </span>
                 @else
-                    <span class="badge bg-light text-muted border" style="font-size: 11px; padding: 3px 6px; border-radius: 12px;" title="{{ __('Given to 1 user') }}">
-                        <i class="fas fa-user me-1"></i> 1
+                    <span class="badge bg-light text-secondary border" style="font-size: 11px; padding: 3px 6px; border-radius: 12px;" title="{{ __('Unused / Not given to any customer') }}">
+                        <i class="fas fa-user-slash me-1"></i> {{ __('Unused') }}
                     </span>
                 @endif
             </div>

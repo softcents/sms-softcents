@@ -1,3 +1,37 @@
+<style>
+@media (max-width: 999px) {
+    .header-button-group a.mobile-header-auth-btn {
+        display: inline-flex !important;
+        align-items: center;
+        text-decoration: none;
+    }
+    .header-button-group {
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+    }
+    .sidebar-btn {
+        margin-left: 4px !important;
+    }
+}
+@media (max-width: 480px) {
+    .header-button-group a.mobile-header-auth-btn {
+        padding: 5px 8px !important;
+        font-size: 12px !important;
+    }
+    .header-logo img {
+        max-width: 105px !important;
+    }
+}
+.mobile-sidebar-auth .btn {
+    text-transform: none;
+}
+.header-button-group .btn-outline-light:hover {
+    background: #ffffff !important;
+    color: #0d0d16 !important;
+}
+</style>
+
 <div class="overlay"></div>
 <!-- header-section -->
 <header class="header-section">
@@ -52,7 +86,7 @@
                         <img src="{{ asset(get_option('general')['front_logo'] ?? 'web/img/logo.svg') }}" alt="header-logo" />
                     </a>
 
-                    <button class="sidebar-close-btn">
+                    <button class="sidebar-close-btn" type="button" aria-label="Close Menu">
                         <i class="far fa-times" aria-hidden="true"></i>
                     </button>
                 </div>
@@ -65,12 +99,52 @@
                     <li><a href="{{ route('blogs.index') }}">{{ __('Blogs') }}</a></li>
                     <li><a href="{{ route('contact.index') }}">{{ __('Contact Us') }}</a></li>
                 </ul>
+
+                <!-- Mobile Drawer Auth Buttons -->
+                <div class="mobile-sidebar-auth mt-4 pt-3 border-top">
+                    @if (auth()->check())
+                        <a href="{{ route('login') }}" class="btn theme-btn w-100 py-2 d-flex align-items-center justify-content-center" style="border-radius: 8px;">
+                            <i class="fas fa-tachometer-alt me-2"></i> {{ __('Dashboard') }}
+                        </a>
+                    @else
+                        <div class="d-flex flex-column gap-2">
+                            <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center" style="border: 2px solid #4876FF; color: #4876FF; border-radius: 8px; font-size: 15px;">
+                                <i class="fas fa-sign-in-alt me-2"></i> {{ __('Login') }}
+                            </a>
+                            <a href="{{ route('register') }}" class="btn theme-btn w-100 py-2 fw-semibold d-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 15px;">
+                                <i class="fas fa-user-plus me-2"></i> {{ __('Register') }}
+                            </a>
+                        </div>
+                    @endif
+                </div>
             </div>
-            <div class="header-button-group">
-                <a href="{{ route('login') }}" class="btn theme-btn">
-                    {{ __('Get Start') }}
-                </a>
-                <button class="sidebar-btn">
+
+            <div class="header-button-group d-flex align-items-center gap-2">
+                @if (auth()->check())
+                    <a href="{{ route('login') }}" class="btn theme-btn header-nav-btn d-none d-md-inline-block">
+                        <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
+                    </a>
+                    <a href="{{ route('login') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center">
+                        <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
+                    </a>
+                @else
+                    <!-- Desktop buttons -->
+                    <a href="{{ route('login') }}" class="btn btn-outline-light header-nav-btn d-none d-md-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.4); color: #fff;">
+                        <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login') }}
+                    </a>
+                    <a href="{{ route('register') }}" class="btn theme-btn header-nav-btn d-none d-md-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px;">
+                        <i class="fas fa-user-plus me-1"></i> {{ __('Register') }}
+                    </a>
+
+                    <!-- Mobile top navbar buttons -->
+                    <a href="{{ route('login') }}" class="btn btn-outline-light mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.5); color: #fff; font-size: 13px; padding: 6px 12px; font-weight: 500;">
+                        <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login') }}
+                    </a>
+                    <a href="{{ route('register') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; font-size: 13px; padding: 6px 12px !important; font-weight: 600;">
+                        <i class="fas fa-user-plus me-1"></i> {{ __('Register') }}
+                    </a>
+                @endif
+                <button class="sidebar-btn ms-2" type="button" aria-label="Toggle Navigation">
                     <i class="fa fa-bars" aria-hidden="true"></i>
                 </button>
             </div>

@@ -214,12 +214,7 @@ function getEffectiveSmsRate($sender_id_info, $user)
         }
     }
 
-    // If sender ID has a specific custom rate assigned
-    if (!empty($sender_id_info->rate) && (float)$sender_id_info->rate > 0) {
-        return (float)$sender_id_info->rate;
-    }
-
-    // Default to user's assigned rates
+    // Default to user's assigned tariff rates (Selling Rate)
     if ($isMasking) {
         return (float)($user->masking_rate ?? 0.75);
     } else {

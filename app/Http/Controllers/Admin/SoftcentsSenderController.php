@@ -127,10 +127,9 @@ class SoftcentsSenderController extends Controller
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
             'gateway_id' => 'required',
-            'rate' => 'nullable|numeric|min:0'
         ]);
         
-        Senderid::create($request->all());
+        Senderid::create($request->except('rate'));
 
         return response()->json([
             'message' => __('Senderid created successfully'),
@@ -156,10 +155,9 @@ class SoftcentsSenderController extends Controller
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
             'gateway_id' => 'required',
-            'rate' => 'nullable|numeric|min:0'
         ]);
 
-        $senderid->update($request->all());
+        $senderid->update($request->except('rate'));
 
         return response()->json([
             'message' => __('Senderid updated successfully'),
@@ -254,7 +252,6 @@ class SoftcentsSenderController extends Controller
                     'phone' => optional($s->user)->phone ?? __('N/A'),
                     'email' => optional($s->user)->email ?? __('N/A'),
                     'gateway_name' => optional($s->gateway)->name ?? __('Unassigned'),
-                    'rate' => $s->rate > 0 ? '৳' . number_format((float) $s->rate, 4) : __('Default'),
                     'is_default' => (bool) $s->is_default,
                     'status' => (bool) $s->status,
                     'created_at' => $s->created_at ? $s->created_at->format('d M, Y') : '',

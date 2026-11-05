@@ -15,7 +15,7 @@ class ReportController extends Controller
     public function quickSms(Request $request)
     {
         $messages = Sms::with([
-                            'senderid:id,sender,type,rate',
+                            'senderid:id,sender,type',
                             'user:id,name,username,balance,allow_api',
                             'smsgateway:id,name'
                         ])
@@ -64,7 +64,7 @@ class ReportController extends Controller
     public function groupSms(Request $request)
     {
         $groups = Sms::with([
-                        'senderid:id,sender,type,rate',
+                        'senderid:id,sender,type',
                         'user:id,name,username,balance,allow_api',
                         'smsgateway:id,name',
                         'group:id,name'
@@ -117,7 +117,7 @@ class ReportController extends Controller
     public function campaigns(Request $request)
     {
         $campaign_sms = Sms::with([
-                            'senderid:id,sender,type,rate',
+                            'senderid:id,sender,type',
                             'user:id,name,username,balance,allow_api',
                             'smsgateway:id,name',
                             'campaign:id,name'

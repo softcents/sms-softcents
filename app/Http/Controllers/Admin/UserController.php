@@ -246,7 +246,6 @@ class UserController extends Controller
                         'sender' => $sender_id->sender,
                         'type' => $sender_id->type,
                         'gateway_id' => $sender_id->gateway_id ?? 0,
-                        'rate' => $sender_id->rate,
                     ]);
                 }
 

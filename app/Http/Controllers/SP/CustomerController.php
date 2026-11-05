@@ -106,7 +106,6 @@ class CustomerController extends Controller
                     'sender' => $defaultSender->sender,
                     'type' => $defaultSender->type,
                     'gateway_id' => $defaultSender->gateway_id ?? 0,
-                    'rate' => null,
                     'status' => true,
                 ]);
             }

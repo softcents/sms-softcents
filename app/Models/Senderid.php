@@ -18,8 +18,7 @@ class Senderid extends Model
         'type',
         'status',
         'is_default',
-        'gateway_id',
-        'rate'
+        'gateway_id'
     ];
 
     public function user(): BelongsTo

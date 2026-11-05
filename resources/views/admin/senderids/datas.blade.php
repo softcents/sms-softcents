@@ -47,11 +47,6 @@
             </div>
         </td>
         <td>
-            <span class="text-muted fw-semibold">
-                {{ $senderid->rate > 0 ? '৳' . number_format((float)$senderid->rate, 4) : __('Default') }}
-            </span>
-        </td>
-        <td>
             <div class="badge bg-{{ $senderid->is_default == 1 ? 'success' : 'warning' }}">
                 {{ $senderid->is_default == 1 ? __('Yes') : __('No') }}
             </div>

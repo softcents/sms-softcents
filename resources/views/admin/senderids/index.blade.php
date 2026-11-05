@@ -144,7 +144,6 @@
                                 <th>{{ __('Sender Id') }}</th>
                                 <th>{{ __('Assigned Gateway') }}</th>
                                 <th>{{ __('Type') }}</th>
-                                <th>{{ __('Rate') }}</th>
                                 <th>{{ __('Is Default') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
@@ -290,7 +289,6 @@
                                     <th>{{ __('Customer') }}</th>
                                     <th>{{ __('Phone / Email') }}</th>
                                     <th>{{ __('Assigned Gateway') }}</th>
-                                    <th>{{ __('Rate') }}</th>
                                     <th>{{ __('Status') }}</th>
                                 </tr>
                             </thead>
@@ -523,7 +521,6 @@ $(document).ready(function () {
                         '<td><div class="fw-bold">' + u.user_name + '</div>' + usernameTag + '</td>' +
                         '<td><div>' + u.phone + '</div><small class="text-muted">' + u.email + '</small></td>' +
                         '<td><span class="badge px-2 py-1" style="background-color: #4e73df; color: #fff; font-size: 11.5px;"><i class="fas fa-network-wired me-1" style="font-size: 9px;"></i>' + u.gateway_name + '</span></td>' +
-                        '<td><span class="text-muted fw-semibold">' + u.rate + '</span></td>' +
                         '<td>' + statusBadge + '</td>' +
                         '</tr>';
                     $tbody.append(rowHtml);

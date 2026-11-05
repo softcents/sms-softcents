@@ -8,19 +8,21 @@
     .header-button-group {
         display: flex !important;
         align-items: center !important;
-        gap: 6px !important;
+        gap: 8px !important;
     }
     .sidebar-btn {
-        margin-left: 4px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
 }
 @media (max-width: 480px) {
     .header-button-group a.mobile-header-auth-btn {
-        padding: 5px 8px !important;
-        font-size: 12px !important;
+        padding: 6px 12px !important;
+        font-size: 13px !important;
     }
     .header-logo img {
-        max-width: 105px !important;
+        max-width: 115px !important;
     }
 }
 .mobile-sidebar-auth .btn {
@@ -100,7 +102,7 @@
                     <li><a href="{{ route('contact.index') }}">{{ __('Contact Us') }}</a></li>
                 </ul>
 
-                <!-- Mobile Drawer Auth Buttons -->
+                <!-- Mobile Drawer Auth Buttons (Inside 3-dot Menu) -->
                 <div class="mobile-sidebar-auth mt-4 pt-3 border-top">
                     @if (auth()->check())
                         <a href="{{ route('login') }}" class="btn theme-btn w-100 py-2 d-flex align-items-center justify-content-center" style="border-radius: 8px;">
@@ -108,23 +110,25 @@
                         </a>
                     @else
                         <div class="d-flex flex-column gap-2">
-                            <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center" style="border: 2px solid #4876FF; color: #4876FF; border-radius: 8px; font-size: 15px;">
-                                <i class="fas fa-sign-in-alt me-2"></i> {{ __('Login') }}
-                            </a>
                             <a href="{{ route('register') }}" class="btn theme-btn w-100 py-2 fw-semibold d-flex align-items-center justify-content-center" style="border-radius: 8px; font-size: 15px;">
                                 <i class="fas fa-user-plus me-2"></i> {{ __('Register') }}
+                            </a>
+                            <a href="{{ route('login') }}" class="btn btn-outline-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center" style="border: 2px solid #4876FF; color: #4876FF; border-radius: 8px; font-size: 15px;">
+                                <i class="fas fa-sign-in-alt me-2"></i> {{ __('Login') }}
                             </a>
                         </div>
                     @endif
                 </div>
             </div>
 
-            <div class="header-button-group d-flex align-items-center gap-2">
+            <div class="header-button-group d-flex align-items-center">
                 @if (auth()->check())
+                    <!-- Desktop button -->
                     <a href="{{ route('login') }}" class="btn theme-btn header-nav-btn d-none d-md-inline-block">
                         <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
                     </a>
-                    <a href="{{ route('login') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center">
+                    <!-- Mobile button -->
+                    <a href="{{ route('login') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; font-size: 13px; padding: 6px 12px !important;">
                         <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
                     </a>
                 @else
@@ -136,16 +140,14 @@
                         <i class="fas fa-user-plus me-1"></i> {{ __('Register') }}
                     </a>
 
-                    <!-- Mobile top navbar buttons -->
-                    <a href="{{ route('login') }}" class="btn btn-outline-light mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.5); color: #fff; font-size: 13px; padding: 6px 12px; font-weight: 500;">
+                    <!-- Mobile top navbar: Clean Login button -->
+                    <a href="{{ route('login') }}" class="btn btn-outline-light mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.6); color: #fff; font-size: 13px; padding: 6px 14px; font-weight: 600;">
                         <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login') }}
                     </a>
-                    <a href="{{ route('register') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; font-size: 13px; padding: 6px 12px !important; font-weight: 600;">
-                        <i class="fas fa-user-plus me-1"></i> {{ __('Register') }}
-                    </a>
                 @endif
-                <button class="sidebar-btn ms-2" type="button" aria-label="Toggle Navigation">
-                    <i class="fa fa-bars" aria-hidden="true"></i>
+                <!-- Mobile 3-dot Menu Toggle Button -->
+                <button class="sidebar-btn ms-2" type="button" aria-label="Toggle Navigation" style="font-size: 20px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #ffffff;">
+                    <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                 </button>
             </div>
         </div>

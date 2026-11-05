@@ -259,7 +259,6 @@ class UserController extends Controller
                         ]);
                     }
                 }
-            }
 
             $data = [
                 'url' => route('login'),

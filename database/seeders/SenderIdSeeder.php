@@ -14,7 +14,7 @@ class SenderIdSeeder extends Seeder
     public function run(): void
     {
         $senderids = array(
-            array('user_id' => NULL,'sender' => '8809639228873','type' => 'Non-Masking','is_default' => 1,'status' => 1,'created_at' => now(),'updated_at' => now())
+            array('user_id' => NULL,'sender' => '8809639228873','type' => 'Non-Masking','is_default' => 0,'status' => 1,'created_at' => now(),'updated_at' => now())
         );
 
         Senderid::insert($senderids);

@@ -29,7 +29,6 @@ class ExpenseReportController extends Controller
             ->withQueryString();
 
         $senderids = Senderid::where('user_id', $user->id)
-            ->orWhere('is_default', 1)
             ->distinct()
             ->get(['id', 'sender']);
 

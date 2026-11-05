@@ -45,7 +45,6 @@ class ReportController extends Controller
 
         // Sender IDs for filter dropdown
         $senderids = Senderid::whereIn('user_id', $allDownlineIds)
-            ->orWhere('is_default', 1)
             ->distinct()
             ->get(['id', 'sender']);
 

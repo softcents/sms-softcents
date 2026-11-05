@@ -53,8 +53,7 @@ class SoftcentsCampaignController extends Controller
         $campaigns = Campaign::latest()->get();
         $senderids = Senderid::where('user_id', auth()->id())
             ->where('status', true)
-            ->orderByDesc('is_default')
-            ->latest()
+            ->latest('id')
             ->get();
         return view('users.campaigns.create', compact('senderids', 'campaigns'));
     }
@@ -191,8 +190,7 @@ class SoftcentsCampaignController extends Controller
         $campaigns = Campaign::latest()->get();
         $senderids = Senderid::where('user_id', auth()->id())
             ->where('status', true)
-            ->orderByDesc('is_default')
-            ->latest()
+            ->latest('id')
             ->get();
 
         return view('users.campaigns.edit', compact('sms', 'senderids', 'campaigns'));

@@ -132,17 +132,6 @@ class User extends Authenticatable
                 $model->username = $candidate;
             }
         });
-
-        static::created(function ($model) {
-            Senderid::firstOrCreate([
-                'user_id'    => $model->id,
-                'sender'     => '8809639228873',
-            ], [
-                'gateway_id' => 31,
-                'status'     => true,
-                'is_default' => true,
-            ]);
-        });
     }
 
     /**

@@ -44,7 +44,6 @@
                                 <th>{{ __('Customer Phone') }}</th>
                                 <th>{{ __('Sender Id') }}</th>
                                 <th>{{ __('Type') }}</th>
-                                <th>{{ __('Is Default') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
                             </tr>

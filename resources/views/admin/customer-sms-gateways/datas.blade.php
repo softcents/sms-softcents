@@ -19,11 +19,6 @@
                 {{ $senderid->type }}
             </div>
         </td>
-        <td>
-            <div class="badge bg-{{ $senderid->is_default == 1 ? 'success' : 'warning' }}">
-                {{ $senderid->is_default == 1 ? 'Yes' : 'No' }}
-            </div>
-        </td>
         <td class="text-center w-150">
             @can('senderids-update')
                 <label class="switch">

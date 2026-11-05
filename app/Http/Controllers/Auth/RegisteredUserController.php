@@ -53,14 +53,6 @@ class RegisteredUserController extends Controller
             'client_secret' => $request->role == 'user' ? Str::uuid() : null,
         ]);
 
-        $sender_id = Senderid::where('is_default', 1)->first();
-
-        Senderid::create([
-            'user_id' => $user->id,
-            'sender' => $sender_id->sender,
-            'type' => $sender_id->type,
-        ]);
-
         // event(new Registered($user));
 
         $data = [

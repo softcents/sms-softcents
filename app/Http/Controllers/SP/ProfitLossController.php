@@ -37,7 +37,6 @@ class ProfitLossController extends Controller
             ->get();
 
         $senderids = Senderid::whereIn('user_id', $allDownlineIds)
-            ->orWhere('is_default', 1)
             ->distinct()
             ->get(['id', 'sender']);
 

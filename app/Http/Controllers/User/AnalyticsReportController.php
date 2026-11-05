@@ -29,7 +29,6 @@ class AnalyticsReportController extends Controller
             ->withQueryString();
 
         $senderids = Senderid::where('user_id', $userId)
-            ->orWhere('is_default', 1)
             ->distinct()
             ->get(['id', 'sender']);
 

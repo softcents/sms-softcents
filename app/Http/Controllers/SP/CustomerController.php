@@ -99,17 +99,6 @@ class CustomerController extends Controller
                 'client_secret' => Str::uuid(),
             ]);
 
-            $defaultSender = Senderid::where('is_default', 1)->first();
-            if ($defaultSender) {
-                Senderid::create([
-                    'user_id' => $customer->id,
-                    'sender' => $defaultSender->sender,
-                    'type' => $defaultSender->type,
-                    'gateway_id' => $defaultSender->gateway_id ?? 0,
-                    'status' => true,
-                ]);
-            }
-
             DB::commit();
         } catch (\Throwable $e) {
             DB::rollBack();

@@ -52,17 +52,6 @@
                                                 </div>
                                             </div>
                                             <div class="col-sm-6 mt-2">
-                                                <label>{{ __('Is Default') }}</label>
-                                                <div class="gpt-up-down-arrow position-relative">
-                                                    <select name="is_default" required="" class="form-control select-dropdown">
-                                                        <option value="">{{ __('Select One') }}</option>
-                                                        <option value="1">{{ __('Yes') }}</option>
-                                                        <option value="0">{{ __('No') }}</option>
-                                                    </select>
-                                                    <span></span>
-                                                </div>
-                                            </div>
-                                            <div class="col-sm-6 mt-2">
                                                 <label>{{ __('SMS Gateway') }}</label>
                                                 <div class="gpt-up-down-arrow position-relative">
                                                     <select name="gateway_id" required="" class="form-control select-dropdown">

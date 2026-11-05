@@ -24,8 +24,7 @@ class SoftcentsGroupSmsController extends Controller
         $groups = Group::where('user_id', auth()->id())->withCount('contacts')->latest()->get();
         $senderids = Senderid::where('user_id', auth()->id())
             ->where('status', true)
-            ->orderByDesc('is_default')
-            ->latest()
+            ->latest('id')
             ->get();
 
         return view('users.group-sms.index', compact('senderids', 'groups'));

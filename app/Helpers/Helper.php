@@ -214,11 +214,11 @@ function getEffectiveSmsRate($sender_id_info, $user)
         }
     }
 
-    // Default to user's assigned tariff rates (Selling Rate)
+    // User's assigned tariff rates (Selling Rate) - No hardcoded fallback
     if ($isMasking) {
-        return (float)($user->masking_rate ?? 0.75);
+        return (float)($user->masking_rate ?: 0);
     } else {
-        return (float)($user->non_masking_rate ?? 0.39);
+        return (float)($user->non_masking_rate ?: 0);
     }
 }
 

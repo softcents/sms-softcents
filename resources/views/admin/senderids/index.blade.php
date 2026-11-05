@@ -144,7 +144,6 @@
                                 <th>{{ __('Sender Id') }}</th>
                                 <th>{{ __('Assigned Gateway') }}</th>
                                 <th>{{ __('Type') }}</th>
-                                <th>{{ __('Is Default') }}</th>
                                 <th>{{ __('Status') }}</th>
                                 <th>{{ __('Action') }}</th>
                             </tr>

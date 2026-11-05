@@ -17,7 +17,6 @@ class Senderid extends Model
         'sender',
         'type',
         'status',
-        'is_default',
         'gateway_id'
     ];
 

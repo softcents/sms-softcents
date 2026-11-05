@@ -237,19 +237,7 @@ class UserController extends Controller
                 'white_label_favicon' => $request->white_label_favicon ? $this->upload($request, 'white_label_favicon') : null,
             ]);
 
-            if ($request->role == 'user') {
-                $sender_id = Senderid::where('is_default', 1)->first();
-
-                if ($sender_id) {
-                    Senderid::create([
-                        'user_id' => $user->id,
-                        'sender' => $sender_id->sender,
-                        'type' => $sender_id->type,
-                        'gateway_id' => $sender_id->gateway_id ?? 0,
-                    ]);
-                }
-
-                if ($plan ?? false) {
+            if ($plan ?? false) {
                     PlanSubscribe::create([
                         'plan_data' => $plan,
                         'status' => 'approved',

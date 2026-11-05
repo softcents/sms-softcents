@@ -469,7 +469,7 @@ class ProfitLossService
                             $row->id,
                             $row->created_at->format('Y-m-d H:i:s'),
                             $row->username ?? $row->user_name,
-                            $row->gateway_name ?? 'Default Gateway',
+                            $row->gateway_name ?? 'Gateway',
                             $row->sender_name ?? 'N/A',
                             $row->sender_type ?? 'Non-Masking',
                             $row->number,
@@ -503,7 +503,7 @@ class ProfitLossService
             ->leftJoin('smsgateways as gw', 'sms.smsgateway_id', '=', 'gw.id')
             ->selectRaw("
                 COALESCE(gw.id, 0) as gateway_id,
-                COALESCE(gw.name, 'Default / Unassigned') as gateway_name,
+                COALESCE(gw.name, 'Unassigned Gateway') as gateway_name,
                 gw.driver,
                 COALESCE(gw.non_masking_rate, {$defNM}) as non_masking_rate,
                 COALESCE(gw.masking_rate, {$defM}) as masking_rate,

@@ -412,9 +412,6 @@
                                                     <td>{{ $index + 1 }}</td>
                                                     <td>
                                                         <strong class="text-primary font-monospace">{{ $sid->sender }}</strong>
-                                                        @if($sid->is_default)
-                                                            <span class="badge bg-primary-subtle text-primary ms-1 small">{{ __('Default') }}</span>
-                                                        @endif
                                                     </td>
                                                     <td>
                                                         <span class="badge {{ stripos($sid->type, 'mask') !== false && stripos($sid->type, 'non') === false ? 'bg-info' : 'bg-secondary' }}">

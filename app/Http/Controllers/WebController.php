@@ -15,7 +15,7 @@ class WebController extends Controller
     {
         $page_data = get_option('manage-pages');
         $services = Service::whereStatus(1)->latest()->get();
-        $plans = Plan::whereStatus(1)->latest()->get();
+        $plans = Plan::whereStatus(1)->where('price', '>', 0)->orderBy('price', 'asc')->get();
         $testimonials = Testimonial::latest()->get();
         $faqs = Faq::latest()->get();
         $countries = [['name' => 'Bangladesh', 'code' => 'BD']];

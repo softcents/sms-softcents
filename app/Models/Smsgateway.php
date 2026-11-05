@@ -40,4 +40,9 @@ class Smsgateway extends Model
     {
         return $this->belongsTo(GatewayType::class, 'type_id');
     }
+
+    public function senderids()
+    {
+        return $this->hasMany(Senderid::class, 'gateway_id');
+    }
 }

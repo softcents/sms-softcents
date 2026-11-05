@@ -76,7 +76,7 @@
                                             </div>
                                             <div class="col-lg-6 mt-2">
                                                 <label>{{ __('Rate') }}</label>
-                                                <input type="number" name="rate" class="form-control" placeholder="{{ __('Enter rate') }}">
+                                                <input type="number" step="any" name="rate" class="form-control" placeholder="{{ __('Enter rate') }}">
                                             </div>
                                             <div class="col-sm-6 mt-2">
                                                 <label>{{ __('Status') }}</label>

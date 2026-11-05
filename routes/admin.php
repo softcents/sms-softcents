@@ -62,6 +62,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::post('senderids/status/{id}', [ADMIN\SoftcentsSenderController::class, 'status'])->name('senderids.status');
     Route::post('senderids/delete-all', [ADMIN\SoftcentsSenderController::class, 'deleteAll'])->name('senderids.delete-all');
     Route::post('senderids/filter', [ADMIN\SoftcentsSenderController::class, 'softcentsFilter'])->name('senderids.filter');
+    Route::post('senderids/assign-gateway', [ADMIN\SoftcentsSenderController::class, 'assignGateway'])->name('senderids.assign-gateway');
 
     // Send SMS
     //Route::resource('sms', ADMIN\SmsController::class)->except('show');

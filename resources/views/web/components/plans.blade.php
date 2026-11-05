@@ -117,7 +117,7 @@
                                 <i class="fas fa-shopping-cart me-1"></i> {{ __('Buy Now') }}
                             </a>
                             @else
-                            <a data-bs-toggle="modal" data-bs-target="#register-modal" class="btn {{ $isPopular ? 'pricing-plan-btn-primary' : 'pricing-plan-btn-outline' }} w-100 py-2 fw-bold rounded-pill text-uppercase" style="letter-spacing: 0.5px; font-size: 14px;">
+                            <a href="{{ route('register') }}" class="btn {{ $isPopular ? 'pricing-plan-btn-primary' : 'pricing-plan-btn-outline' }} w-100 py-2 fw-bold rounded-pill text-uppercase" style="letter-spacing: 0.5px; font-size: 14px;">
                                 <i class="fas fa-shopping-cart me-1"></i> {{ __('Buy Now') }}
                             </a>
                             @endif

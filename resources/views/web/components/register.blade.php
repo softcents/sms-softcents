@@ -39,6 +39,7 @@
                                     class="form-control" />
                             </div>
                             <input type="hidden" name="country" value="Bangladesh" />
+                            <input type="hidden" name="terms" value="1" />
                         </div>
 
                         <div class="offcanvas-footer mt-3 d-flex justify-content-center">

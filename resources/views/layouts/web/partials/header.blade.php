@@ -1,5 +1,34 @@
 <style>
+/* Hide mobile-only elements on desktop */
+@media (min-width: 1000px) {
+    .mobile-sidebar-auth {
+        display: none !important;
+    }
+    .sidebar-btn {
+        display: none !important;
+    }
+    .mobile-header-auth-btn {
+        display: none !important;
+    }
+}
+
+/* Mobile & Tablet view */
 @media (max-width: 999px) {
+    .mobile-sidebar-auth {
+        display: block !important;
+    }
+    .sidebar-btn {
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        font-size: 20px !important;
+        width: 38px !important;
+        height: 38px !important;
+        border-radius: 8px !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+    }
     .header-button-group a.mobile-header-auth-btn {
         display: inline-flex !important;
         align-items: center;
@@ -10,12 +39,8 @@
         align-items: center !important;
         gap: 8px !important;
     }
-    .sidebar-btn {
-        display: inline-flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
 }
+
 @media (max-width: 480px) {
     .header-button-group a.mobile-header-auth-btn {
         padding: 6px 12px !important;
@@ -25,6 +50,7 @@
         max-width: 115px !important;
     }
 }
+
 .mobile-sidebar-auth .btn {
     text-transform: none;
 }
@@ -102,8 +128,8 @@
                     <li><a href="{{ route('contact.index') }}">{{ __('Contact Us') }}</a></li>
                 </ul>
 
-                <!-- Mobile Drawer Auth Buttons (Inside 3-dot Menu) -->
-                <div class="mobile-sidebar-auth mt-4 pt-3 border-top">
+                <!-- Mobile Drawer Auth Buttons (Strictly Mobile Only) -->
+                <div class="mobile-sidebar-auth mt-4 pt-3 border-top d-block d-lg-none">
                     @if (auth()->check())
                         <a href="{{ route('login') }}" class="btn theme-btn w-100 py-2 d-flex align-items-center justify-content-center" style="border-radius: 8px;">
                             <i class="fas fa-tachometer-alt me-2"></i> {{ __('Dashboard') }}
@@ -124,29 +150,29 @@
             <div class="header-button-group d-flex align-items-center">
                 @if (auth()->check())
                     <!-- Desktop button -->
-                    <a href="{{ route('login') }}" class="btn theme-btn header-nav-btn d-none d-md-inline-block">
+                    <a href="{{ route('login') }}" class="btn theme-btn header-nav-btn d-none d-lg-inline-block">
                         <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
                     </a>
                     <!-- Mobile button -->
-                    <a href="{{ route('login') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; font-size: 13px; padding: 6px 12px !important;">
+                    <a href="{{ route('login') }}" class="btn theme-btn mobile-header-auth-btn d-inline-flex d-lg-none align-items-center" style="border-radius: 6px; font-size: 13px; padding: 6px 12px !important;">
                         <i class="fas fa-tachometer-alt me-1"></i> {{ __('Dashboard') }}
                     </a>
                 @else
                     <!-- Desktop buttons -->
-                    <a href="{{ route('login') }}" class="btn btn-outline-light header-nav-btn d-none d-md-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.4); color: #fff;">
+                    <a href="{{ route('login') }}" class="btn btn-outline-light header-nav-btn d-none d-lg-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.4); color: #fff;">
                         <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login') }}
                     </a>
-                    <a href="{{ route('register') }}" class="btn theme-btn header-nav-btn d-none d-md-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px;">
+                    <a href="{{ route('register') }}" class="btn theme-btn header-nav-btn d-none d-lg-inline-block px-3 py-2 fw-semibold" style="border-radius: 6px;">
                         <i class="fas fa-user-plus me-1"></i> {{ __('Register') }}
                     </a>
 
                     <!-- Mobile top navbar: Clean Login button -->
-                    <a href="{{ route('login') }}" class="btn btn-outline-light mobile-header-auth-btn d-inline-flex d-md-none align-items-center" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.6); color: #fff; font-size: 13px; padding: 6px 14px; font-weight: 600;">
+                    <a href="{{ route('login') }}" class="btn btn-outline-light mobile-header-auth-btn d-inline-flex d-lg-none align-items-center" style="border-radius: 6px; border: 1.5px solid rgba(255,255,255,0.6); color: #fff; font-size: 13px; padding: 6px 14px; font-weight: 600;">
                         <i class="fas fa-sign-in-alt me-1"></i> {{ __('Login') }}
                     </a>
                 @endif
-                <!-- Mobile 3-dot Menu Toggle Button -->
-                <button class="sidebar-btn ms-2" type="button" aria-label="Toggle Navigation" style="font-size: 20px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.1); color: #ffffff;">
+                <!-- Mobile 3-dot Menu Toggle Button (Strictly Mobile Only) -->
+                <button class="sidebar-btn ms-2 d-inline-flex d-lg-none" type="button" aria-label="Toggle Navigation">
                     <i class="fas fa-ellipsis-v" aria-hidden="true"></i>
                 </button>
             </div>

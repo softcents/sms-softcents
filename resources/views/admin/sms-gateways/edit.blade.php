@@ -73,10 +73,12 @@
                                             <div class="col-12">
                                                 <div class="row" id="input-container">
                                                     @foreach ($gateway->params ?? [] as $key => $param)
+                                                    @if (!in_array(strtolower($key), ['senderid', 'sender_id', 'sender']))
                                                     <div class="col-sm-6 mb-2">
                                                         <label>{{ ucfirst($key) }}</label>
                                                         <input type="text" name="params[{{ $key }}]" value="{{ $param }}" class="form-control" placeholder="{{ ucfirst($key) }}">
                                                     </div>
+                                                    @endif
                                                     @endforeach
                                                 </div>
                                             </div>

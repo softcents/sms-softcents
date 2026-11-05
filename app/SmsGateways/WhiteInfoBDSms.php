@@ -23,14 +23,9 @@ class WhiteInfoBDSms
             $number = $cleanNumber;
         }
 
-        // Ensure sender ID is valid for WhiteInfoBD account (8809639228873 or 09639900454)
-        $validSenders = ['8809639228873', '09639900454'];
+        // Clean sender ID
         $cleanSender = preg_replace('/[^0-9]/', '', (string) $senderid);
-        if (!in_array($cleanSender, $validSenders)) {
-            $senderid = '8809639228873';
-        } else {
-            $senderid = $cleanSender;
-        }
+        $senderid = !empty($cleanSender) ? $cleanSender : (string) $senderid;
 
         $payload = [
             'sender_id' => $senderid,
@@ -81,13 +76,15 @@ class WhiteInfoBDSms
     ): bool {
         $params = is_array($gateway->params) ? $gateway->params : json_decode($gateway->params, true);
 
-        $senderId = trim((string) ($sender_name ?: ($params['sender_id'] ?? '')));
-        $validSenders = ['8809639228873', '09639900454'];
+        $senderId = trim((string) $sender_name);
         $cleanSender = preg_replace('/[^0-9]/', '', $senderId);
-        if (!in_array($cleanSender, $validSenders)) {
-            $senderId = '8809639228873';
-        } else {
+        if (!empty($cleanSender)) {
             $senderId = $cleanSender;
+        }
+
+        if (empty($senderId)) {
+            Log::error('WhiteInfoBDSms::send_message - Missing sender ID');
+            return false;
         }
 
         $apiurl = $params['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages';

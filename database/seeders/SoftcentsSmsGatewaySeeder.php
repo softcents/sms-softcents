@@ -72,7 +72,7 @@ class SoftcentsSmsGatewaySeeder extends Seeder
                 'status' => '1',
                 'driver' => 'whiteinfobd',
                 'namespace' => 'App\\SmsGateways\\WhiteInfoBDSms',
-                'params' => '{"api_url":"####","api_key":"####","sender_id":"####"}',
+                'params' => '{"api_url":"####","api_key":"####"}',
                 'non_masking_rate' => 0.2250,
                 'masking_rate' => 0.4800,
                 'created_at' => now(),

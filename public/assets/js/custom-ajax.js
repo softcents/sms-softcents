@@ -315,6 +315,9 @@ $('.gateway-type').on('change', function() {
     let inputHtml = '';
 
     $.each(names, function(key, name) {
+        if (!name || ['senderid', 'sender_id', 'sender'].includes(name.toLowerCase())) {
+            return;
+        }
         var label = labels[key] || '';
 
         inputHtml += `

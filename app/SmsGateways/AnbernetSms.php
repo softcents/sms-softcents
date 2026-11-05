@@ -36,7 +36,7 @@ class AnbernetSms
         $token     = trim((string) ($config['token'] ?? ''));
         $apiKey    = trim((string) ($config['api_key'] ?? $config['apikey'] ?? $config['key'] ?? ''));
         $transtype = trim((string) ($config['transtype'] ?? 'T')) ?: 'T';
-        $senderId  = trim((string) ($senderid ?: ($config['senderid'] ?? $config['sender_id'] ?? '')));
+        $senderId  = trim((string) $senderid);
         if (preg_match('/^0\d+$/', $senderId)) {
             $senderId = '88' . $senderId;
         }
@@ -157,7 +157,7 @@ class AnbernetSms
     ): bool {
         $params = is_array($gateway->params) ? $gateway->params : (json_decode($gateway->params, true) ?: []);
 
-        $callerId = trim((string) ($sender_name ?: ($params['senderid'] ?? $params['sender_id'] ?? '')));
+        $callerId = trim((string) $sender_name);
         if (preg_match('/^0\d+$/', $callerId)) {
             $callerId = '88' . $callerId;
         }

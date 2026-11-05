@@ -67,7 +67,12 @@ class SmsGatewayController extends Controller
 
         $type = GatewayType::findOrFail($request->type_id);
 
-        Smsgateway::create($request->all() + [
+        $params = (array) $request->input('params', []);
+        unset($params['senderid'], $params['sender_id'], $params['sender']);
+        $data = $request->all();
+        $data['params'] = $params;
+
+        Smsgateway::create($data + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
             'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : 0.2400,
@@ -113,7 +118,12 @@ class SmsGatewayController extends Controller
         $gateway = Smsgateway::findOrFail($id);
         $type = GatewayType::findOrFail($request->type_id);
 
-        $gateway->update($request->all() + [
+        $params = (array) $request->input('params', []);
+        unset($params['senderid'], $params['sender_id'], $params['sender']);
+        $data = $request->all();
+        $data['params'] = $params;
+
+        $gateway->update($data + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
             'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : ($gateway->non_masking_rate ?? 0.2400),

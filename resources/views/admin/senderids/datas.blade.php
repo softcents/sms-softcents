@@ -1,4 +1,7 @@
 @forelse($senderids as $senderid)
+    @php
+        $assignedCount = isset($senderUserCounts) && isset($senderUserCounts[$senderid->sender]) ? $senderUserCounts[$senderid->sender] : 1;
+    @endphp
     <tr>
         @can('senderids-delete')
         <td class="checkbox text-start">
@@ -14,7 +17,18 @@
         </td>
         <td>{{ optional($senderid->user)->phone ?? 'N/A' }}</td>
         <td>
-            <span class="fw-semibold text-dark">{{ $senderid->sender }}</span>
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+                <span class="fw-bold text-dark font-monospace" style="font-size: 13.5px;">{{ $senderid->sender }}</span>
+                @if($assignedCount > 1)
+                    <a href="javascript:void(0)" class="badge bg-info text-white text-decoration-none btn-view-assigned-users shadow-sm" data-sender="{{ $senderid->sender }}" title="{{ __('Given to :count users. Click to view all.', ['count' => $assignedCount]) }}" style="font-size: 11px; padding: 4px 8px; border-radius: 12px; cursor: pointer;">
+                        <i class="fas fa-users me-1"></i> {{ $assignedCount }} {{ __('Users') }}
+                    </a>
+                @else
+                    <span class="badge bg-light text-muted border" style="font-size: 11px; padding: 3px 6px; border-radius: 12px;" title="{{ __('Given to 1 user') }}">
+                        <i class="fas fa-user me-1"></i> 1
+                    </span>
+                @endif
+            </div>
         </td>
         <td>
             @if($senderid->gateway)
@@ -60,6 +74,12 @@
                     <i class="far fa-ellipsis-v"></i>
                 </button>
                 <ul class="dropdown-menu">
+                    <li>
+                        <a href="javascript:void(0)" class="btn-view-assigned-users" data-sender="{{ $senderid->sender }}">
+                            <i class="fal fa-users text-info"></i>
+                            {{ __('Assigned Users') }} ({{ $assignedCount }})
+                        </a>
+                    </li>
                     @can('senderids-update')
                     <li>
                         <a href="javascript:void(0)" class="btn-quick-change-gateway" data-id="{{ $senderid->id }}" data-sender="{{ $senderid->sender }}" data-gateway-id="{{ $senderid->gateway_id ?? 0 }}" data-gateway-name="{{ optional($senderid->gateway)->name ?? __('Unassigned') }}">

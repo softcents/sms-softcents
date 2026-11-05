@@ -77,9 +77,15 @@ class SoftcentsSenderController extends Controller
 
         $senderids = $query->paginate($perPage)->withQueryString();
 
+        // Calculate how many distinct users each sender on this page is assigned to
+        $senderUserCounts = Senderid::select('sender', \Illuminate\Support\Facades\DB::raw('count(distinct user_id) as user_count'))
+            ->whereIn('sender', $senderids->pluck('sender')->unique()->filter())
+            ->groupBy('sender')
+            ->pluck('user_count', 'sender');
+
         if ($request->ajax()) {
             return response()->json([
-                'data' => view('admin.senderids.datas', compact('senderids'))->render(),
+                'data' => view('admin.senderids.datas', compact('senderids', 'senderUserCounts'))->render(),
                 'pagination' => (string) $senderids->links('pagination::bootstrap-5'),
                 'total' => $senderids->total(),
             ]);
@@ -87,6 +93,7 @@ class SoftcentsSenderController extends Controller
 
         return view('admin.senderids.index', compact(
             'senderids',
+            'senderUserCounts',
             'gateways',
             'gatewayList',
             'totalSenderidsCount',
@@ -221,6 +228,43 @@ class SoftcentsSenderController extends Controller
                 'gateway' => $gatewayName
             ]),
             'redirect' => route('admin.senderids.index')
+        ]);
+    }
+
+    /**
+     * Get list of all users assigned to a specific sender ID
+     */
+    public function assignedUsers(Request $request)
+    {
+        $sender = trim((string) $request->get('sender'));
+        if ($sender === '') {
+            return response()->json(['error' => __('Sender ID is required')], 422);
+        }
+
+        $records = Senderid::with(['user', 'gateway'])
+            ->where('sender', $sender)
+            ->latest('id')
+            ->get()
+            ->map(function ($s) {
+                return [
+                    'id' => $s->id,
+                    'user_id' => $s->user_id,
+                    'user_name' => optional($s->user)->name ?? __('N/A'),
+                    'username' => optional($s->user)->username ?? '',
+                    'phone' => optional($s->user)->phone ?? __('N/A'),
+                    'email' => optional($s->user)->email ?? __('N/A'),
+                    'gateway_name' => optional($s->gateway)->name ?? __('Unassigned'),
+                    'rate' => $s->rate > 0 ? '৳' . number_format((float) $s->rate, 4) : __('Default'),
+                    'is_default' => (bool) $s->is_default,
+                    'status' => (bool) $s->status,
+                    'created_at' => $s->created_at ? $s->created_at->format('d M, Y') : '',
+                ];
+            });
+
+        return response()->json([
+            'sender' => $sender,
+            'total_users' => $records->count(),
+            'users' => $records,
         ]);
     }
 }

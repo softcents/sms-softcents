@@ -260,6 +260,53 @@
             </div>
         </div>
     </div>
+
+    <!-- View Assigned Users Modal -->
+    <div class="modal fade" id="assigned-users-modal" tabindex="-1" aria-labelledby="assignedUsersModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom py-3" style="background-color: #f8f9fc;">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-users text-primary fa-lg"></i>
+                        <div>
+                            <h5 class="modal-title fw-bold mb-0" id="assignedUsersModalLabel" style="font-size: 16px;">
+                                {{ __('Assigned Customers for') }}: <span class="text-primary font-monospace" id="modal-assigned-sender-title">-</span>
+                            </h5>
+                            <small class="text-muted">{{ __('Total assigned customers') }}: <strong id="modal-assigned-total-badge" class="text-primary">0</strong></small>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="assigned-users-loading" class="text-center py-5">
+                        <i class="fas fa-spinner fa-spin fa-2x text-primary mb-2"></i>
+                        <p class="text-muted mb-0">{{ __('Loading assigned customers...') }}</p>
+                    </div>
+                    <div id="assigned-users-table-container" class="responsive-table d-none" style="max-height: 420px; overflow-y: auto;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light sticky-top" style="font-size: 12.5px;">
+                                <tr>
+                                    <th style="width: 40px;">#</th>
+                                    <th>{{ __('Customer') }}</th>
+                                    <th>{{ __('Phone / Email') }}</th>
+                                    <th>{{ __('Assigned Gateway') }}</th>
+                                    <th>{{ __('Rate') }}</th>
+                                    <th>{{ __('Status') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assigned-users-tbody" style="font-size: 13px;"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer border-top py-2 px-4 justify-content-between" style="background-color: #f8f9fc;">
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btn-filter-main-table-by-sender">
+                        <i class="fas fa-filter me-1"></i> {{ __('Filter in Main Table') }}
+                    </button>
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">{{ __('Close') }}</button>
+                </div>
+            </div>
+        </div>
+    </div>
 @endpush
 
 @push('js')
@@ -430,6 +477,72 @@ $(document).ready(function () {
                 toastr.error(msg);
             }
         });
+    });
+
+    // View Assigned Users Modal
+    let currentModalSender = '';
+    $(document).on('click', '.btn-view-assigned-users', function (e) {
+        e.preventDefault();
+        const sender = $(this).data('sender');
+        currentModalSender = sender;
+
+        $('#modal-assigned-sender-title').text(sender);
+        $('#modal-assigned-total-badge').text('...');
+        $('#assigned-users-loading').removeClass('d-none');
+        $('#assigned-users-table-container').addClass('d-none');
+        $('#assigned-users-tbody').empty();
+
+        $('#assigned-users-modal').modal('show');
+
+        $.ajax({
+            url: '{{ route("admin.senderids.assigned-users") }}',
+            type: 'GET',
+            data: { sender: sender },
+            success: function (res) {
+                $('#assigned-users-loading').addClass('d-none');
+                $('#assigned-users-table-container').removeClass('d-none');
+                $('#modal-assigned-total-badge').text(res.total_users || 0);
+
+                const $tbody = $('#assigned-users-tbody');
+                $tbody.empty();
+
+                if (!res.users || res.users.length === 0) {
+                    $tbody.append('<tr><td colspan="6" class="text-center py-4 text-muted">{{ __("No customers found.") }}</td></tr>');
+                    return;
+                }
+
+                res.users.forEach(function (u, idx) {
+                    const statusBadge = u.status
+                        ? '<span class="badge bg-success" style="font-size: 11px;">{{ __("Active") }}</span>'
+                        : '<span class="badge bg-danger" style="font-size: 11px;">{{ __("Deactive") }}</span>';
+                    
+                    const usernameTag = u.username ? '<small class="text-primary font-monospace d-block">@' + u.username + '</small>' : '';
+
+                    const rowHtml = '<tr>' +
+                        '<td>' + (idx + 1) + '</td>' +
+                        '<td><div class="fw-bold">' + u.user_name + '</div>' + usernameTag + '</td>' +
+                        '<td><div>' + u.phone + '</div><small class="text-muted">' + u.email + '</small></td>' +
+                        '<td><span class="badge px-2 py-1" style="background-color: #4e73df; color: #fff; font-size: 11.5px;"><i class="fas fa-network-wired me-1" style="font-size: 9px;"></i>' + u.gateway_name + '</span></td>' +
+                        '<td><span class="text-muted fw-semibold">' + u.rate + '</span></td>' +
+                        '<td>' + statusBadge + '</td>' +
+                        '</tr>';
+                    $tbody.append(rowHtml);
+                });
+            },
+            error: function () {
+                $('#assigned-users-loading').addClass('d-none');
+                toastr.error('{{ __("Failed to load assigned customers.") }}');
+            }
+        });
+    });
+
+    // "Filter in Main Table" button from Assigned Users Modal
+    $('#btn-filter-main-table-by-sender').on('click', function () {
+        if (!currentModalSender) return;
+        $('#assigned-users-modal').modal('hide');
+        $('.searchInput').val(currentModalSender);
+        $('#filter-gateway-select').val('');
+        reloadSenderIds();
     });
 });
 </script>

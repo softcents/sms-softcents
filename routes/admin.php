@@ -58,6 +58,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::post('campaigns/filter', [ADMIN\SoftcentsCampaignController::class, 'softcentsFilter'])->name('campaigns.filter');
 
     // Sender Ids
+    Route::get('senderids/assigned-users', [ADMIN\SoftcentsSenderController::class, 'assignedUsers'])->name('senderids.assigned-users');
     Route::resource('senderids', ADMIN\SoftcentsSenderController::class)->except('show');
     Route::post('senderids/status/{id}', [ADMIN\SoftcentsSenderController::class, 'status'])->name('senderids.status');
     Route::post('senderids/delete-all', [ADMIN\SoftcentsSenderController::class, 'deleteAll'])->name('senderids.delete-all');

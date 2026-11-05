@@ -72,11 +72,6 @@
                             <span class="fs-2 fw-bolder text-primary">{{ currency_format($plan->price) }}</span>
                             <span class="text-muted small d-block">/ {{ str_replace("_", " ", $plan->duration) }}</span>
                         </div>
-
-                        <!-- SMS Volume Badge -->
-                        <div class="sms-volume-badge mt-3 py-2 px-3 rounded-pill d-inline-flex align-items-center justify-content-center" style="background: {{ $isPopular ? 'linear-gradient(135deg, #4876FF, #2563eb)' : '#eef2ff' }}; color: {{ $isPopular ? '#ffffff' : '#4876FF' }}; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.3px; width: 88%;">
-                            <i class="fas fa-sms me-2 fs-5"></i> {{ number_format($plan->total_sms) }} SMS
-                        </div>
                     </div>
 
                     <div class="card-body px-4 py-3 d-flex flex-column flex-grow-1">

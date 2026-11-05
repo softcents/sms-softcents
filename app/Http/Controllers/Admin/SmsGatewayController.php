@@ -70,7 +70,7 @@ class SmsGatewayController extends Controller
         Smsgateway::create($request->all() + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
-            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : 0.2000,
+            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : 0.2400,
             'masking_rate' => $request->filled('masking_rate') ? $request->masking_rate : 0.4500,
         ]);
 
@@ -116,7 +116,7 @@ class SmsGatewayController extends Controller
         $gateway->update($request->all() + [
             'driver' => $type->driver,
             'namespace' => $type->namespace,
-            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : ($gateway->non_masking_rate ?? 0.2000),
+            'non_masking_rate' => $request->filled('non_masking_rate') ? $request->non_masking_rate : ($gateway->non_masking_rate ?? 0.2400),
             'masking_rate' => $request->filled('masking_rate') ? $request->masking_rate : ($gateway->masking_rate ?? 0.4500),
         ]);
 

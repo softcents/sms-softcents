@@ -109,7 +109,17 @@
 
         {{-- 14. Channel --}}
         <td>
-            <span class="fw-semibold">{{ optional($campaign->smsgateway)->name ?? 'Direct Gateway' }}</span>
+            @php
+                $gw = $campaign->smsgateway ?: optional($campaign->senderid)->gateway;
+                $isMask = (stripos(optional($campaign->senderid)->type ?? '', 'masking') !== false && stripos(optional($campaign->senderid)->type ?? '', 'non') === false);
+                $gwRate = $gw ? ($isMask ? ($gw->masking_rate ?: 0.45) : ($gw->non_masking_rate ?: 0.24)) : ($isMask ? 0.45 : 0.24);
+            @endphp
+            <div class="d-flex flex-column">
+                <span class="fw-semibold">{{ $gw->name ?? 'Direct Gateway' }}</span>
+                <small class="text-muted" title="{{ __('Gateway Purchase Rate') }}">
+                    <i class="fas fa-shopping-cart fa-xs me-1 text-primary"></i>৳{{ number_format((float)$gwRate, 4) }}
+                </small>
+            </div>
         </td>
 
         {{-- 15. Submit Time --}}

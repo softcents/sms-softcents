@@ -60,7 +60,7 @@
 
                                             <div class="col-sm-6 mb-2">
                                                 <label class="fw-bold text-primary">{{ __('Non-Masking Purchase Rate (BDT)') }}</label>
-                                                <input type="number" step="0.0001" min="0" name="non_masking_rate" value="0.2000" class="form-control" placeholder="0.2000" required>
+                                                <input type="number" step="0.0001" min="0" name="non_masking_rate" value="0.2400" class="form-control" placeholder="0.2400" required>
                                                 <small class="text-muted">{{ __('Wholesale cost per non-masking SMS from this gateway provider') }}</small>
                                             </div>
 

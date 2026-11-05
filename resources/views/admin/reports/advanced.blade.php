@@ -690,7 +690,17 @@
                                 </td>
                                 <td class="fw-bold text-success">৳{{ number_format($sms->charge ?? 0, 2) }}</td>
                                 <td>
-                                    <span class="fw-semibold">{{ optional($sms->smsgateway)->name ?? 'Direct Gateway' }}</span>
+                                    @php
+                                        $gw = $sms->smsgateway ?: optional($sms->senderid)->gateway;
+                                        $isMask = (stripos(optional($sms->senderid)->type ?? '', 'masking') !== false && stripos(optional($sms->senderid)->type ?? '', 'non') === false);
+                                        $gwRate = $gw ? ($isMask ? ($gw->masking_rate ?: 0.45) : ($gw->non_masking_rate ?: 0.24)) : ($isMask ? 0.45 : 0.24);
+                                    @endphp
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-semibold">{{ $gw->name ?? 'Direct Gateway' }}</span>
+                                        <small class="text-muted" title="{{ __('Gateway Purchase Rate') }}">
+                                            <i class="fas fa-shopping-cart fa-xs me-1 text-primary"></i>৳{{ number_format((float)$gwRate, 4) }}
+                                        </small>
+                                    </div>
                                 </td>
                                 <td>
                                     @if(in_array($sms->status, ['success', 'delivered']))

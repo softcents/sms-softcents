@@ -15,7 +15,7 @@ class ProfitLossService
     /**
      * Default wholesale cost rates.
      */
-    const DEFAULT_GATEWAY_NON_MASKING = 0.20;
+    const DEFAULT_GATEWAY_NON_MASKING = 0.24;
     const DEFAULT_GATEWAY_MASKING = 0.45;
     const DEFAULT_SP_NON_MASKING = 0.28;
     const DEFAULT_SP_MASKING = 0.55;

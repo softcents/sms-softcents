@@ -33,7 +33,7 @@ class TariffController extends Controller
         $users = $query->latest()->paginate(20)->withQueryString();
 
         // Platform wholesale costs
-        $gwNonMasking = (float) Smsgateway::where('status', 1)->avg('non_masking_rate') ?: 0.20;
+        $gwNonMasking = (float) Smsgateway::where('status', 1)->avg('non_masking_rate') ?: 0.24;
         $gwMasking = (float) Smsgateway::where('status', 1)->avg('masking_rate') ?: 0.45;
 
         // Statistics

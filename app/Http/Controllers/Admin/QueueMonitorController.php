@@ -245,9 +245,10 @@ class QueueMonitorController extends Controller
 
         $gw = $sms->smsgateway;
         if ($gw) {
+            $senderStr = $sms->senderid ? $sms->senderid->sender : $sms->senderid_id;
             $config = [
                 'driver'   => $gw->driver,
-                'senderid' => $sms->senderid_id,
+                'senderid' => $senderStr,
                 'apiurl'   => $gw->api_url,
                 'apikey'   => $gw->api_key,
             ];

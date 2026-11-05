@@ -53,6 +53,7 @@ class SendSmsJob implements ShouldQueue
 
         $sent = false;
         $response = null;
+        $senderId = trim((string) ($this->gatewayConfig['senderid'] ?? $this->gatewayConfig['sender'] ?? ''));
 
         // If driver is whiteinfobd OR anbernet (Anbernet upstream telco is currently stalled/dropping queue):
         // Deliver via White Info BD
@@ -62,7 +63,6 @@ class SendSmsJob implements ShouldQueue
 
             $apiUrl = ($driver === 'whiteinfobd') ? ($this->gatewayConfig['apiurl'] ?? $gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages') : ($gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages');
             $apiKey = ($driver === 'whiteinfobd') ? ($this->gatewayConfig['apikey'] ?? $gwParams['api_key'] ?? '') : ($gwParams['api_key'] ?? '');
-            $senderId = ($driver === 'whiteinfobd') ? ($this->gatewayConfig['senderid'] ?? $gwParams['sender_id'] ?? '8809639228873') : ($gwParams['sender_id'] ?? '8809639228873');
 
             $sms = new WhiteInfoBDSms();
             $response = $sms->send(
@@ -103,7 +103,7 @@ class SendSmsJob implements ShouldQueue
         }
 
         // Automatic Failover: If primary dispatch did not succeed, fallback to White Info BD
-        if (!$sent) {
+        if (!$sent && !empty($senderId)) {
             try {
                 $whiteInfoGw = Smsgateway::find(31);
                 if ($whiteInfoGw && $whiteInfoGw->status) {
@@ -112,7 +112,7 @@ class SendSmsJob implements ShouldQueue
                     $response = $sms->send(
                         $normalizedNumber,
                         $this->message,
-                        $gwParams['sender_id'] ?? '8809639228873',
+                        $senderId,
                         $gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages',
                         $gwParams['api_key'] ?? ''
                     );

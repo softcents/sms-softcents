@@ -183,7 +183,7 @@ function sendMessage($numbers, $contents, Senderid $sender)
     // Automatic Failover: White Info BD (Gateway 31)
     $fallbackGateway = \App\Models\Smsgateway::find(31);
     if ($fallbackGateway && $fallbackGateway->status) {
-        $response = \App\SmsGateways\WhiteInfoBDSms::send_message($fallbackGateway, $numbers, $contents, '8809639228873');
+        $response = \App\SmsGateways\WhiteInfoBDSms::send_message($fallbackGateway, $numbers, $contents, $sender->sender);
         if ($response) {
             session()->put('gateway_id', $fallbackGateway->id);
             return $response;

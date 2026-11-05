@@ -15,7 +15,7 @@
     justify-content: center;
 }
 .terms-card-container {
-    max-width: 900px;
+    max-width: 860px;
     width: 100%;
     background: #ffffff;
     border-radius: 16px;
@@ -25,14 +25,15 @@
 .terms-header {
     background: linear-gradient(135deg, #055DD6 0%, #0d9aff 100%);
     color: #ffffff;
-    padding: 35px 30px 25px;
+    padding: 30px 25px 22px;
     text-align: center;
 }
 .step-nav {
     display: flex;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
     margin-top: 15px;
+    flex-wrap: wrap;
 }
 .step-badge {
     padding: 6px 18px;
@@ -54,7 +55,7 @@
     border: 1px solid #e2e8f0;
     border-radius: 10px;
     padding: 16px 20px;
-    margin-bottom: 15px;
+    margin-bottom: 14px;
     transition: all 0.2s ease;
 }
 .term-item:hover {
@@ -100,31 +101,75 @@
     padding: 22px;
     margin-top: 25px;
 }
-.form-section-wrapper {
-    max-width: 520px;
-    margin: 0 auto;
+
+/* Step 2 Form Responsive Styling */
+.registration-form-box {
+    width: 100%;
+    max-width: 100%;
 }
-.mybazar-login-section .login-wrapper .input-group {
+.custom-form-control {
+    height: 48px !important;
+    font-size: 14.5px !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 10px 14px !important;
+    background-color: #f8fafc !important;
+    transition: all 0.2s ease !important;
+    width: 100% !important;
+}
+.custom-form-control:focus {
+    background-color: #ffffff !important;
+    border-color: #0d9aff !important;
+    box-shadow: 0 0 0 3px rgba(13, 154, 255, 0.15) !important;
+    outline: none !important;
+}
+.custom-input-group {
     position: relative;
-    margin-top: 12px;
-    border: 1px solid #98a2b3;
-    background-color: #f4f5f7;
-    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    width: 100%;
 }
-.mybazar-login-section .login-wrapper .input-group input {
-    border-left: 1px solid #98a2b3 !important;
+.custom-input-icon {
+    position: absolute;
+    left: 14px;
+    color: #94a3b8;
+    z-index: 4;
+    font-size: 15px;
+    pointer-events: none;
+}
+.custom-input-with-icon {
+    padding-left: 42px !important;
+}
+.custom-pwd-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
     border: none;
-    margin-left: 50px !important;
+    color: #94a3b8;
+    cursor: pointer;
+    z-index: 4;
+    padding: 6px;
+    font-size: 15px;
 }
+.custom-pwd-toggle:hover {
+    color: #0d9aff;
+}
+
 @media (max-width: 768px) {
     .terms-page-wrapper {
-        padding: 15px 10px;
+        padding: 12px 8px;
     }
     .terms-header {
-        padding: 25px 15px 20px;
+        padding: 22px 14px 18px;
     }
     .terms-body {
-        padding: 20px 15px !important;
+        padding: 18px 14px !important;
+    }
+    .term-item {
+        padding: 14px 14px;
+    }
+    .agreement-box {
+        padding: 15px 12px;
     }
 }
 </style>
@@ -133,7 +178,7 @@
     <div class="terms-card-container">
         <!-- Header -->
         <div class="terms-header">
-            <h2 class="fw-bold mb-1" style="font-size: 1.75rem;">
+            <h2 class="fw-bold mb-1" style="font-size: 1.65rem;">
                 <i class="fas fa-file-contract me-2"></i> Terms & Conditions – esmsbd.net
             </h2>
             <p class="mb-0 text-white-50 small">Please read carefully and agree to our terms before creating your account</p>
@@ -154,10 +199,10 @@
                 <!-- Alert Box -->
                 <div class="alert alert-danger border-2 p-3 p-md-4 rounded-3 mb-4" style="background: #fff5f5; border-color: #feb2b2;">
                     <div class="d-flex align-items-start">
-                        <i class="fas fa-exclamation-triangle text-danger fs-4 me-3 mt-1"></i>
+                        <i class="fas fa-exclamation-triangle text-danger fs-4 me-3 mt-1 flex-shrink-0"></i>
                         <div>
-                            <h6 class="fw-bold text-danger mb-1" style="font-size: 16px;">গুরুত্বপূর্ণ নির্দেশনা:</h6>
-                            <p class="mb-0 text-dark" style="font-size: 14.5px; line-height: 1.6;">
+                            <h6 class="fw-bold text-danger mb-1" style="font-size: 15.5px;">গুরুত্বপূর্ণ নির্দেশনা:</h6>
+                            <p class="mb-0 text-dark" style="font-size: 14px; line-height: 1.6;">
                                 আমাদের SMS সার্ভিস ব্যবহার করার পূর্বে অনুগ্রহ করে নিচের সকল শর্তাবলি ভালোভাবে পড়ে নিন। অন্যথায়, কোনো শর্ত ভঙ্গের কারণে আপনার অ্যাকাউন্ট সাসপেন্ড বা স্থায়ীভাবে বন্ধ করা হলে এ বিষয়ে কোনো ধরনের আপত্তি, অভিযোগ বা পুনর্বহালের অনুরোধ গ্রহণ করা হবে না।
                             </p>
                         </div>
@@ -302,76 +347,103 @@
                 </div>
             </div>
 
-            <!-- STEP 2: REGISTRATION FORM -->
+            <!-- STEP 2: REGISTRATION FORM (100% Mobile & Desktop Responsive) -->
             <div id="step-register-content" style="display: none;">
-                <div class="form-section-wrapper mybazar-login-section" style="background: transparent; display: block;">
-                    <div class="login-wrapper w-100 p-0 shadow-none" style="background: transparent;">
-                        <div class="text-center mb-4">
-                            <h2 class="fw-bold mb-1" style="font-size: 1.6rem;">{{ __('Create Your Account') }}</h2>
-                            <p class="text-muted small mb-2">{{ __('Please fill up your details to complete registration') }}</p>
-                            <div class="d-inline-flex align-items-center badge bg-success-subtle text-success border border-success-subtle py-2 px-3 rounded-pill">
-                                <i class="fas fa-check-circle me-2"></i> {{ __('Terms & Conditions Accepted') }}
+                <div class="registration-form-box">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold mb-1 text-dark" style="font-size: 1.65rem;">{{ __('Create Your Account') }}</h2>
+                        <p class="text-muted small mb-2">{{ __('Please fill up your details to complete registration') }}</p>
+                        
+                        <div class="alert alert-success d-flex align-items-center justify-content-between py-2 px-3 rounded-3 mt-3 mb-0" style="background: #f0fdf4; border: 1px solid #bbf7d0;">
+                            <span class="small fw-semibold text-success d-flex align-items-center">
+                                <i class="fas fa-check-circle me-2 fs-6"></i> {{ __('Terms & Conditions Accepted') }}
+                            </span>
+                            <a href="javascript:void(0)" id="btnBackToTerms" class="text-success small fw-bold text-decoration-underline">
+                                <i class="fas fa-undo me-1"></i> {{ __('Review Terms') }}
+                            </a>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ route('register') }}" class="ajaxform_instant_reload">
+                        @csrf
+
+                        <div class="row g-3">
+                            <!-- Full Name -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Full Name') }} <span class="text-danger">*</span></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-user custom-input-icon"></i>
+                                    <input type="text" name="name" class="form-control custom-form-control custom-input-with-icon" placeholder="e.g. Shakil Ahmed" required>
+                                </div>
                             </div>
-                            <div class="mt-2">
-                                <a href="javascript:void(0)" id="btnBackToTerms" class="text-primary small text-decoration-none">
-                                    <i class="fas fa-undo me-1"></i> {{ __('Review Terms & Conditions') }}
-                                </a>
+
+                            <!-- Username -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Username') }} <small class="text-muted fw-normal">({{ __('Optional') }})</small></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-at custom-input-icon"></i>
+                                    <input type="text" name="username" class="form-control custom-form-control custom-input-with-icon font-monospace" placeholder="e.g. yourbrand">
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Phone Number') }} <span class="text-danger">*</span></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-phone-alt custom-input-icon"></i>
+                                    <input type="text" name="phone" class="form-control custom-form-control custom-input-with-icon" placeholder="017XXXXXXXX" required>
+                                </div>
+                            </div>
+
+                            <!-- Email Address -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Email Address') }} <span class="text-danger">*</span></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-envelope custom-input-icon"></i>
+                                    <input type="email" name="email" class="form-control custom-form-control custom-input-with-icon" placeholder="name@example.com" required>
+                                </div>
+                            </div>
+
+                            <!-- Password -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Password') }} <span class="text-danger">*</span></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-lock custom-input-icon"></i>
+                                    <input type="password" name="password" id="reg_password" class="form-control custom-form-control custom-input-with-icon pe-5" placeholder="{{ __('Password (min 4 characters)') }}" required>
+                                    <button type="button" class="custom-pwd-toggle toggle-pwd-btn" data-target="reg_password" aria-label="Toggle Password Visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Confirm Password -->
+                            <div class="col-md-6 col-12">
+                                <label class="form-label fw-bold text-dark small mb-1">{{ __('Confirm Password') }} <span class="text-danger">*</span></label>
+                                <div class="custom-input-group">
+                                    <i class="fas fa-lock custom-input-icon"></i>
+                                    <input type="password" name="password_confirmation" id="reg_password_conf" class="form-control custom-form-control custom-input-with-icon pe-5" placeholder="{{ __('Confirm Password') }}" required>
+                                    <button type="button" class="custom-pwd-toggle toggle-pwd-btn" data-target="reg_password_conf" aria-label="Toggle Password Visibility">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
-                        <form method="POST" action="{{ route('register') }}" class="ajaxform_instant_reload">
-                            @csrf
+                        <input type="hidden" name="country" value="Bangladesh">
+                        <input type="hidden" name="terms" value="1">
 
-                            <div class="input-group">
-                                <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                                <input type="text" name="name" class="form-control" placeholder="{{ __('Enter your name') }}" required>
-                            </div>
-
-                            <div class="input-group">
-                                <span><i class="fas fa-at text-muted ps-3"></i></span>
-                                <input type="text" name="username" class="form-control font-monospace" placeholder="{{ __('Choose username (e.g. yourbrand)') }}">
-                            </div>
-
-                            <div class="input-group">
-                                <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                                <input type="text" name="phone" class="form-control" placeholder="{{ __('Enter your phone number') }}" required>
-                            </div>
-
-                            <div class="input-group">
-                                <span><img src="{{ asset('assets/images/icons/user.png') }}" alt="img"></span>
-                                <input type="email" name="email" class="form-control email" placeholder="{{ __('Enter your Email') }}" required>
-                            </div>
-
-                            <div class="input-group">
-                                <span><img src="{{ asset('assets/images/icons/lock.png') }}" alt="img"></span>
-                                <span class="hide-pass">
-                                    <img src="{{ asset('assets/images/icons/Hide.svg') }}" alt="img">
-                                    <img src="{{ asset('assets/images/icons/show.svg') }}" alt="img">
-                                </span>
-                                <input type="password" name="password" class="form-control password" placeholder="{{ __('Password') }}" required>
-                            </div>
-
-                            <div class="input-group">
-                                <span><img src="{{ asset('assets/images/icons/lock.png') }}" alt="img"></span>
-                                <span class="hide-pass">
-                                    <img src="{{ asset('assets/images/icons/Hide.svg') }}" alt="img">
-                                    <img src="{{ asset('assets/images/icons/show.svg') }}" alt="img">
-                                </span>
-                                <input type="password" name="password_confirmation" class="form-control password" placeholder="{{ __('Confirm Password') }}" required>
-                            </div>
-
-                            <input type="hidden" name="country" value="Bangladesh">
-                            <input type="hidden" name="terms" value="1">
-
-                            <button type="submit" class="btn login-btn submit-btn mt-3 fw-bold" style="background: #0d9aff; color: #fff; border-radius: 8px; height: 48px;">
+                        <div class="mt-4">
+                            <button type="submit" class="btn submit-btn w-100 py-3 fw-bold text-white text-uppercase" style="background: linear-gradient(135deg, #0d9aff, #055dd6); border-radius: 8px; font-size: 15px; letter-spacing: 0.5px; border: none; box-shadow: 0 4px 15px rgba(13, 154, 255, 0.35);">
                                 <i class="fas fa-user-check me-2"></i> {{ __('Complete Registration') }}
                             </button>
+                        </div>
 
-                            <a href="{{ route('login') }}" class="mt-3 d-block text-center text-muted">
-                                {{ __("Already have an account? Login") }}
+                        <div class="text-center mt-3">
+                            <a href="{{ route('login') }}" class="text-muted text-decoration-none small">
+                                {{ __("Already have an account?") }} <span class="text-primary fw-semibold">{{ __('Login here') }}</span>
                             </a>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -420,6 +492,20 @@ $(document).ready(function() {
         $('#badge-step-2').removeClass('active').addClass('inactive');
         $('#badge-step-1').removeClass('inactive').addClass('active');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Custom Password Toggle
+    $(document).on('click', '.toggle-pwd-btn', function() {
+        let targetId = $(this).data('target');
+        let input = $('#' + targetId);
+        let icon = $(this).find('i');
+        if (input.attr('type') === 'password') {
+            input.attr('type', 'text');
+            icon.removeClass('fa-eye').addClass('fa-eye-slash');
+        } else {
+            input.attr('type', 'password');
+            icon.removeClass('fa-eye-slash').addClass('fa-eye');
+        }
     });
 });
 </script>

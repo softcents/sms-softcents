@@ -18,6 +18,7 @@ class SoftcentsSenderController extends Controller
         $gatewayId = $request->get('gateway_id');
         $type = $request->get('type');
         $status = $request->get('status');
+        $usage = $request->get('usage');
         $perPage = (int) $request->get('per_page', 20);
         if ($perPage <= 0 || $perPage > 500) {
             $perPage = 20;
@@ -49,6 +50,13 @@ class SoftcentsSenderController extends Controller
                     $q->where('gateway_id', (int) $gatewayId);
                 }
             })
+            ->when($request->filled('usage'), function ($q) use ($usage) {
+                if ($usage === 'unused') {
+                    $q->whereNull('user_id');
+                } elseif ($usage === 'used') {
+                    $q->whereNotNull('user_id');
+                }
+            })
             ->when($request->filled('type'), function ($q) use ($type) {
                 $q->where('type', $type);
             })
@@ -59,17 +67,30 @@ class SoftcentsSenderController extends Controller
 
         // Total count of senderids & metrics
         $totalSenderidsCount = Senderid::count();
+        $totalUnusedCount = Senderid::whereNull('user_id')->count();
+        $totalUsedCount = Senderid::whereNotNull('user_id')->count();
         $unassignedCount = Senderid::where(function ($q) {
             $q->whereNull('gateway_id')->orWhere('gateway_id', 0);
         })->count();
+        $unassignedUnusedCount = Senderid::where(function ($q) {
+            $q->whereNull('gateway_id')->orWhere('gateway_id', 0);
+        })->whereNull('user_id')->count();
         $maskingCount = Senderid::where('type', 'Masking')->count();
         $nonMaskingCount = Senderid::where('type', 'Non-Masking')->count();
         $activeCount = Senderid::where('status', 1)->count();
         $deactiveCount = Senderid::where('status', 0)->count();
 
-        // Gateway statistics (Name + count of sender IDs)
+        // Gateway statistics (Name + total count + unused count)
         $gateways = Smsgateway::select('id', 'name', 'status')
-            ->withCount('senderids')
+            ->withCount([
+                'senderids',
+                'senderids as unused_senderids_count' => function ($q) {
+                    $q->whereNull('user_id');
+                },
+                'senderids as used_senderids_count' => function ($q) {
+                    $q->whereNotNull('user_id');
+                }
+            ])
             ->orderBy('name')
             ->get();
 
@@ -97,7 +118,10 @@ class SoftcentsSenderController extends Controller
             'gateways',
             'gatewayList',
             'totalSenderidsCount',
+            'totalUnusedCount',
+            'totalUsedCount',
             'unassignedCount',
+            'unassignedUnusedCount',
             'maskingCount',
             'nonMaskingCount',
             'activeCount',

@@ -24,30 +24,66 @@
 
                     <!-- Gateway Distribution & Fast-Filter Pills -->
                     <div class="gateway-stats-wrapper my-3 p-3 rounded" style="background-color: #f8f9fc; border: 1px solid #e3e6f0;">
-                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-1 border-bottom">
+                        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom">
                             <div class="fw-bold text-dark d-flex align-items-center gap-2" style="font-size: 14px;">
                                 <i class="fas fa-network-wired text-primary"></i>
                                 <span>{{ __('Gateway-wise Sender ID Breakdown') }}</span>
                             </div>
-                            <span class="text-muted small">
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <span class="badge bg-white text-dark border px-2 py-1 shadow-sm" style="font-size: 12px;">
+                                    <i class="fas fa-layer-group text-primary me-1"></i>{{ __('Total:') }} <strong>{{ $totalSenderidsCount }}</strong>
+                                </span>
+                                <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-1 shadow-sm" style="font-size: 12px;">
+                                    <i class="fas fa-inbox text-warning me-1"></i>{{ __('Unused:') }} <strong class="text-danger">{{ $totalUnusedCount }}</strong>
+                                </span>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success px-2 py-1 shadow-sm" style="font-size: 12px;">
+                                    <i class="fas fa-user-check text-success me-1"></i>{{ __('In Use:') }} <strong>{{ $totalUsedCount }}</strong>
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Usage Quick-Tabs: All vs Unused Only vs In-Use Only -->
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2 pt-1">
+                            <span class="text-muted small fw-semibold me-1"><i class="fas fa-filter me-1 text-secondary"></i>{{ __('Show:') }}</span>
+                            <button type="button" class="btn btn-xs usage-tab-btn {{ !request('usage') ? 'btn-dark text-white shadow-sm' : 'btn-outline-secondary bg-white' }}" data-usage="" style="border-radius: 14px; font-size: 11.5px; padding: 4px 12px; font-weight: 500;">
+                                <i class="fas fa-list me-1"></i> {{ __('All') }} ({{ $totalSenderidsCount }})
+                            </button>
+                            <button type="button" class="btn btn-xs usage-tab-btn {{ request('usage') === 'unused' ? 'btn-danger text-white shadow-sm' : 'btn-outline-danger bg-white' }}" data-usage="unused" style="border-radius: 14px; font-size: 11.5px; padding: 4px 12px; font-weight: 600;">
+                                <i class="fas fa-inbox me-1"></i> {{ __('Unused Only') }} ({{ $totalUnusedCount }})
+                            </button>
+                            <button type="button" class="btn btn-xs usage-tab-btn {{ request('usage') === 'used' ? 'btn-success text-white shadow-sm' : 'btn-outline-success bg-white' }}" data-usage="used" style="border-radius: 14px; font-size: 11.5px; padding: 4px 12px; font-weight: 500;">
+                                <i class="fas fa-user-check me-1"></i> {{ __('In Use Only') }} ({{ $totalUsedCount }})
+                            </button>
+                            <span class="text-muted small ms-auto d-none d-md-inline">
                                 <i class="far fa-hand-pointer me-1"></i>{{ __('Click any gateway to filter list instantly') }}
                             </span>
                         </div>
+
+                        <!-- Gateway-wise Pills with Total & Unused Counts -->
                         <div class="d-flex flex-wrap gap-2 align-items-center gateway-filter-pills pt-1">
                             <button type="button" class="btn btn-sm gateway-pill-btn {{ !request('gateway_id') ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary bg-white' }}" data-gateway-id="" style="border-radius: 20px; font-weight: 500; font-size: 12.5px; padding: 5px 14px;">
                                 <i class="fas fa-layer-group me-1"></i> {{ __('All Gateways') }}
                                 <span class="badge {{ !request('gateway_id') ? 'bg-white text-primary' : 'bg-secondary text-white' }} ms-1" style="font-size: 11px;">{{ $totalSenderidsCount }}</span>
+                                <span class="badge bg-warning text-dark border ms-1" style="font-size: 10px;" title="{{ __('Total Unused across all gateways') }}">{{ $totalUnusedCount }} Unused</span>
                             </button>
                             @foreach($gateways as $gw)
                                 <button type="button" class="btn btn-sm gateway-pill-btn {{ request('gateway_id') == $gw->id ? 'btn-primary text-white shadow-sm' : 'btn-outline-secondary bg-white' }}" data-gateway-id="{{ $gw->id }}" style="border-radius: 20px; font-weight: 500; font-size: 12.5px; padding: 5px 14px;">
                                     <i class="fas fa-server me-1 text-primary"></i> {{ $gw->name }}
                                     <span class="badge {{ request('gateway_id') == $gw->id ? 'bg-white text-primary' : 'bg-primary text-white' }} ms-1" style="font-size: 11px;">{{ $gw->senderids_count }}</span>
+                                    @if($gw->unused_senderids_count > 0)
+                                        <span class="badge bg-warning text-dark border ms-1" title="{{ __(':count Unused Sender IDs in :gw', ['count' => $gw->unused_senderids_count, 'gw' => $gw->name]) }}" style="font-size: 10px; font-weight: 600;">
+                                            <i class="fas fa-inbox me-1"></i>{{ $gw->unused_senderids_count }} Unused
+                                        </span>
+                                    @endif
                                 </button>
                             @endforeach
                             @if($unassignedCount > 0)
                                 <button type="button" class="btn btn-sm gateway-pill-btn {{ request('gateway_id') === '0' || request('gateway_id') === 'unassigned' ? 'btn-warning text-dark shadow-sm' : 'btn-outline-warning text-dark bg-white' }}" data-gateway-id="0" style="border-radius: 20px; font-weight: 500; font-size: 12.5px; padding: 5px 14px;">
-                                    <i class="fas fa-exclamation-triangle me-1 text-warning"></i> {{ __('Unassigned') }}
+                                    <i class="fas fa-exclamation-triangle me-1 text-warning"></i> {{ __('Unassigned Gateway') }}
                                     <span class="badge bg-warning text-dark border ms-1" style="font-size: 11px;">{{ $unassignedCount }}</span>
+                                    @if($unassignedUnusedCount > 0)
+                                        <span class="badge bg-danger text-white border ms-1" style="font-size: 10px;">{{ $unassignedUnusedCount }} Unused</span>
+                                    @endif
                                 </button>
                             @endif
                         </div>
@@ -56,9 +92,10 @@
                     <!-- Advanced Multi-Filter Toolbar -->
                     <div class="table-top-form">
                         <form action="{{ route('admin.senderids.index') }}" method="get" id="senderid-filter-form">
+                            <input type="hidden" name="usage" id="filter-usage-input" value="{{ request('usage') }}">
                             <div class="row g-2 align-items-center">
                                 <!-- Search Input -->
-                                <div class="col-xl-3 col-lg-4 col-md-6">
+                                <div class="col-xl-3 col-lg-3 col-md-6">
                                     <div class="table-search w-100">
                                         <input class="form-control searchInput" type="text" name="search" placeholder="{{ __('Search Sender ID, Customer...') }}" value="{{ request('search') }}" autocomplete="off">
                                     </div>
@@ -70,11 +107,26 @@
                                         <option value="">{{ __('All Gateways') }} ({{ $totalSenderidsCount }})</option>
                                         @foreach($gateways as $gw)
                                             <option value="{{ $gw->id }}" {{ request('gateway_id') == $gw->id ? 'selected' : '' }}>
-                                                {{ $gw->name }} ({{ $gw->senderids_count }})
+                                                {{ $gw->name }} ({{ $gw->senderids_count }} total • {{ $gw->unused_senderids_count }} unused)
                                             </option>
                                         @endforeach
-                                        <option value="0" {{ request('gateway_id') === '0' || request('gateway_id') === 'unassigned' ? 'selected' : '' }}>
-                                            ⚠️ {{ __('Unassigned / No Gateway') }} ({{ $unassignedCount }})
+                                        @if($unassignedCount > 0)
+                                            <option value="0" {{ request('gateway_id') === '0' || request('gateway_id') === 'unassigned' ? 'selected' : '' }}>
+                                                ⚠️ {{ __('Unassigned Gateway') }} ({{ $unassignedCount }} total • {{ $unassignedUnusedCount }} unused)
+                                            </option>
+                                        @endif
+                                    </select>
+                                </div>
+
+                                <!-- Usage / Assignment Dropdown -->
+                                <div class="col-xl-2 col-lg-2 col-md-4">
+                                    <select id="filter-usage-select" class="form-select filter-dropdown" style="font-size: 13px; height: 44px; border-radius: 6px; border: 1px solid #ced4da;">
+                                        <option value="">{{ __('All Assignments') }} ({{ $totalSenderidsCount }})</option>
+                                        <option value="unused" {{ request('usage') === 'unused' ? 'selected' : '' }}>
+                                            📥 {{ __('Unused Only') }} ({{ $totalUnusedCount }})
+                                        </option>
+                                        <option value="used" {{ request('usage') === 'used' ? 'selected' : '' }}>
+                                            👤 {{ __('In Use Only') }} ({{ $totalUsedCount }})
                                         </option>
                                     </select>
                                 </div>
@@ -89,25 +141,26 @@
                                 </div>
 
                                 <!-- Status Filter Dropdown -->
-                                <div class="col-xl-2 col-lg-2 col-md-4">
+                                <div class="col-xl-1 col-lg-1 col-md-4">
                                     <select name="status" class="form-select filter-dropdown" style="font-size: 13px; height: 44px; border-radius: 6px; border: 1px solid #ced4da;">
-                                        <option value="">{{ __('All Status') }}</option>
+                                        <option value="">{{ __('Status') }}</option>
                                         <option value="1" {{ request('status') === '1' ? 'selected' : '' }}>{{ __('Active') }} ({{ $activeCount }})</option>
                                         <option value="0" {{ request('status') === '0' ? 'selected' : '' }}>{{ __('Deactive') }} ({{ $deactiveCount }})</option>
                                     </select>
                                 </div>
 
                                 <!-- Per Page & Reset Button -->
-                                <div class="col-xl-2 col-lg-1 col-md-4 d-flex align-items-center gap-2">
-                                    <select name="per_page" class="form-select filter-dropdown" style="font-size: 13px; height: 44px; border-radius: 6px; width: 75px; border: 1px solid #ced4da;" title="{{ __('Rows per page') }}">
+                                <div class="col-xl-1 col-lg-1 col-md-4 d-flex align-items-center gap-2">
+                                    <select name="per_page" class="form-select filter-dropdown" style="font-size: 13px; height: 44px; border-radius: 6px; width: 68px; border: 1px solid #ced4da; padding-left: 6px; padding-right: 18px;" title="{{ __('Rows per page') }}">
                                         <option value="20" {{ request('per_page', 20) == 20 ? 'selected' : '' }}>20</option>
                                         <option value="50" {{ request('per_page') == 50 ? 'selected' : '' }}>50</option>
                                         <option value="100" {{ request('per_page') == 100 ? 'selected' : '' }}>100</option>
                                     </select>
-                                    <a href="{{ route('admin.senderids.index') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="{{ __('Reset Filters') }}" style="height: 44px; width: 44px; border-radius: 6px;">
+                                    <a href="{{ route('admin.senderids.index') }}" class="btn btn-outline-secondary d-flex align-items-center justify-content-center" title="{{ __('Reset Filters') }}" style="height: 44px; width: 44px; border-radius: 6px; flex-shrink: 0;">
                                         <i class="fas fa-undo"></i>
                                     </a>
                                 </div>
+                            </div>
                             </div>
 
                             <!-- Selected Bulk Action Toolbar (Appears when checkboxes are selected) -->
@@ -349,6 +402,43 @@ $(document).ready(function () {
             });
         }, 200);
     }
+
+    // Usage Quick-Tabs click (All vs Unused Only vs In Use Only)
+    $(document).on('click', '.usage-tab-btn', function (e) {
+        e.preventDefault();
+        const usageVal = $(this).data('usage') || '';
+        $('#filter-usage-input').val(usageVal);
+        $('#filter-usage-select').val(usageVal);
+
+        $('.usage-tab-btn').removeClass('btn-dark btn-danger btn-success text-white shadow-sm').addClass('btn-outline-secondary bg-white');
+        if (usageVal === 'unused') {
+            $(this).removeClass('btn-outline-secondary bg-white btn-outline-danger').addClass('btn-danger text-white shadow-sm');
+        } else if (usageVal === 'used') {
+            $(this).removeClass('btn-outline-secondary bg-white btn-outline-success').addClass('btn-success text-white shadow-sm');
+        } else {
+            $(this).removeClass('btn-outline-secondary bg-white').addClass('btn-dark text-white shadow-sm');
+        }
+
+        reloadSenderIds();
+    });
+
+    // When usage select changes in filter bar
+    $(document).on('change', '#filter-usage-select', function () {
+        const usageVal = $(this).val() || '';
+        $('#filter-usage-input').val(usageVal);
+
+        $('.usage-tab-btn').removeClass('btn-dark btn-danger btn-success text-white shadow-sm').addClass('btn-outline-secondary bg-white');
+        const $matchingTab = $('.usage-tab-btn[data-usage="' + usageVal + '"]');
+        if (usageVal === 'unused') {
+            $matchingTab.removeClass('btn-outline-secondary bg-white btn-outline-danger').addClass('btn-danger text-white shadow-sm');
+        } else if (usageVal === 'used') {
+            $matchingTab.removeClass('btn-outline-secondary bg-white btn-outline-success').addClass('btn-success text-white shadow-sm');
+        } else {
+            $matchingTab.removeClass('btn-outline-secondary bg-white').addClass('btn-dark text-white shadow-sm');
+        }
+
+        reloadSenderIds();
+    });
 
     // Fast filter pills click
     $(document).on('click', '.gateway-pill-btn', function (e) {

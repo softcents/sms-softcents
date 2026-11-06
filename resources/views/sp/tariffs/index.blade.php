@@ -87,11 +87,35 @@
                     </form>
                 </div>
 
+                <!-- Bulk Actions Toolbar -->
+                <div class="card bg-light border mb-3">
+                    <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold text-dark small"><i class="fas fa-layer-group text-primary me-1"></i> {{ __('Multiple Tariff') }}:</span>
+                            <span id="sp-bulk-count" class="badge bg-secondary">0 {{ __('selected') }}</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btn-sp-select-all">
+                                <i class="fas fa-check-square me-1"></i> {{ __('Select All') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-sp-clear-selection" style="display:none;">
+                                <i class="fas fa-times me-1"></i> {{ __('Clear') }}
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-primary fw-semibold" id="btn-open-sp-bulk" disabled>
+                                <i class="fas fa-edit me-1"></i> {{ __('Set Tariff for Selected') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Table -->
                 <div class="responsive-table">
                     <table class="table table-bordered table-hover align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th style="width: 40px;" class="text-center">
+                                    <input type="checkbox" id="check-all-sp-tariffs" class="form-check-input">
+                                </th>
                                 <th style="width: 50px;">{{ __('SL') }}</th>
                                 <th>{{ __('Account / Name') }}</th>
                                 <th>{{ __('Role / Type') }}</th>
@@ -111,6 +135,9 @@
                                     $mMargin = $mRate - $myMasking;
                                 @endphp
                                 <tr id="row-tariff-{{ $c->id }}">
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input tariff-sp-checkbox" value="{{ $c->id }}" data-name="{{ $c->name }}" data-user="{{ $c->username }}" data-nm="{{ $nmRate }}" data-m="{{ $mRate }}">
+                                    </td>
                                     <td>{{ $clients->firstItem() + $index }}</td>
                                     <td>
                                         <div class="fw-bold text-dark">{{ $c->name }}</div>
@@ -155,6 +182,8 @@
                                     </td>
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1 btn-sp-open-tariff"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#modal-sp-tariff"
                                             data-id="{{ $c->id }}"
                                             data-name="{{ $c->name }}"
                                             data-username="{{ $c->username }}"
@@ -170,7 +199,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center py-4 text-muted">
+                                    <td colspan="9" class="text-center py-4 text-muted">
                                         <i class="fas fa-search me-1"></i> {{ __('No downline accounts found.') }}
                                     </td>
                                 </tr>
@@ -245,15 +274,75 @@
         </div>
     </div>
 </div>
+
+<!-- Bulk Tariff Edit Modal for SP -->
+<div class="modal fade" id="modal-sp-bulk-tariff" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+            <div class="modal-header text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2">
+                    <i class="fas fa-layer-group"></i>
+                    <span>{{ __('Set Tariff for Selected Accounts') }}</span>
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <form id="form-sp-bulk-tariff" action="{{ route('sp.tariffs.bulk-update') }}" method="POST">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="alert alert-primary py-2 px-3 small mb-3 d-flex align-items-center justify-content-between">
+                        <div>
+                            <i class="fas fa-users me-1"></i>
+                            <span id="sp-bulk-modal-count-text">0 {{ __('accounts selected') }}</span>
+                        </div>
+                        <span class="badge bg-white text-primary fw-bold" id="sp-bulk-modal-badge">0</span>
+                    </div>
+
+                    <div class="alert alert-warning py-2 small mb-3">
+                        <i class="fas fa-coins me-1"></i>
+                        {{ __('Your buying rate is') }}: <strong>NM: ৳{{ number_format($myNonMasking, 2) }}</strong> &bull; <strong>Masking: ৳{{ number_format($myMasking, 2) }}</strong>.
+                    </div>
+
+                    <!-- Selected Accounts Preview Chips -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-muted">{{ __('Selected Accounts') }}:</label>
+                        <div id="sp-bulk-selected-chips" class="p-2 bg-light border rounded d-flex flex-wrap gap-1" style="max-height: 90px; overflow-y: auto;"></div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ __('Non-Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-bold">৳</span>
+                            <input type="number" step="0.0001" min="0" name="non_masking_rate" id="sp_bulk_modal_nm" class="form-control" required placeholder="0.3900" value="0.3900">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ __('Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text fw-bold">৳</span>
+                            <input type="number" step="0.0001" min="0" name="masking_rate" id="sp_bulk_modal_m" class="form-control" required placeholder="0.7500" value="0.7500">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between">
+                    <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                    <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold" id="btn-sp-bulk-save">
+                        <i class="fas fa-check-circle me-1"></i> <span id="btn-sp-bulk-label">{{ __('Apply to Selected') }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('js')
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    $(document).on('click', '.btn-sp-open-tariff', function(e) {
-        e.preventDefault();
-        let btn = $(this);
-        let id = btn.data('id');
+$(function() {
+    function populateSpTariffModal(btn) {
+        if (!btn || !btn.length || !btn.data('action')) return;
         let name = btn.data('name');
         let username = btn.data('username');
         let role = btn.data('role');
@@ -267,10 +356,23 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#sp-modal-client-role').text(role);
         $('#sp_modal_nm').val(parseFloat(nm));
         $('#sp_modal_m').val(parseFloat(m));
+    }
 
-        let modalEl = document.getElementById('modal-sp-tariff');
-        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
+    $(document).on('click', '.btn-sp-open-tariff', function(e) {
+        populateSpTariffModal($(this));
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            let modalEl = document.getElementById('modal-sp-tariff');
+            let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            $('#modal-sp-tariff').modal('show');
+        }
+    });
+
+    $('#modal-sp-tariff').on('show.bs.modal', function(e) {
+        if (e.relatedTarget) {
+            populateSpTariffModal($(e.relatedTarget));
+        }
     });
 
     $('#form-sp-tariff').on('submit', function(e) {
@@ -286,7 +388,10 @@ document.addEventListener('DOMContentLoaded', function() {
             url: form.attr('action'),
             type: 'POST',
             data: form.serialize(),
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
             success: function(res) {
                 if (res.success) {
                     if (typeof toastr !== 'undefined') {
@@ -294,9 +399,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else {
                         alert(res.message);
                     }
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        let modalEl = document.getElementById('modal-sp-tariff');
+                        let modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    } else {
+                        $('#modal-sp-tariff').modal('hide');
+                    }
                     setTimeout(function() {
                         location.reload();
-                    }, 600);
+                    }, 500);
                 } else {
                     alert(res.message || '{{ __("Failed to update tariff.") }}');
                 }
@@ -312,6 +424,139 @@ document.addEventListener('DOMContentLoaded', function() {
             complete: function() {
                 submitBtn.prop('disabled', false);
                 $('#btn-sp-tariff-label').text(origText);
+            }
+        });
+    });
+
+    // Bulk selection logic
+    function updateSpBulkState() {
+        let selected = $('.tariff-sp-checkbox:checked');
+        let count = selected.length;
+        let total = $('.tariff-sp-checkbox').length;
+
+        $('#sp-bulk-count').text(count + ' {{ __("selected") }}');
+        $('#sp-bulk-modal-count-text').text(count + ' {{ __("accounts selected") }}');
+        $('#sp-bulk-modal-badge').text(count);
+
+        if (count > 0) {
+            $('#btn-open-sp-bulk').prop('disabled', false);
+            $('#btn-sp-clear-selection').show();
+        } else {
+            $('#btn-open-sp-bulk').prop('disabled', true);
+            $('#btn-sp-clear-selection').hide();
+        }
+
+        $('#check-all-sp-tariffs').prop('checked', count > 0 && count === total);
+    }
+
+    $(document).on('change', '.tariff-sp-checkbox', function() {
+        updateSpBulkState();
+    });
+
+    $('#check-all-sp-tariffs').on('change', function() {
+        let isChecked = $(this).is(':checked');
+        $('.tariff-sp-checkbox').prop('checked', isChecked);
+        updateSpBulkState();
+    });
+
+    $('#btn-sp-select-all').on('click', function() {
+        $('.tariff-sp-checkbox').prop('checked', true);
+        $('#check-all-sp-tariffs').prop('checked', true);
+        updateSpBulkState();
+    });
+
+    $('#btn-sp-clear-selection').on('click', function() {
+        $('.tariff-sp-checkbox').prop('checked', false);
+        $('#check-all-sp-tariffs').prop('checked', false);
+        updateSpBulkState();
+    });
+
+    $('#btn-open-sp-bulk').on('click', function(e) {
+        e.preventDefault();
+        let selected = $('.tariff-sp-checkbox:checked');
+        if (!selected.length) return;
+
+        let chipsHtml = '';
+        selected.each(function() {
+            let name = $(this).data('name') || '';
+            let user = $(this).data('user') || '';
+            chipsHtml += '<span class="badge bg-white text-dark border px-2 py-1"><i class="fas fa-user-circle text-primary me-1"></i>' + name + ' (@' + user + ')</span>';
+        });
+        $('#sp-bulk-selected-chips').html(chipsHtml);
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            let modalEl = document.getElementById('modal-sp-bulk-tariff');
+            let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            $('#modal-sp-bulk-tariff').modal('show');
+        }
+    });
+
+    $('#form-sp-bulk-tariff').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        let submitBtn = $('#btn-sp-bulk-save');
+        let origText = $('#btn-sp-bulk-label').text();
+
+        let userIds = [];
+        $('.tariff-sp-checkbox:checked').each(function() {
+            userIds.push($(this).val());
+        });
+
+        if (!userIds.length) {
+            alert('{{ __("Please select at least one account.") }}');
+            return;
+        }
+
+        submitBtn.prop('disabled', true);
+        $('#btn-sp-bulk-label').html('<i class="fas fa-spinner fa-spin me-1"></i> {{ __("Updating...") }}');
+
+        let data = form.serializeArray();
+        userIds.forEach(function(id) {
+            data.push({ name: 'user_ids[]', value: id });
+        });
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: $.param(data),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(res) {
+                if (res.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(res.message);
+                    } else {
+                        alert(res.message);
+                    }
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        let modalEl = document.getElementById('modal-sp-bulk-tariff');
+                        let modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    } else {
+                        $('#modal-sp-bulk-tariff').modal('hide');
+                    }
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(res.message || '{{ __("Failed to update tariffs.") }}');
+                }
+            },
+            error: function(xhr) {
+                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '{{ __("Failed to update tariffs.") }}';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                } else {
+                    alert(msg);
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false);
+                $('#btn-sp-bulk-label').text(origText);
             }
         });
     });

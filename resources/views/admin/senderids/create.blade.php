@@ -39,6 +39,10 @@
                                             <div class="col-lg-6 mt-2">
                                                 <label>{{ __('Sender Id') }}</label>
                                                 <input type="text" name="sender" required class="form-control" placeholder="{{ __('Enter sender id') }}">
+                                                <div id="sender-assignment-warning" class="alert alert-warning py-2 px-3 mt-2 d-none" style="font-size: 13px; border-radius: 6px;">
+                                                    <i class="fas fa-exclamation-triangle text-warning me-1"></i>
+                                                    <span id="sender-assignment-warning-text"></span>
+                                                </div>
                                             </div>
                                             <div class="col-sm-6 mt-2">
                                                 <label>{{ __('Type') }}</label>
@@ -93,3 +97,30 @@
         </div>
     </div>
 @endsection
+
+@push('js')
+<script>
+$(document).ready(function() {
+    let checkTimer = null;
+    $('input[name="sender"]').on('keyup change paste input', function() {
+        clearTimeout(checkTimer);
+        const val = $(this).val().trim();
+        if (val.length < 2) {
+            $('#sender-assignment-warning').addClass('d-none');
+            return;
+        }
+        checkTimer = setTimeout(function() {
+            $.get('{{ route("admin.senderids.check-assignment") }}', { sender: val }, function(res) {
+                if (res && res.assigned && res.users.length > 0) {
+                    let userListStr = res.users.map(u => u.name + ' (@' + (u.username || 'user' + u.user_id) + ', Phone: ' + (u.phone || '-') + ')').join(', ');
+                    $('#sender-assignment-warning-text').html('<strong>{{ __("Warning:") }}</strong> {{ __("This Sender ID is already assigned to:") }} ' + userListStr);
+                    $('#sender-assignment-warning').removeClass('d-none');
+                } else {
+                    $('#sender-assignment-warning').addClass('d-none');
+                }
+            });
+        }, 350);
+    });
+});
+</script>
+@endpush

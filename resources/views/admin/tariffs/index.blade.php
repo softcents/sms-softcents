@@ -90,11 +90,35 @@
                     </form>
                 </div>
 
+                <!-- Bulk Actions Toolbar -->
+                <div class="card bg-light border mb-3">
+                    <div class="card-body py-2 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold text-dark small"><i class="fas fa-layer-group text-primary me-1"></i> {{ __('Multiple Tariff') }}:</span>
+                            <span id="admin-bulk-count" class="badge bg-secondary">0 {{ __('selected') }}</span>
+                            <button type="button" class="btn btn-sm btn-outline-primary py-0 px-2" id="btn-admin-select-all">
+                                <i class="fas fa-check-square me-1"></i> {{ __('Select All') }}
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary py-0 px-2" id="btn-admin-clear-selection" style="display:none;">
+                                <i class="fas fa-times me-1"></i> {{ __('Clear') }}
+                            </button>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-primary fw-semibold" id="btn-open-admin-bulk" disabled>
+                                <i class="fas fa-edit me-1"></i> {{ __('Set Tariff for Selected') }}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Tariffs Table -->
                 <div class="responsive-table">
                     <table class="table table-bordered table-hover align-middle">
                         <thead class="table-light">
                             <tr>
+                                <th style="width: 40px;" class="text-center">
+                                    <input type="checkbox" id="check-all-admin-tariffs" class="form-check-input">
+                                </th>
                                 <th style="width: 50px;">{{ __('SL') }}</th>
                                 <th>{{ __('Account / User') }}</th>
                                 <th>{{ __('Role / Type') }}</th>
@@ -109,6 +133,9 @@
                         <tbody>
                             @forelse($users as $index => $u)
                                 <tr class="user-tariff-cell-{{ $u->id }}">
+                                    <td class="text-center">
+                                        <input type="checkbox" class="form-check-input tariff-admin-checkbox" value="{{ $u->id }}" data-name="{{ $u->name }}" data-user="{{ $u->username }}">
+                                    </td>
                                     <td>{{ $users->firstItem() + $index }}</td>
                                     <td>
                                         <div class="d-flex align-items-center gap-2">
@@ -176,7 +203,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="9" class="text-center py-4 text-muted">
+                                    <td colspan="10" class="text-center py-4 text-muted">
                                         <i class="fas fa-search me-1"></i> {{ __('No accounts found matching your criteria.') }}
                                     </td>
                                 </tr>
@@ -196,4 +223,204 @@
 
 @push('modal')
     @include('admin.users.tariff-modal')
+
+    <!-- Bulk Tariff Edit Modal for Admin -->
+    <div class="modal fade" id="modal-admin-bulk-tariff" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow-lg border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);">
+                    <h5 class="modal-title fw-bold text-white d-flex align-items-center gap-2">
+                        <i class="fas fa-layer-group"></i>
+                        <span>{{ __('Set Tariff for Selected Accounts') }}</span>
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="form-admin-bulk-tariff" action="{{ route('admin.tariffs.bulk-update') }}" method="POST">
+                    @csrf
+                    <div class="modal-body p-4">
+                        <div class="alert alert-primary py-2 px-3 small mb-3 d-flex align-items-center justify-content-between">
+                            <div>
+                                <i class="fas fa-users me-1"></i>
+                                <span id="admin-bulk-modal-count-text">0 {{ __('accounts selected') }}</span>
+                            </div>
+                            <span class="badge bg-white text-primary fw-bold" id="admin-bulk-modal-badge">0</span>
+                        </div>
+
+                        <div class="alert alert-info py-2 small mb-3">
+                            <i class="fas fa-coins me-1"></i>
+                            {{ __('Platform wholesale buying costs') }}: <strong>NM: ৳{{ number_format($gwNonMasking, 2) }}</strong> &bull; <strong>Masking: ৳{{ number_format($gwMasking, 2) }}</strong>.
+                        </div>
+
+                        <!-- Selected Accounts Preview Chips -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small text-muted">{{ __('Selected Accounts') }}:</label>
+                            <div id="admin-bulk-selected-chips" class="p-2 bg-light border rounded d-flex flex-wrap gap-1" style="max-height: 90px; overflow-y: auto;"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ __('Non-Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold">৳</span>
+                                <input type="number" step="0.0001" min="0" name="non_masking_rate" id="admin_bulk_modal_nm" class="form-control" required placeholder="0.3900" value="0.3900">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{{ __('Masking Rate (BDT)') }} <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text fw-bold">৳</span>
+                                <input type="number" step="0.0001" min="0" name="masking_rate" id="admin_bulk_modal_m" class="form-control" required placeholder="0.7500" value="0.7500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer bg-light py-2 px-4 d-flex justify-content-between">
+                        <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-primary btn-sm px-4 fw-semibold" id="btn-admin-bulk-save">
+                            <i class="fas fa-check-circle me-1"></i> <span id="btn-admin-bulk-label">{{ __('Apply to Selected') }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+@endpush
+
+@push('js')
+<script>
+$(function() {
+    function updateAdminBulkState() {
+        let selected = $('.tariff-admin-checkbox:checked');
+        let count = selected.length;
+        let total = $('.tariff-admin-checkbox').length;
+
+        $('#admin-bulk-count').text(count + ' {{ __("selected") }}');
+        $('#admin-bulk-modal-count-text').text(count + ' {{ __("accounts selected for tariff update") }}');
+        $('#admin-bulk-modal-badge').text(count);
+
+        if (count > 0) {
+            $('#btn-open-admin-bulk').prop('disabled', false);
+            $('#btn-admin-clear-selection').show();
+        } else {
+            $('#btn-open-admin-bulk').prop('disabled', true);
+            $('#btn-admin-clear-selection').hide();
+        }
+
+        $('#check-all-admin-tariffs').prop('checked', count > 0 && count === total);
+    }
+
+    $(document).on('change', '.tariff-admin-checkbox', function() {
+        updateAdminBulkState();
+    });
+
+    $('#check-all-admin-tariffs').on('change', function() {
+        let isChecked = $(this).is(':checked');
+        $('.tariff-admin-checkbox').prop('checked', isChecked);
+        updateAdminBulkState();
+    });
+
+    $('#btn-admin-select-all').on('click', function() {
+        $('.tariff-admin-checkbox').prop('checked', true);
+        $('#check-all-admin-tariffs').prop('checked', true);
+        updateAdminBulkState();
+    });
+
+    $('#btn-admin-clear-selection').on('click', function() {
+        $('.tariff-admin-checkbox').prop('checked', false);
+        $('#check-all-admin-tariffs').prop('checked', false);
+        updateAdminBulkState();
+    });
+
+    $('#btn-open-admin-bulk').on('click', function(e) {
+        e.preventDefault();
+        let selected = $('.tariff-admin-checkbox:checked');
+        if (!selected.length) return;
+
+        let chipsHtml = '';
+        selected.each(function() {
+            let name = $(this).data('name') || '';
+            let user = $(this).data('user') || '';
+            chipsHtml += '<span class="badge bg-white text-dark border px-2 py-1"><i class="fas fa-user-circle text-primary me-1"></i>' + name + ' (@' + user + ')</span>';
+        });
+        $('#admin-bulk-selected-chips').html(chipsHtml);
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            let modalEl = document.getElementById('modal-admin-bulk-tariff');
+            let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            $('#modal-admin-bulk-tariff').modal('show');
+        }
+    });
+
+    $('#form-admin-bulk-tariff').on('submit', function(e) {
+        e.preventDefault();
+        let form = $(this);
+        let submitBtn = $('#btn-admin-bulk-save');
+        let origText = $('#btn-admin-bulk-label').text();
+
+        let userIds = [];
+        $('.tariff-admin-checkbox:checked').each(function() {
+            userIds.push($(this).val());
+        });
+
+        if (!userIds.length) {
+            alert('{{ __("Please select at least one account.") }}');
+            return;
+        }
+
+        submitBtn.prop('disabled', true);
+        $('#btn-admin-bulk-label').html('<i class="fas fa-spinner fa-spin me-1"></i> {{ __("Updating...") }}');
+
+        let data = form.serializeArray();
+        userIds.forEach(function(id) {
+            data.push({ name: 'user_ids[]', value: id });
+        });
+
+        $.ajax({
+            url: form.attr('action'),
+            type: 'POST',
+            data: $.param(data),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(res) {
+                if (res.success) {
+                    if (typeof toastr !== 'undefined') {
+                        toastr.success(res.message);
+                    } else {
+                        alert(res.message);
+                    }
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        let modalEl = document.getElementById('modal-admin-bulk-tariff');
+                        let modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+                    } else {
+                        $('#modal-admin-bulk-tariff').modal('hide');
+                    }
+                    setTimeout(function() {
+                        location.reload();
+                    }, 500);
+                } else {
+                    alert(res.message || '{{ __("Failed to update tariffs.") }}');
+                }
+            },
+            error: function(xhr) {
+                let msg = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : '{{ __("Failed to update tariffs.") }}';
+                if (typeof toastr !== 'undefined') {
+                    toastr.error(msg);
+                } else {
+                    alert(msg);
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false);
+                $('#btn-admin-bulk-label').text(origText);
+            }
+        });
+    });
+});
+</script>
 @endpush

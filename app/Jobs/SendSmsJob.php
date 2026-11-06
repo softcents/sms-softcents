@@ -55,14 +55,35 @@ class SendSmsJob implements ShouldQueue
         $response = null;
         $senderId = trim((string) ($this->gatewayConfig['senderid'] ?? $this->gatewayConfig['sender'] ?? ''));
 
-        // If driver is whiteinfobd OR anbernet (Anbernet upstream telco is currently stalled/dropping queue):
-        // Deliver via White Info BD
-        if ($driver === 'whiteinfobd' || $driver === 'anbernet') {
+        if ($driver === 'anbernet') {
+            $sms = new AnbernetSms();
+            $apiUrl = $this->gatewayConfig['api_url'] ?? $this->gatewayConfig['apiurl'] ?? 'https://wapi.anbernet.com:9956';
+            $response = $sms->send(
+                $normalizedNumber,
+                $this->message,
+                $senderId,
+                $apiUrl,
+                $this->gatewayConfig
+            );
+
+            if (is_array($response) && (
+                ($response['status'] ?? '') === 'success' ||
+                ($response['code'] ?? null) == '9000' ||
+                !empty($response['message_id'])
+            )) {
+                $sent = true;
+            } else {
+                Log::warning('SendSmsJob: Anbernet send returned non-success response', [
+                    'number' => $normalizedNumber,
+                    'response' => $response,
+                ]);
+            }
+        } elseif ($driver === 'whiteinfobd') {
             $whiteInfoGw = Smsgateway::find(31);
             $gwParams = $whiteInfoGw && is_array($whiteInfoGw->params) ? $whiteInfoGw->params : (json_decode($whiteInfoGw->params ?? '{}', true) ?: []);
 
-            $apiUrl = ($driver === 'whiteinfobd') ? ($this->gatewayConfig['apiurl'] ?? $gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages') : ($gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages');
-            $apiKey = ($driver === 'whiteinfobd') ? ($this->gatewayConfig['apikey'] ?? $gwParams['api_key'] ?? '') : ($gwParams['api_key'] ?? '');
+            $apiUrl = $this->gatewayConfig['apiurl'] ?? $gwParams['api_url'] ?? 'https://sms.whiteinfobd.com/api/v1/messages';
+            $apiKey = $this->gatewayConfig['apikey'] ?? $gwParams['api_key'] ?? '';
 
             $sms = new WhiteInfoBDSms();
             $response = $sms->send(

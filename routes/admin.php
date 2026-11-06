@@ -15,6 +15,7 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
     Route::post('users/tariff', [ADMIN\UserController::class, 'updateTariff'])->name('users.tariff.update');
     Route::post('users/{user}/tariff', [ADMIN\UserController::class, 'updateTariff'])->name('users.tariff.update.user');
     Route::get('tariffs', [ADMIN\TariffController::class, 'index'])->name('tariffs.index');
+    Route::post('tariffs/bulk-update', [ADMIN\TariffController::class, 'bulkUpdate'])->name('tariffs.bulk-update');
     Route::put('tariffs/{user}', [ADMIN\TariffController::class, 'update'])->name('tariffs.update');
     Route::post('users/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan');
     Route::post('users/{user}/assign-plan', [ADMIN\UserController::class, 'assignPlan'])->name('users.assign-plan.user');
@@ -59,6 +60,8 @@ Route::group(['as' => 'admin.', 'prefix' => 'admin', 'middleware' => ['admin']],
 
     // Sender Ids
     Route::get('senderids/assigned-users', [ADMIN\SoftcentsSenderController::class, 'assignedUsers'])->name('senderids.assigned-users');
+    Route::get('senderids/check-assignment', [ADMIN\SoftcentsSenderController::class, 'checkAssignment'])->name('senderids.check-assignment');
+    Route::post('senderids/assign-user', [ADMIN\SoftcentsSenderController::class, 'assignUser'])->name('senderids.assign-user');
     Route::resource('senderids', ADMIN\SoftcentsSenderController::class)->except('show');
     Route::post('senderids/status/{id}', [ADMIN\SoftcentsSenderController::class, 'status'])->name('senderids.status');
     Route::post('senderids/delete-all', [ADMIN\SoftcentsSenderController::class, 'deleteAll'])->name('senderids.delete-all');

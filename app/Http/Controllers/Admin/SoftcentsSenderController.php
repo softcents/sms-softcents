@@ -112,11 +112,17 @@ class SoftcentsSenderController extends Controller
             ]);
         }
 
+        $userList = User::whereIn('role', ['user', 'sp', 'ssp'])
+            ->select('id', 'name', 'username', 'phone', 'role')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.senderids.index', compact(
             'senderids',
             'senderUserCounts',
             'gateways',
             'gatewayList',
+            'userList',
             'totalSenderidsCount',
             'totalUnusedCount',
             'totalUsedCount',
@@ -135,7 +141,7 @@ class SoftcentsSenderController extends Controller
      */
     public function create()
     {
-        $users = User::where('role', 'user')->select('id', 'name', 'phone')->latest()->get();
+        $users = User::whereIn('role', ['user', 'sp', 'ssp'])->select('id', 'name', 'username', 'phone', 'role')->orderBy('name')->get();
         $gatewayList = Smsgateway::latest()->select("id", "name")->get();
         return view('admin.senderids.create', compact('users','gatewayList'));
     }
@@ -146,14 +152,19 @@ class SoftcentsSenderController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'sender' => 'required|string|max:500',
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
             'gateway_id' => 'required',
         ]);
         
-        Senderid::create($request->except('rate'));
+        $data = $request->except('rate');
+        if (empty($data['user_id'])) {
+            $data['user_id'] = null;
+        }
+
+        Senderid::create($data);
 
         return response()->json([
             'message' => __('Senderid created successfully'),
@@ -163,7 +174,7 @@ class SoftcentsSenderController extends Controller
 
     public function edit(Senderid $senderid)
     {
-        $users = User::where('role', 'user')->select('id', 'name', 'phone')->latest()->get();
+        $users = User::whereIn('role', ['user', 'sp', 'ssp'])->select('id', 'name', 'username', 'phone', 'role')->orderBy('name')->get();
         $gatewayList = Smsgateway::latest()->select("id", "name")->get();
         return view('admin.senderids.edit', compact('senderid', 'users','gatewayList'));
     }
@@ -174,14 +185,19 @@ class SoftcentsSenderController extends Controller
     public function update(Request $request, Senderid $senderid)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'sender' => 'required|string|max:500',
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
             'gateway_id' => 'required',
         ]);
 
-        $senderid->update($request->except('rate'));
+        $data = $request->except('rate');
+        if (empty($data['user_id'])) {
+            $data['user_id'] = null;
+        }
+
+        $senderid->update($data);
 
         return response()->json([
             'message' => __('Senderid updated successfully'),
@@ -285,6 +301,92 @@ class SoftcentsSenderController extends Controller
             'sender' => $sender,
             'total_users' => $records->count(),
             'users' => $records,
+        ]);
+    }
+
+    /**
+     * Quick / Bulk Assign Customer to selected Sender IDs
+     */
+    public function assignUser(Request $request)
+    {
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'required|integer|exists:senderids,id',
+            'user_id' => 'nullable',
+        ]);
+
+        $rawUserId = $request->input('user_id');
+        $targetUserId = (!empty($rawUserId) && (int) $rawUserId > 0) ? (int) $rawUserId : null;
+
+        if ($targetUserId !== null) {
+            $userExists = User::where('id', $targetUserId)->exists();
+            if (!$userExists) {
+                return response()->json(['error' => __('Invalid user selected.')], 422);
+            }
+        }
+
+        Senderid::whereIn('id', $request->ids)->update([
+            'user_id' => $targetUserId,
+        ]);
+
+        $count = count($request->ids);
+        $targetUser = $targetUserId ? User::find($targetUserId) : null;
+        $userName = $targetUser
+            ? ($targetUser->name . ' (@' . ($targetUser->username ?: ('user' . $targetUser->id)) . ')')
+            : __('Unassigned / Unused');
+
+        return response()->json([
+            'message' => __(':count Sender ID(s) assigned to :user successfully.', [
+                'count' => $count,
+                'user' => $userName,
+            ]),
+            'redirect' => route('admin.senderids.index'),
+        ]);
+    }
+
+    /**
+     * Check if a sender ID string is already assigned to any user(s)
+     */
+    public function checkAssignment(Request $request)
+    {
+        $sender = trim((string) $request->get('sender'));
+        $excludeId = $request->get('exclude_id');
+
+        if ($sender === '') {
+            return response()->json([
+                'assigned' => false,
+                'count' => 0,
+                'users' => [],
+            ]);
+        }
+
+        $query = Senderid::with(['user:id,name,username,phone,email', 'gateway:id,name'])
+            ->where('sender', $sender)
+            ->whereNotNull('user_id');
+
+        if (!empty($excludeId)) {
+            $query->where('id', '!=', (int) $excludeId);
+        }
+
+        $records = $query->get();
+
+        $users = $records->map(function ($s) {
+            return [
+                'sender_id_record' => $s->id,
+                'user_id' => $s->user_id,
+                'name' => optional($s->user)->name ?? __('Unknown'),
+                'username' => optional($s->user)->username ?? '',
+                'phone' => optional($s->user)->phone ?? '',
+                'email' => optional($s->user)->email ?? '',
+                'gateway_name' => optional($s->gateway)->name ?? __('Unassigned'),
+                'type' => $s->type,
+            ];
+        })->values();
+
+        return response()->json([
+            'assigned' => $users->isNotEmpty(),
+            'count' => $users->count(),
+            'users' => $users,
         ]);
     }
 }

@@ -80,6 +80,12 @@
                     </li>
                     @can('senderids-update')
                     <li>
+                        <a href="javascript:void(0)" class="btn-quick-assign-user" data-id="{{ $senderid->id }}" data-sender="{{ $senderid->sender }}" data-user-id="{{ $senderid->user_id ?? '' }}" data-user-name="{{ $senderid->user ? ($senderid->user->name . ' (@' . ($senderid->user->username ?: ('user' . $senderid->user->id)) . ')') : '' }}" data-user-phone="{{ optional($senderid->user)->phone ?? '' }}" data-gateway-name="{{ optional($senderid->gateway)->name ?? __('Unassigned') }}">
+                            <i class="fal fa-user-tag text-success"></i>
+                            {{ __('Assign User') }}
+                        </a>
+                    </li>
+                    <li>
                         <a href="javascript:void(0)" class="btn-quick-change-gateway" data-id="{{ $senderid->id }}" data-sender="{{ $senderid->sender }}" data-gateway-id="{{ $senderid->gateway_id ?? 0 }}" data-gateway-name="{{ optional($senderid->gateway)->name ?? __('Unassigned') }}">
                             <i class="fal fa-exchange-alt"></i>
                             {{ __('Change Gateway') }}

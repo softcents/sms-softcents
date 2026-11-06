@@ -54,13 +54,18 @@ class SmsController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'sender' => 'required|string|max:500',
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
         ]);
 
-        Senderid::create($request->all());
+        $data = $request->all();
+        if (empty($data['user_id'])) {
+            $data['user_id'] = null;
+        }
+
+        Senderid::create($data);
 
         return response()->json([
             'message' => __('Senderid created successfully'),
@@ -80,13 +85,18 @@ class SmsController extends Controller
     public function update(Request $request, Senderid $senderid)
     {
         $request->validate([
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
             'sender' => 'required|string|max:500',
             'type' => 'required|string|in:Non-Masking,Masking',
             'status' => 'required|integer|in:0,1',
         ]);
 
-        $senderid->update($request->all());
+        $data = $request->all();
+        if (empty($data['user_id'])) {
+            $data['user_id'] = null;
+        }
+
+        $senderid->update($data);
 
         return response()->json([
             'message' => __('Senderid updated successfully'),

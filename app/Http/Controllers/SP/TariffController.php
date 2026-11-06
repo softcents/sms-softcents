@@ -14,7 +14,10 @@ class TariffController extends Controller
         $role = $request->get('role', 'all');
         $search = $request->get('search');
 
-        $query = User::where('parent_id', $sp->id)
+        $sspIds = User::where('parent_id', $sp->id)->where('role', 'ssp')->pluck('id')->toArray();
+        $allowedParentIds = array_merge([$sp->id], $sspIds);
+
+        $query = User::whereIn('parent_id', $allowedParentIds)
             ->whereIn('role', ['ssp', 'user']);
 
         if ($role && $role !== 'all') {
@@ -33,7 +36,7 @@ class TariffController extends Controller
         $clients = $query->latest()->paginate(20)->withQueryString();
 
         $totalSsp = User::where('parent_id', $sp->id)->where('role', 'ssp')->count();
-        $totalCustomers = User::where('parent_id', $sp->id)->where('role', 'user')->count();
+        $totalCustomers = User::whereIn('parent_id', $allowedParentIds)->where('role', 'user')->count();
 
         // SP's buying rates from Softcents admin
         $myNonMasking = (float) ($sp->non_masking_rate ?: 0.28);
@@ -55,7 +58,10 @@ class TariffController extends Controller
     {
         $sp = auth()->user();
 
-        if ($user->parent_id !== $sp->id || !in_array($user->role, ['ssp', 'user'])) {
+        $sspIds = User::where('parent_id', $sp->id)->where('role', 'ssp')->pluck('id')->toArray();
+        $allowedParentIds = array_merge([$sp->id], $sspIds);
+
+        if (!in_array($user->parent_id, $allowedParentIds) || !in_array($user->role, ['ssp', 'user'])) {
             abort(403);
         }
 
@@ -84,6 +90,63 @@ class TariffController extends Controller
                 'masking_rate' => (float) $user->masking_rate,
                 'formatted_non_masking' => '৳' . number_format($user->non_masking_rate, 2),
                 'formatted_masking' => '৳' . number_format($user->masking_rate, 2),
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
+
+    public function bulkUpdate(Request $request)
+    {
+        $sp = auth()->user();
+
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'required|integer',
+            'non_masking_rate' => 'required|numeric|min:0',
+            'masking_rate' => 'required|numeric|min:0',
+        ]);
+
+        $sspIds = User::where('parent_id', $sp->id)->where('role', 'ssp')->pluck('id')->toArray();
+        $allowedParentIds = array_merge([$sp->id], $sspIds);
+
+        $validUsers = User::whereIn('id', $request->user_ids)
+            ->whereIn('parent_id', $allowedParentIds)
+            ->whereIn('role', ['ssp', 'user'])
+            ->get();
+
+        if ($validUsers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('No eligible users found to update.'),
+            ], 422);
+        }
+
+        $nmRate = (float) $request->non_masking_rate;
+        $mRate = (float) $request->masking_rate;
+
+        User::whereIn('id', $validUsers->pluck('id'))->update([
+            'non_masking_rate' => $nmRate,
+            'masking_rate' => $mRate,
+        ]);
+
+        $count = $validUsers->count();
+        $message = __('Tariff updated for :count accounts — Non-Masking: ৳:nm | Masking: ৳:m', [
+            'count' => $count,
+            'nm' => number_format($nmRate, 4),
+            'm' => number_format($mRate, 4),
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => $count,
+                'updated_ids' => $validUsers->pluck('id'),
+                'non_masking_rate' => $nmRate,
+                'masking_rate' => $mRate,
+                'formatted_non_masking' => '৳' . number_format($nmRate, 2),
+                'formatted_masking' => '৳' . number_format($mRate, 2),
             ]);
         }
 

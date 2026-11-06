@@ -85,4 +85,55 @@ class TariffController extends Controller
 
         return back()->with('success', $message);
     }
+
+    public function bulkUpdate(Request $request)
+    {
+        $request->validate([
+            'user_ids' => 'required|array|min:1',
+            'user_ids.*' => 'required|integer',
+            'non_masking_rate' => 'required|numeric|min:0',
+            'masking_rate' => 'required|numeric|min:0',
+        ]);
+
+        $validUsers = User::whereIn('id', $request->user_ids)
+            ->whereIn('role', ['user', 'sp', 'ssp'])
+            ->get();
+
+        if ($validUsers->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => __('No eligible accounts found to update.'),
+            ], 422);
+        }
+
+        $nmRate = (float) $request->non_masking_rate;
+        $mRate = (float) $request->masking_rate;
+
+        User::whereIn('id', $validUsers->pluck('id'))->update([
+            'non_masking_rate' => $nmRate,
+            'masking_rate' => $mRate,
+        ]);
+
+        $count = $validUsers->count();
+        $message = __('Tariff updated for :count accounts — Non-Masking: ৳:nm | Masking: ৳:m', [
+            'count' => $count,
+            'nm' => number_format($nmRate, 4),
+            'm' => number_format($mRate, 4),
+        ]);
+
+        if ($request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'count' => $count,
+                'updated_ids' => $validUsers->pluck('id'),
+                'non_masking_rate' => $nmRate,
+                'masking_rate' => $mRate,
+                'formatted_non_masking' => '৳' . number_format($nmRate, 2),
+                'formatted_masking' => '৳' . number_format($mRate, 2),
+            ]);
+        }
+
+        return back()->with('success', $message);
+    }
 }

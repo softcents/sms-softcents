@@ -79,11 +79,9 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Open Tariff Modal handler
-    $(document).on('click', '.btn-open-tariff-modal', function(e) {
-        e.preventDefault();
-        let btn = $(this);
+$(function() {
+    function populateAdminTariffModal(btn) {
+        if (!btn || !btn.length) return;
         let userId = btn.data('id');
         let userName = btn.data('name') || '';
         let username = btn.data('username') || '';
@@ -97,10 +95,26 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#tariff-target-user-role').text(role);
         $('#tariff_non_masking_rate').val(parseFloat(nonMasking));
         $('#tariff_masking_rate').val(parseFloat(masking));
+    }
 
-        let modalEl = document.getElementById('modal-tariff');
-        let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
-        modal.show();
+    // Open Tariff Modal handler
+    $(document).on('click', '.btn-open-tariff-modal', function(e) {
+        e.preventDefault();
+        populateAdminTariffModal($(this));
+
+        if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+            let modalEl = document.getElementById('modal-tariff');
+            let modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+            modal.show();
+        } else {
+            $('#modal-tariff').modal('show');
+        }
+    });
+
+    $('#modal-tariff').on('show.bs.modal', function(e) {
+        if (e.relatedTarget) {
+            populateAdminTariffModal($(e.relatedTarget));
+        }
     });
 
     // Submit Tariff Form handler via AJAX
@@ -118,7 +132,8 @@ document.addEventListener('DOMContentLoaded', function() {
             type: 'POST',
             data: form.serialize(),
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(res) {
                 if (res.success) {
@@ -155,9 +170,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
 
                     // Close modal
-                    let modalInst = bootstrap.Modal.getInstance(document.getElementById('modal-tariff'));
-                    if (modalInst) {
-                        modalInst.hide();
+                    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        let modalInst = bootstrap.Modal.getInstance(document.getElementById('modal-tariff'));
+                        if (modalInst) modalInst.hide();
+                    } else {
+                        $('#modal-tariff').modal('hide');
                     }
                 } else {
                     alert(res.message || '{{ __("Failed to update tariff.") }}');

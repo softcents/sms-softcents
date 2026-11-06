@@ -170,6 +170,9 @@
                                     <span class="fw-semibold text-dark" style="font-size: 13.5px;">{{ __('Sender IDs selected') }}</span>
                                 </div>
                                 <div class="d-flex align-items-center gap-2">
+                                    <button type="button" class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm px-3 py-2" id="btn-open-bulk-assign-user-modal" style="border-radius: 6px; font-weight: 500;">
+                                        <i class="fas fa-user-tag"></i> {{ __('Assign User to Selected') }}
+                                    </button>
                                     <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm px-3 py-2" id="btn-open-bulk-assign-modal" style="border-radius: 6px; font-weight: 500;">
                                         <i class="fas fa-exchange-alt"></i> {{ __('Assign Gateway to Selected') }}
                                     </button>
@@ -304,6 +307,138 @@
                     <div class="modal-footer border-top py-2 px-4" style="background-color: #f8f9fc;">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
                         <button type="submit" class="btn btn-primary px-3" id="btn-submit-bulk-assign">
+                            <i class="fas fa-check me-1"></i> {{ __('Apply to Selected') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Single Quick Assign User Modal -->
+    <div class="modal fade" id="single-assign-user-modal" tabindex="-1" aria-labelledby="singleAssignUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom py-3" style="background-color: #f8f9fc;">
+                    <h5 class="modal-title fw-bold" id="singleAssignUserModalLabel" style="font-size: 16px;">
+                        <i class="fas fa-user-tag text-success me-2"></i>{{ __('Assign Sender ID to Customer') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="single-assign-user-form" action="{{ route('admin.senderids.assign-user') }}" method="POST">
+                    @csrf
+                    <input type="hidden" name="ids[]" id="single-assign-modal-id" value="">
+                    <div class="modal-body p-4">
+                        <div class="mb-3 p-3 rounded" style="background-color: #f1f3f9;">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <span class="text-muted small d-block">{{ __('Sender ID') }}:</span>
+                                    <span class="fw-bold fs-5 text-dark font-monospace" id="single-assign-modal-sender">-</span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="text-muted small d-block">{{ __('Current Gateway') }}:</span>
+                                    <span class="badge bg-primary" id="single-assign-modal-gateway">-</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Assignment Warning Box -->
+                        <div id="single-assign-warning-box" class="alert alert-warning border border-warning d-none align-items-start gap-2 mb-3" style="border-radius: 8px;">
+                            <i class="fas fa-exclamation-triangle text-warning fa-lg mt-1"></i>
+                            <div>
+                                <strong class="d-block text-dark">{{ __('Warning: Currently Assigned!') }}</strong>
+                                <span class="small">{{ __('This Sender ID is currently assigned to') }}:</span>
+                                <div class="fw-bold text-danger mt-1" id="single-assign-modal-current-user-info">-</div>
+                                <div class="small text-muted mt-1">
+                                    <i class="fas fa-info-circle me-1"></i>{{ __('Selecting another customer will reassign this Sender ID.') }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="single-assign-unused-box" class="alert alert-info border border-info d-none align-items-center gap-2 mb-3" style="border-radius: 8px;">
+                            <i class="fas fa-info-circle text-primary fa-lg"></i>
+                            <div>
+                                <strong>{{ __('Current Status') }}:</strong> <span class="badge bg-secondary">{{ __('Unused / Unassigned') }}</span>
+                                <div class="small text-muted">{{ __('This Sender ID is not yet assigned to any customer.') }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Additional warning if same sender string is also used by other customers -->
+                        <div id="single-assign-other-users-box" class="alert alert-danger border border-danger d-none align-items-start gap-2 mb-3" style="border-radius: 8px;">
+                            <i class="fas fa-users text-danger fa-lg mt-1"></i>
+                            <div>
+                                <strong class="d-block text-danger">{{ __('Also Assigned to Other Customer(s)!') }}</strong>
+                                <span class="small">{{ __('This Sender ID number is also registered under') }}:</span>
+                                <div class="small fw-semibold mt-1" id="single-assign-other-users-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold" style="font-size: 13.5px;">
+                                {{ __('Target Customer') }} <span class="text-danger">*</span>
+                            </label>
+                            <select name="user_id" id="single-assign-modal-user-select" class="form-select" required style="border-radius: 6px; height: 42px;">
+                                <option value="">-- {{ __('Select a Customer') }} --</option>
+                                <option value="0" class="text-danger">⚠️ {{ __('Unassigned / Set as Unused (Remove Assignment)') }}</option>
+                                @foreach($userList ?? [] as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ '@' . ($u->username ?: ('user' . $u->id)) }}) - {{ $u->phone }} [{{ strtoupper($u->role) }}]</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top py-2 px-4" style="background-color: #f8f9fc;">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-success px-3" id="btn-submit-single-assign-user">
+                            <i class="fas fa-check me-1"></i> {{ __('Save Assignment') }}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Assign User Modal -->
+    <div class="modal fade" id="bulk-assign-user-modal" tabindex="-1" aria-labelledby="bulkAssignUserModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content shadow border-0" style="border-radius: 12px; overflow: hidden;">
+                <div class="modal-header border-bottom py-3" style="background-color: #f8f9fc;">
+                    <h5 class="modal-title fw-bold" id="bulkAssignUserModalLabel" style="font-size: 16px;">
+                        <i class="fas fa-users text-success me-2"></i>{{ __('Bulk Assign Sender IDs to Customer') }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="bulk-assign-user-form" action="{{ route('admin.senderids.assign-user') }}" method="POST">
+                    @csrf
+                    <div id="bulk-hidden-user-ids-container"></div>
+                    <div class="modal-body p-4">
+                        <div class="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-3" style="font-size: 13.5px;">
+                            <i class="fas fa-info-circle fa-lg"></i>
+                            <div>
+                                {{ __('You are assigning') }} <strong id="modal-bulk-user-count" class="text-primary">0</strong> {{ __('selected Sender IDs.') }}
+                            </div>
+                        </div>
+                        <div class="alert alert-warning py-2 px-3 d-flex align-items-start gap-2 mb-3" style="font-size: 13px;">
+                            <i class="fas fa-exclamation-triangle fa-lg mt-1"></i>
+                            <div>
+                                <strong>{{ __('Notice:') }}</strong> {{ __('Any previously assigned customer for these Sender IDs will be updated to the selected customer below.') }}
+                            </div>
+                        </div>
+                        <div class="form-group mb-2">
+                            <label class="form-label fw-semibold" style="font-size: 13.5px;">
+                                {{ __('Select Destination Customer') }} <span class="text-danger">*</span>
+                            </label>
+                            <select name="user_id" class="form-select" required style="border-radius: 6px; height: 42px;">
+                                <option value="">-- {{ __('Choose Customer') }} --</option>
+                                <option value="0" class="text-danger">⚠️ {{ __('Unassigned / Set as Unused (Remove from users)') }}</option>
+                                @foreach($userList ?? [] as $u)
+                                    <option value="{{ $u->id }}">{{ $u->name }} ({{ '@' . ($u->username ?: ('user' . $u->id)) }}) - {{ $u->phone }} [{{ strtoupper($u->role) }}]</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top py-2 px-4" style="background-color: #f8f9fc;">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">{{ __('Cancel') }}</button>
+                        <button type="submit" class="btn btn-success px-3" id="btn-submit-bulk-assign-user">
                             <i class="fas fa-check me-1"></i> {{ __('Apply to Selected') }}
                         </button>
                     </div>
@@ -561,6 +696,109 @@ $(document).ready(function () {
             error: function (xhr) {
                 $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> {{ __("Apply to Selected") }}');
                 const msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '{{ __("Failed to assign gateway.") }}';
+                toastr.error(msg);
+            }
+        });
+    });
+
+    // Single Assign User Modal
+    $(document).on('click', '.btn-quick-assign-user', function () {
+        const id = $(this).data('id');
+        const sender = $(this).data('sender');
+        const userId = $(this).data('user-id');
+        const userName = $(this).data('user-name');
+        const userPhone = $(this).data('user-phone');
+        const gatewayName = $(this).data('gateway-name') || 'Unassigned';
+
+        $('#single-assign-modal-id').val(id);
+        $('#single-assign-modal-sender').text(sender);
+        $('#single-assign-modal-gateway').text(gatewayName);
+        $('#single-assign-modal-user-select').val(userId ? String(userId) : '0');
+
+        if (userId && userName) {
+            $('#single-assign-modal-current-user-info').html(userName + (userPhone ? ' &bull; ' + userPhone : ''));
+            $('#single-assign-warning-box').removeClass('d-none').addClass('d-flex');
+            $('#single-assign-unused-box').addClass('d-none').removeClass('d-flex');
+        } else {
+            $('#single-assign-warning-box').addClass('d-none').removeClass('d-flex');
+            $('#single-assign-unused-box').removeClass('d-none').addClass('d-flex');
+        }
+
+        // Check if any other records share this sender number
+        $('#single-assign-other-users-box').addClass('d-none').removeClass('d-flex');
+        $('#single-assign-other-users-list').empty();
+
+        $.get('{{ route("admin.senderids.check-assignment") }}', { sender: sender, exclude_id: id }, function (res) {
+            if (res && res.assigned && res.users.length > 0) {
+                let items = res.users.map(u => `<div>&bull; <strong>${u.name}</strong> (@${u.username || 'user' + u.user_id}) - ${u.phone || '-'} [${u.type || ''}]</div>`).join('');
+                $('#single-assign-other-users-list').html(items);
+                $('#single-assign-other-users-box').removeClass('d-none').addClass('d-flex');
+            }
+        });
+
+        $('#single-assign-user-modal').modal('show');
+    });
+
+    $('#single-assign-user-form').on('submit', function (e) {
+        e.preventDefault();
+        const $btn = $('#btn-submit-single-assign-user');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Saving...');
+
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function (res) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> {{ __("Save Assignment") }}');
+                $('#single-assign-user-modal').modal('hide');
+                toastr.success(res.message || '{{ __("User assigned successfully.") }}');
+                reloadSenderIds();
+            },
+            error: function (xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> {{ __("Save Assignment") }}');
+                const msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '{{ __("Failed to assign user.") }}';
+                toastr.error(msg);
+            }
+        });
+    });
+
+    // Bulk Assign User Modal
+    $(document).on('click', '#btn-open-bulk-assign-user-modal', function () {
+        const $checked = $('.checkbox-item:checked');
+        if ($checked.length === 0) {
+            toastr.warning('{{ __("Please select at least one Sender ID.") }}');
+            return;
+        }
+
+        $('#modal-bulk-user-count').text($checked.length);
+        const $hiddenContainer = $('#bulk-hidden-user-ids-container');
+        $hiddenContainer.empty();
+
+        $checked.each(function () {
+            $hiddenContainer.append('<input type="hidden" name="ids[]" value="' + $(this).val() + '">');
+        });
+
+        $('#bulk-assign-user-modal').modal('show');
+    });
+
+    $('#bulk-assign-user-form').on('submit', function (e) {
+        e.preventDefault();
+        const $btn = $('#btn-submit-bulk-assign-user');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i> Updating...');
+
+        $.ajax({
+            url: $(this).attr('action'),
+            type: 'POST',
+            data: $(this).serialize(),
+            success: function (res) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> {{ __("Apply to Selected") }}');
+                $('#bulk-assign-user-modal').modal('hide');
+                toastr.success(res.message || '{{ __("Sender IDs assigned successfully.") }}');
+                reloadSenderIds();
+            },
+            error: function (xhr) {
+                $btn.prop('disabled', false).html('<i class="fas fa-check me-1"></i> {{ __("Apply to Selected") }}');
+                const msg = xhr.responseJSON && xhr.responseJSON.error ? xhr.responseJSON.error : '{{ __("Failed to assign user.") }}';
                 toastr.error(msg);
             }
         });

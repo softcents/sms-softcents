@@ -32,6 +32,7 @@ Route::group(['as' => 'sp.', 'prefix' => 'sp', 'middleware' => ['auth', 'sp']], 
 
     // Tariff Management
     Route::get('/tariffs', [SP\TariffController::class, 'index'])->name('tariffs.index');
+    Route::post('/tariffs/bulk-update', [SP\TariffController::class, 'bulkUpdate'])->name('tariffs.bulk-update');
     Route::put('/tariffs/{user}', [SP\TariffController::class, 'update'])->name('tariffs.update');
 
     // White Label Settings
